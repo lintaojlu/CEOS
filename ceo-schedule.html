@@ -271,9 +271,9 @@
                     <p id="aiReflectionStatus" class="text-[11px] text-zinc-500 min-h-[1.2rem] mb-1">
                         基于今日任务与记录，生成一篇标题为《CEO的反思》的日终总结，可继续编辑保存。
                     </p>
-                    <div id="dailyReflectionDisplay" class="reflection-markdown w-full h-[160px] p-2.5 bg-dark-700/50 rounded-xl text-sm leading-relaxed text-zinc-200 overflow-y-auto"></div>
+                    <div id="dailyReflectionDisplay" class="reflection-markdown w-full h-[400px] p-2.5 bg-dark-700/50 rounded-xl text-sm leading-relaxed text-zinc-200 overflow-y-auto"></div>
                     <textarea id="dailyReflection" 
-                        class="hidden w-full min-h-[165px] p-2.5 bg-dark-700/50 rounded-xl text-sm resize-y leading-relaxed"
+                        class="hidden w-full min-h-[340px] p-2.5 bg-dark-700/50 rounded-xl text-sm resize-y leading-relaxed"
                         placeholder="支持 Markdown，如 **粗体**、- 列表..."
                         oninput="app.saveReflection()"
                         onblur="app.reflectionEditDone()"></textarea>
@@ -305,7 +305,7 @@
                     <p id="aiEvalStatus" class="text-[11px] text-zinc-500 min-h-[1.2rem]">
                         根据今日任务与感悟，生成一份符合固定模板的 AI 日报，可直接复制发送。
                     </p>
-                    <div id="aiEvalResult" class="reflection-markdown w-full h-[200px] p-2.5 bg-dark-700/50 rounded-xl text-sm leading-relaxed text-zinc-200 overflow-y-auto">
+                    <div id="aiEvalResult" class="reflection-markdown w-full h-[400px] p-2.5 bg-dark-700/50 rounded-xl text-sm leading-relaxed text-zinc-200 overflow-y-auto">
                     </div>
                 </section>
             </div>

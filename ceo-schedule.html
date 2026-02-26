@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CEO Schedule System</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300d4ff'/%3E%3Cstop offset='100%25' style='stop-color:%23a855f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0f'/%3E%3Cpath fill='url(%23g)' d='M8 6h14a2 2 0 0 1 2 2v4H10V8H8V6zm-2 4v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10H6zm4 4h8v2h-8v-2zm0 4h6v2h-6v-2z'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#0a0a0f',
+                            800: '#12121a',
+                            700: '#1a1a25',
+                            600: '#252535',
+                            500: '#353545',
+                        },
+                        accent: {
+                            cyan: '#00d4ff',
+                            purple: '#a855f7',
+                            green: '#22c55e',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="css/ceo-schedule.css">
+</head>
+<body class="min-h-screen">
+    <div id="app" class="max-w-7xl mx-auto p-4 md:p-6">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center glow-cyan">
+                    <svg class="w-5 h-5 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+                <div class="flex flex-col justify-center">
+                    <h1 class="text-xl font-bold tracking-tight">CEO Schedule System</h1>
+                    <p class="text-xs text-zinc-500 font-mono mt-0.5">每个人都是自己的CEO</p>
+                </div>
+            </div>
+            
+            <!-- 右上：Streak + 日期（等高） -->
+            <div class="flex items-center gap-2">
+                <div id="streakDisplay"
+                     class="flex items-center justify-center gap-1.5 px-3 h-[52px] rounded-xl bg-dark-700/70 text-xs text-zinc-300 shrink-0"
+                     title="截止今日连续有待办事项的天数">
+                    <span class="text-base leading-none">🔥</span>
+                    <span id="streakCount" class="font-mono font-medium">0</span>
+                </div>
+                <div class="flex items-center gap-2 h-[52px] glass rounded-xl px-1.5 py-1 shrink-0">
+                <button onclick="app.prevDay()" class="date-nav-btn p-2 hover:bg-white/5 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <div class="px-4 text-center min-w-[140px]">
+                    <div id="currentDate" class="font-mono text-sm font-medium"></div>
+                    <div id="currentWeekday" class="text-xs text-zinc-500"></div>
+                </div>
+                <button onclick="app.nextDay()" class="date-nav-btn p-2 hover:bg-white/5 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <button onclick="app.today()" class="date-nav-btn px-3 py-2 text-xs font-medium bg-accent-cyan/10 text-accent-cyan rounded-lg hover:bg-accent-cyan/20 ml-2">
+                    今天
+                </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout：上方里程碑+任务，下方始终是每日感悟 -->
+        <div class="space-y-2">
+            <!-- 里程碑 + 任务 -->
+            <div class="space-y-2">
+                <!-- Milestones Timeline -->
+                <section class="glass rounded-2xl p-2 glow-cyan">
+                    <div class="flex items-center justify-between mb-1">
+                        <h2 class="text-sm font-semibold text-accent-cyan uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            目标里程碑
+                        </h2>
+                        <button onclick="app.addMilestone()" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
+                            <svg class="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- 横向时间轴，支持左右滑动 -->
+                    <div id="milestonesList" class="flex gap-3 overflow-x-auto pb-1">
+                        <!-- Milestones will be rendered here -->
+                    </div>
+                </section>
+
+                <!-- Tasks Section -->
+                <section class="glass rounded-2xl p-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-sm font-semibold text-accent-purple uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                                任务清单
+                            </h2>
+                            <!-- Progress Ring + 完成状态文案 -->
+                            <div class="flex items-center gap-2">
+                                <div class="relative w-10 h-10">
+                                    <svg class="w-10 h-10 progress-ring" viewBox="0 0 36 36">
+                                        <circle cx="18" cy="18" r="14" fill="none" stroke="#252535" stroke-width="3"/>
+                                        <circle id="progressCircle" cx="18" cy="18" r="14" fill="none" stroke="#a855f7" stroke-width="3" 
+                                            stroke-dasharray="87.96" stroke-dashoffset="87.96" stroke-linecap="round" class="progress-ring-circle"/>
+                                    </svg>
+                                    <span id="progressText" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold">0%</span>
+                                </div>
+                                <span id="progressLabel" class="text-xs text-zinc-500 whitespace-nowrap">先加几个任务吧</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="app.syncPrevDayTasks()" class="px-2.5 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-accent-cyan hover:bg-white/5 transition-colors" title="将昨日未完成的必做/选做任务同步到今日">
+                                同步任务
+                            </button>
+                            <button onclick="app.clearTodayTasks()" class="p-2 rounded-lg text-zinc-600 hover:text-accent-rose hover:bg-white/5 transition-colors" title="清空当日所有任务">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M10 11v6m4-6v6M9 4h6a1 1 0 011 1v2H8V5a1 1 0 011-1zM5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Required & Optional Tasks in two columns -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                        <!-- Required Tasks -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-medium text-zinc-400 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-accent-rose"></span>
+                                    必做任务
+                                </h3>
+                                <button onclick="app.showTaskInput('required')" class="p-1 hover:bg-white/5 rounded transition-colors">
+                                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="requiredTasks" class="space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
+                                ondragover="app.handleTaskDragOver(event)"
+                                ondragenter="app.handleTaskDragEnter(event)"
+                                ondragleave="app.handleTaskDragLeave(event)"
+                                ondrop="app.handleTaskDrop(event, 'required')">
+                                <!-- Tasks will be rendered here -->
+                            </div>
+                            <div id="requiredInput" class="hidden mt-1.5">
+                                <input type="text" id="requiredTaskInput" 
+                                    class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm placeholder-zinc-600"
+                                    placeholder="输入任务，按回车添加（如：14:00 会议）..."
+                                    onkeypress="app.handleTaskInput(event, 'required')"
+                                    onblur="app.hideTaskInput('required')">
+                            </div>
+                        </div>
+
+                        <!-- Optional Tasks -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-medium text-zinc-400 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-accent-amber"></span>
+                                    选做任务
+                                </h3>
+                                <button onclick="app.showTaskInput('optional')" class="p-1 hover:bg-white/5 rounded transition-colors">
+                                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="optionalTasks" class="space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
+                                ondragover="app.handleTaskDragOver(event)"
+                                ondragenter="app.handleTaskDragEnter(event)"
+                                ondragleave="app.handleTaskDragLeave(event)"
+                                ondrop="app.handleTaskDrop(event, 'optional')">
+                                <!-- Tasks will be rendered here -->
+                            </div>
+                            <div id="optionalInput" class="hidden mt-1.5">
+                                <input type="text" id="optionalTaskInput" 
+                                    class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm placeholder-zinc-600"
+                                    placeholder="输入选做任务，按回车添加..."
+                                    onkeypress="app.handleTaskInput(event, 'optional')"
+                                    onblur="app.hideTaskInput('optional')">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 灵感收集箱（独立一行） -->
+                <section class="glass rounded-2xl p-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <h2 class="text-sm font-semibold text-accent-cyan uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-accent-cyan"></span>
+                            灵感收集箱
+                        </h2>
+                        <button onclick="app.showTaskInput('ideas')" class="p-1.5 hover:bg-white/5 rounded-lg transition-colors">
+                            <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="ideasTasks" class="space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
+                        ondragover="app.handleTaskDragOver(event)"
+                        ondragenter="app.handleTaskDragEnter(event)"
+                        ondragleave="app.handleTaskDragLeave(event)"
+                        ondrop="app.handleTaskDrop(event, 'ideas')">
+                        <!-- Ideas will be rendered here -->
+                    </div>
+                    <div id="ideasInput" class="hidden mt-1.5">
+                        <input type="text" id="ideasTaskInput" 
+                            class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm placeholder-zinc-600"
+                            placeholder="记录灵感，按回车添加..."
+                            onkeypress="app.handleTaskInput(event, 'ideas')"
+                            onblur="app.hideTaskInput('ideas')">
+                    </div>
+                </section>
+            </div>
+
+                <!-- 底部一行：AI 反思 | AI 日报生成（同一行，左右平行） -->
+            <div class="flex flex-col md:flex-row gap-2">
+                <!-- AI 反思：《CEO的反思》 -->
+                <section class="flex-1 glass rounded-2xl p-2 glow-purple">
+                    <div class="flex items-center justify-between mb-1">
+                        <h2 class="text-sm font-semibold text-accent-purple uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            AI 反思
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <button 
+                                type="button"
+                                id="aiReflectionBtn"
+                                onclick="aiEval.generateReflection()"
+                                class="px-3 py-1 rounded-full bg-accent-purple/10 text-xs text-accent-purple hover:bg-accent-purple/20 transition-colors">
+                                生成反思
+                            </button>
+                            <button 
+                                type="button"
+                                id="reflectionEditBtn"
+                                onclick="app.toggleReflectionEdit()"
+                                class="text-xs text-zinc-500 hover:text-accent-cyan transition-colors">
+                                编辑
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 mb-1.5">
+                        <button type="button" data-reflection-tag="效率很高" onclick="app.setReflectionTag('效率很高')" class="reflection-tag px-3 py-1.5 rounded-full text-xs border border-dark-500 text-zinc-400 hover:border-accent-cyan/50 hover:text-zinc-200 transition-colors">效率很高</button>
+                        <button type="button" data-reflection-tag="需要改进" onclick="app.setReflectionTag('需要改进')" class="reflection-tag px-3 py-1.5 rounded-full text-xs border border-dark-500 text-zinc-400 hover:border-accent-cyan/50 hover:text-zinc-200 transition-colors">需要改进</button>
+                        <button type="button" data-reflection-tag="有点摆烂" onclick="app.setReflectionTag('有点摆烂')" class="reflection-tag px-3 py-1.5 rounded-full text-xs border border-dark-500 text-zinc-400 hover:border-accent-cyan/50 hover:text-zinc-200 transition-colors">有点摆烂</button>
+                    </div>
+                    <p id="aiReflectionStatus" class="text-[11px] text-zinc-500 min-h-[1.2rem] mb-1">
+                        基于今日任务与记录，生成一篇标题为《CEO的反思》的日终总结，可继续编辑保存。
+                    </p>
+                    <div id="dailyReflectionDisplay" class="reflection-markdown w-full h-[160px] p-2.5 bg-dark-700/50 rounded-xl text-sm leading-relaxed text-zinc-200 overflow-y-auto"></div>
+                    <textarea id="dailyReflection" 
+                        class="hidden w-full min-h-[165px] p-2.5 bg-dark-700/50 rounded-xl text-sm resize-y leading-relaxed"
+                        placeholder="支持 Markdown，如 **粗体**、- 列表..."
+                        oninput="app.saveReflection()"
+                        onblur="app.reflectionEditDone()"></textarea>
+                </section>
+                <!-- AI 日报生成 -->
+                <section class="flex-1 glass rounded-2xl p-2 glow-cyan">
+                    <div class="flex items-center justify-between mb-1">
+                        <h2 class="text-sm font-semibold text-accent-cyan uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7H7m6 4H7m4 4H7m4-12l4 4-4 4m0-8v8" />
+                            </svg>
+                            AI 日报
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <button 
+                                id="aiEvaluateBtn"
+                                class="px-3 py-1 rounded-full bg-accent-cyan/10 text-xs text-accent-cyan hover:bg-accent-cyan/20 transition-colors"
+                                onclick="aiEval.evaluateToday()">
+                                生成日报
+                            </button>
+                            <button
+                                type="button"
+                                class="px-3 py-1 rounded-full bg-dark-700 text-xs text-zinc-300 hover:bg-dark-600 transition-colors border border-dark-500/80"
+                                onclick="aiEval.copyTodayReport()">
+                                复制日报
+                            </button>
+                        </div>
+                    </div>
+                    <p id="aiEvalStatus" class="text-[11px] text-zinc-500 min-h-[1.2rem]">
+                        根据今日任务与感悟，生成一份符合固定模板的 AI 日报，可直接复制发送。
+                    </p>
+                    <div id="aiEvalResult" class="reflection-markdown w-full h-[200px] p-2.5 bg-dark-700/50 rounded-xl text-sm leading-relaxed text-zinc-200 overflow-y-auto">
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右下角：导出 MD -->
+    <button onclick="app.exportMD()" class="fixed bottom-6 right-6 date-nav-btn flex items-center gap-2 px-4 py-2.5 glass rounded-xl text-sm hover:bg-white/5 shadow-lg z-40">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        导出 MD
+    </button>
+
+    <!-- Milestone Modal -->
+    <div id="milestoneModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="glass rounded-2xl p-6 w-full max-w-md fade-in">
+            <h3 id="milestoneModalTitle" class="text-lg font-semibold mb-4">添加里程碑</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-zinc-500 mb-1 block">目标名称</label>
+                    <input type="text" id="milestoneTitle" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm" placeholder="例如：产品上线">
+                </div>
+                <div>
+                    <label class="text-xs text-zinc-500 mb-1 block">目标日期</label>
+                    <input type="date" id="milestoneDate" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm text-zinc-100">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="app.closeMilestoneModal()" class="flex-1 px-4 py-2 bg-dark-600 rounded-lg text-sm hover:bg-dark-500 transition-colors">取消</button>
+                    <button onclick="app.deleteMilestoneFromModal()" class="flex-1 px-4 py-2 bg-dark-700 rounded-lg text-sm hover:bg-accent-rose/20 text-accent-rose transition-colors">删除</button>
+                    <button onclick="app.saveMilestone()" class="flex-1 px-4 py-2 bg-accent-cyan text-dark-900 rounded-lg text-sm font-medium hover:bg-accent-cyan/90 transition-colors">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Edit Modal -->
+    <div id="taskModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="glass rounded-2xl p-6 w-full max-w-md fade-in">
+            <h3 class="text-lg font-semibold mb-4">编辑任务</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-zinc-500 mb-1 block">任务内容</label>
+                    <input type="text" id="taskEditTitle" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm" placeholder="例如：14:00 项目复盘">
+                </div>
+                <div id="taskEditTimeRow">
+                    <label class="text-xs text-zinc-500 mb-1 block">时间</label>
+                    <input type="time" id="taskEditTime" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm" step="60">
+                </div>
+                <div>
+                    <label class="text-xs text-zinc-500 mb-1 block">说明</label>
+                    <textarea id="taskEditNote" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm resize-none" rows="3" placeholder="补充说明（可选）"></textarea>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="app.closeTaskModal()" class="flex-1 px-4 py-2 bg-dark-600 rounded-lg text-sm hover:bg-dark-500 transition-colors">取消</button>
+                    <button onclick="app.deleteTaskFromModal()" class="flex-1 px-4 py-2 bg-dark-700 rounded-lg text-sm hover:bg-accent-rose/20 text-accent-rose transition-colors">删除</button>
+                    <button onclick="app.saveTaskFromModal()" class="flex-1 px-4 py-2 bg-accent-cyan text-dark-900 rounded-lg text-sm font-medium hover:bg-accent-cyan/90 transition-colors">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/ceo-schedule.js"></script>
+    <script src="js/ai-eval.js"></script>
+</body>
+</html>

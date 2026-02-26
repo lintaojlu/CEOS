@@ -1,0 +1,11 @@
+{
+  "name": "ceo-schedule",
+  "private": true,
+  "scripts": {
+    "start": "node ai-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0"
+  }
+}

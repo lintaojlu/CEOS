@@ -11,6 +11,7 @@ logs/
 # 环境配置
 .env
 .env.*
+!.env.example
 
 # 构建产物
 dist/

@@ -356,6 +356,14 @@
                     <input type="time" id="taskEditTime" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm" step="60">
                 </div>
                 <div>
+                    <label class="text-xs text-zinc-500 mb-1 block">周期</label>
+                    <select id="taskEditRecurrence" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm text-zinc-100">
+                        <option value="">无</option>
+                        <option value="daily">每日</option>
+                        <option value="weekdays">每个工作日</option>
+                    </select>
+                </div>
+                <div>
                     <label class="text-xs text-zinc-500 mb-1 block">说明</label>
                     <textarea id="taskEditNote" class="w-full px-3 py-2 bg-dark-700 rounded-lg text-sm resize-none" rows="3" placeholder="补充说明（可选）"></textarea>
                 </div>

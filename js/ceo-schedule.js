@@ -62,7 +62,7 @@ const app = {
 
             const existingIds = new Set(data[type].map(t => t.id));
             prevList.forEach(t => {
-                const notCompleted = type === 'ideas' ? true : !t.completed;
+                const notCompleted = !t.completed;
                 if (notCompleted && !existingIds.has(t.id)) {
                     data[type].push({ ...t });
                 }
@@ -221,7 +221,8 @@ const app = {
             completed: false,
             time: time,
             pinned: false,
-            note: ''
+            note: '',
+            recurrence: ''
         };
 
         data[type].push(task);
@@ -411,6 +412,9 @@ const app = {
         const timeRow = document.getElementById('taskEditTimeRow');
         if (timeRow) timeRow.style.display = type === 'ideas' ? 'none' : 'block';
 
+        const recurrenceEl = document.getElementById('taskEditRecurrence');
+        if (recurrenceEl) recurrenceEl.value = task.recurrence || '';
+
         if (noteEl) noteEl.value = task.note || '';
 
         const modal = document.getElementById('taskModal');
@@ -468,6 +472,9 @@ const app = {
 
         if (noteEl) task.note = noteEl.value || '';
 
+        const recurrenceEl = document.getElementById('taskEditRecurrence');
+        task.recurrence = (recurrenceEl && recurrenceEl.value) ? recurrenceEl.value : '';
+
         this.saveData();
         this.renderTasks();
         this.updateProgress();
@@ -498,6 +505,8 @@ const app = {
         const showTime = type !== 'ideas';
         const pinClass = task.pinned ? 'text-accent-cyan' : 'text-zinc-600 hover:text-zinc-400';
         const noteIndicator = task.note ? `<span class="text-accent-cyan text-xs ml-2">●</span>` : '';
+        const recurrence = task.recurrence || '';
+        const recurrenceBadge = recurrence === 'daily' ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-accent-amber/20 text-accent-amber shrink-0">每日</span>' : (recurrence === 'weekdays' ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-accent-cyan/20 text-accent-cyan shrink-0">工作日</span>' : '');
         const noteIndent = type === 'ideas' ? 'pl-0' : 'pl-14';
         const dragAttrs = `draggable="true" ondragstart="app.handleTaskDragStart(event, '${type}', '${task.id}')" ondragend="app.handleTaskDragEnd(event)"`;
 
@@ -507,9 +516,10 @@ const app = {
                             ${task.completed ? 'checked' : ''} 
                             onchange="app.toggleTask('${type}', '${task.id}')">
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 ${showTime ? `<span class="text-xs font-mono text-zinc-500 shrink-0">${timeStr}</span>` : ''}
                                 <span class="text-sm truncate ${task.completed ? 'line-through text-zinc-500' : ''}">${this.escapeHtml(task.text)}</span>
+                                ${recurrenceBadge}
                                 ${noteIndicator}
                             </div>
                             ${task.note ? `<div class="text-xs text-zinc-500 mt-1 ${noteIndent}">${this.escapeHtml(task.note)}</div>` : ''}

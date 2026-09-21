@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一键导入历史数据 · CEO Schedule System</title>
+<style>
+  :root{--paper:#eff2f1;--raised:#f8faf9;--ink:#15181b;--soft:#363c41;--muted:#60686d;--dim:#929a9e;--line:rgba(20,23,26,.14);--line-hi:rgba(20,23,26,.3);--accent:#e14a0e;--accent-soft:rgba(225,74,14,.08)}
+  body{margin:0;padding:48px 24px 80px;background:var(--paper);color:var(--soft);font:14px/1.7 'Inter',-apple-system,'PingFang SC',sans-serif}
+  main{max-width:720px;margin:0 auto}
+  h1{margin:.2em 0 .6em;font:400 30px/1.15 Georgia,'Songti SC',serif;letter-spacing:-.02em;color:var(--ink)}
+  h2{margin:0 0 .8em;font:500 17px/1.3 Georgia,'Songti SC',serif;color:var(--ink)}
+  .kicker{color:var(--dim);font:500 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase}
+  .panel{margin-top:20px;padding:22px 24px;border:1px solid var(--line-hi);border-radius:14px;background:var(--raised)}
+  .stat{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:0}
+  .stat b{color:var(--ink);font-family:ui-monospace,Menlo,monospace;font-weight:500}
+  .src{color:var(--muted);font:11px/1.8 ui-monospace,Menlo,monospace}
+  .note{margin-top:14px;padding:12px 14px;border:1px solid rgba(225,74,14,.3);border-radius:10px;background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent);font-size:13px}
+  button{min-height:44px;padding:.6rem 1.3rem;border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:var(--paper);font:500 14px 'Inter',sans-serif;cursor:pointer}
+  button.secondary{border-color:var(--line-hi);background:transparent;color:var(--ink);margin-left:8px}
+  button:disabled{opacity:.45;cursor:default}
+  a{color:var(--accent)}
+  code{font:12px ui-monospace,Menlo,monospace;background:rgba(20,23,26,.06);padding:.1em .35em;border-radius:4px}
+  pre{margin:16px 0 0;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font:12px/1.7 ui-monospace,Menlo,monospace;white-space:pre-wrap}
+  ol{margin:.5em 0 0;padding-left:1.3em;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">Import</div>
+  <h1>一键导入全部历史数据</h1>
+  <p>写入当前源 <code id="origin"></code>。灵感与里程碑<strong>挂在各自的日期下</strong>，互不合并成全局列表。同 id 已存在则跳过。</p>
+
+  <div class="panel">
+    <h2>档案内容</h2>
+    <div id="preview">正在读取备份…</div>
+    <div class="note">
+      请打开 <code>http://localhost:5173/restore.html</code> 再导入。
+      <ol>
+        <li>翻到哪天，只看到那天的灵感；删 9/16 不影响 9/18。</li>
+        <li>里程碑存在「目标日期」那天；当前查看日只展示当天的里程碑。</li>
+        <li>「同步任务」只拷必做/选做，绝不拷灵感或里程碑。</li>
+      </ol>
+    </div>
+    <p style="margin-top:22px">
+      <button id="go" disabled>一键合并导入</button>
+      <button type="button" class="secondary" id="openApp" disabled>打开日程</button>
+    </p>
+    <div id="result"></div>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+$('origin').textContent = location.origin;
+
+let payload = null;
+
+function row(label, value) {
+  return '<div class="stat"><span>' + label + '</span><b>' + value + '</b></div>';
+}
+
+function emptyDay() {
+  return { required: [], optional: [], ideas: [], milestones: [], reflection: '', reflectionTags: [], aiEval: '' };
+}
+
+fetch('/backup/ceos-full-history.json')
+  .then((r) => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then((data) => {
+    payload = data;
+    const dates = Object.keys(data.schedule || {});
+    let tasks = 0, ideas = 0, milestones = 0, texts = 0;
+    dates.forEach((d) => {
+      const day = data.schedule[d];
+      tasks += (day.required || []).length + (day.optional || []).length;
+      ideas += (day.ideas || []).length;
+      milestones += (day.milestones || []).length;
+      if (day.reflection || day.aiEval) texts++;
+    });
+    $('preview').innerHTML =
+      row('日期范围', (data.dateRange || []).join(' → ')) +
+      row('有记录的天数', dates.length + ' 天') +
+      row('任务', tasks + ' 条') +
+      row('灵感（按日）', ideas + ' 条') +
+      row('里程碑（按目标日）', milestones + ' 个') +
+      row('含感悟 / AI 日报', texts + ' 天') +
+      '<div class="src" style="margin-top:14px">schema v' + (data.schemaVersion || '?') +
+        (data.sources ? '<br>' + data.sources.map((s) => s.source).join(' · ') : '') +
+      '</div>';
+    $('go').disabled = false;
+  })
+  .catch((e) => {
+    $('preview').textContent = '读取备份失败：' + e.message + '（请确认 npm run dev 正在运行）';
+  });
+
+$('openApp').onclick = () => { location.href = '/ceo-schedule.html'; };
+
+$('go').onclick = () => {
+  const readJson = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  };
+
+  localStorage.setItem('ceoBackupBeforeRestore', JSON.stringify({
+    at: new Date().toISOString(),
+    ceoSchedule: localStorage.getItem('ceoSchedule'),
+    ceoIdeas: localStorage.getItem('ceoIdeas'),
+    ceoMilestones: localStorage.getItem('ceoMilestones')
+  }));
+
+  let addedDays = 0, addedTasks = 0, addedIdeas = 0, addedMs = 0, filledTexts = 0;
+
+  const schedule = readJson('ceoSchedule', {}) || {};
+  Object.keys(payload.schedule || {}).forEach((dateKey) => {
+    const src = payload.schedule[dateKey];
+    const existed = !!schedule[dateKey];
+    const dst = schedule[dateKey] || emptyDay();
+    if (!existed) addedDays++;
+
+    ['required', 'optional'].forEach((list) => {
+      if (!Array.isArray(dst[list])) dst[list] = [];
+      const have = new Set(dst[list].map((t) => t.id));
+      const added = (src[list] || []).filter((t) => t && t.id && !have.has(t.id));
+      dst[list] = dst[list].concat(added);
+      addedTasks += added.length;
+    });
+
+    if (!Array.isArray(dst.ideas)) dst.ideas = [];
+    {
+      const have = new Set(dst.ideas.map((n) => n.id));
+      const added = (src.ideas || []).filter((n) => n && n.id && !have.has(n.id));
+      dst.ideas = dst.ideas.concat(added);
+      addedIdeas += added.length;
+    }
+
+    if (!Array.isArray(dst.milestones)) dst.milestones = [];
+    {
+      const have = new Set(dst.milestones.map((m) => m.id));
+      const added = (src.milestones || []).filter((m) => m && m.id && !have.has(m.id));
+      dst.milestones = dst.milestones.concat(added);
+      addedMs += added.length;
+    }
+
+    if (!dst.reflection && src.reflection) { dst.reflection = src.reflection; filledTexts++; }
+    if (!dst.aiEval && src.aiEval) { dst.aiEval = src.aiEval; filledTexts++; }
+    if ((!dst.reflectionTags || !dst.reflectionTags.length) && src.reflectionTags && src.reflectionTags.length) {
+      dst.reflectionTags = src.reflectionTags.slice();
+    }
+    schedule[dateKey] = dst;
+  });
+
+  localStorage.setItem('ceoSchedule', JSON.stringify(schedule));
+  // Remove obsolete global stores — days own the data now.
+  localStorage.removeItem('ceoIdeas');
+  localStorage.removeItem('ceoMilestones');
+  localStorage.setItem('ceoSchemaVersion', '2');
+
+  $('go').disabled = true;
+  $('openApp').disabled = false;
+  $('result').innerHTML =
+    '<pre>新增日期 ' + addedDays + ' 天\n新增任务 ' + addedTasks +
+    ' 条\n新增灵感 ' + addedIdeas + ' 条\n新增里程碑 ' + addedMs +
+    ' 个\n补回感悟/日报 ' + filledTexts + ' 处</pre>' +
+    '<p>导入完成。<a href="/ceo-schedule.html">打开日程</a>，翻到 2026-09-16 可看到当天灵感。</p>' +
+    '<p style="color:var(--muted);font-size:12px">导入前快照在 <code>ceoBackupBeforeRestore</code>。</p>';
+};
+</script>
+</body>
+</html>

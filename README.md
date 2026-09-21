@@ -2,194 +2,154 @@
 
 **Slogan：每个人都是自己的 CEO**
 
-CEOS 是一个为技术型 CEO / 创业者设计的每日时间与认知管理工具：用一套轻量的「里程碑 + 日程 + 反思 + AI 日报」体系，帮助你像运营公司一样运营自己和事业。
+CEOS 是一个为技术型 CEO / 创业者设计的每日时间与认知管理工具：用一套轻量的「里程碑 + 日程 + 灵感 DAG + 反思 + AI 日报」体系，帮助你像运营公司一样运营自己和事业。
 
 ---
 
 ### 项目亮点
 
-- **日日清机制**：任务不过夜，告别清单越来越长的焦虑，每天清零才有成就感。
-- **微观宏观双视图**：时间线视图对齐长期目标，日视图专注当下执行，不再被困在今天里瞎忙。
-- **每日 AI 复盘**：像 Git 提交代码一样给一天写 commit message，AI 自动评估今日价值与方向。
+- **日日清机制**：必做/选做按日管理；暂时做不了的事进入**当天**灵感箱，设 DDL 或前序后再捡起。
+- **灵感 DAG**：灵感挂在当前日期下；可依赖**当天**其他灵感或当天必做/选做；就绪后应用内提醒。
+- **分层前端架构**：Domain / Application / Infrastructure / UI，可用 Vitest 单测核心规则。
+- **每日 AI 复盘**：根据任务与感悟生成团队日报与《CEO的反思》。
 
-**更多特性：**
+---
 
-- **一体化视图**：目标里程碑、当日任务、灵感收集、每日反思、AI 日报，全都在一个页面完成。
-- **极简上手**：纯前端页面 + 一个轻量 Node.js 代理，无需数据库，开箱即用。
-- **本地优先**：所有日程数据与反思内容都保存在浏览器 `localStorage`，默认不出本机。
-- **AI 加持**：
-  - 根据当天任务与感悟生成结构化团队日报（可直接发给团队）。
-  - 根据你的记录生成《CEO的反思》，帮助你做高质量的自我复盘。
-- **自我激励小技巧**：支持任务时间解析、优先级置顶、拖拽、完成率进度环、Streak 连续天数等。
+### 设计原则：按日解耦
+
+每一天的任务与灵感彼此独立（例如 9/17 与 9/18 互不相关）。**只有**用户点击「同步任务」或「同步灵感」时，才会把前一天未完成项拷贝到当前日；切日期不会自动迁移。
 
 ---
 
 ### 功能模块
 
 - **目标里程碑（Milestones）**
-  - 维护长期目标与关键节点（如「产品上线」「完成一轮融资」等）。
-  - 自动计算「还有 X 天 / 距今 X 天 / 今天」，支持标记已完成。
-  - 以时间线形式横向展示，适合每天浏览对齐方向。
+  - 按**目标日期**存在对应那天的 `milestones[]`；界面按当前查看日展示。
 
 - **任务清单（必做 / 选做）**
-  - 分为「必做任务」与「选做任务」两列。
-  - 支持：
-    - 自然语言时间解析：如输入「14:00 开会」「下午3点复盘」自动识别时间排序。
-    - 拖拽在「必做 / 选做 / 灵感」之间移动。
-    - 置顶（Pin）、完成勾选、详情编辑（时间 + 说明）。
-  - 顶部有一个圆形进度环 + 文案反馈今日节奏感受。
+  - 自然语言时间解析、拖拽、置顶、周期、完成勾选。
+  - 「同步任务」**仅**拷贝昨日未完成的必做/选做；不碰灵感与里程碑。
 
-- **灵感收集箱（Ideas）**
-  - 记录「暂时不安排时间，但值得记住」的想法、To Think 列表。
-  - 支持拖拽任务从其他列移入，支持说明备注。
+- **灵感收集箱（按日 DAG）**
+  - **随日期切换**：翻到哪天只看/改那天的灵感；删 9/16 不影响 9/18。
+  - 「同步灵感」显式拷贝昨日未完成灵感；依赖边按当日重映射（目标日不存在的前序会丢弃）。
+  - 每条灵感可设 **DDL**（到日才可捡起）与 **前序任务**（仅当天灵感 / 必做 / 选做）。
+  - **画布 / DAG 视图（默认）**：React Flow 可视化当天节点与依赖边；右上角 **DAG | 列表** 可切换。
+  - **列表视图**：分区 **可捡起来 / 等待中 / 已完成**；标题角标显示「可捡起 N」。
+  - 就绪时显示应用内横幅；「列入今日」写入今日必做。
+  - 从必做/选做拖入灵感箱 = 暂缓到当天。
 
-- **每日感悟 & 标签**
-  - 支持 Markdown 格式编辑与展示。
-  - 提供「效率很高 / 需要改进 / 有点摆烂」等标签，可多选，作为复盘情绪和状态索引。
-  - 所有内容按日期存储，可长期回看。
+- **每日感悟 & 标签 / AI 日报 / AI 反思 / 导出 JSON**
+  - 导出以 `schedule`（含按日 ideas / milestones）与 `schemaVersion` 为主。
 
-- **AI 日报（业务 / 团队日报）**
-  - 聚合当天「已完成任务 + 灵感 + 感悟」，调用 LLM 生成结构化日报：
-    - 标题示例：`团队日报 M.D`（如 `3.10`）。
-    - 拆分为「左侧（业务进展）」和「右侧（投融资 / 募资进展）」两大块。
-  - 生成后支持一键复制，直接粘贴到飞书 / 钉钉 / 微信群。
+---
 
-- **AI 反思（《CEO的反思》）**
-  - 基于你的任务列表、完成情况、灵感与感悟，生成一篇 200–400 字的日终反思文章。
-  - 标题固定为《CEO的反思》，结构清晰，包含：开头整体回顾、若干条带 Emoji 的“做得好 / 需要改进”要点、以及「明天的小承诺」。
+### 架构
 
-- **导出 Markdown**
-  - 右下角「导出 MD」按钮可以将当前日期的：里程碑、任务列表（含完成状态与备注）、完成率统计、每日感悟、AI 评估结果，一键导出为本地 `CEO_Schedule_YYYY-MM-DD.md`。
+```text
+UI  →  Application (ScheduleApp / Services / EventBus)
+         →  Domain (纯函数：就绪规则、环检测、日任务)
+         →  Infrastructure (localStorage Repository + Migration)
+```
 
-- **连续天数 Streak**
-  - 右上角 🔥 指标展示最近连续有任务记录的天数。
+| 层 | 职责 | 禁止 |
+|----|------|------|
+| `src/domain/` | 实体与规则（无 IO） | DOM、localStorage、fetch |
+| `src/application/` | 用例、事件、组合根 | 直接操作 DOM |
+| `src/infrastructure/` | 持久化与 schema 迁移 | UI |
+| `src/ui/` | 视图与弹窗 | 直接读写 localStorage |
+
+**就绪规则**：未完成 + 全部前序已完成（引用丢失视为已满足）+ 无 DDL 或 DDL ≤ 今天。
 
 ---
 
 ### 技术栈
 
-- **前端**
-  - HTML + 原生 JavaScript
-  - [Tailwind CSS](https://tailwindcss.com)（CDN 引入）
-  - [Marked](https://marked.js.org/) 用于 Markdown 渲染
-  - 浏览器 `localStorage` 用于本地数据持久化
-
-- **后端 / AI 代理**
-  - Node.js + [Express](https://expressjs.com/)
-  - [node-fetch](https://github.com/node-fetch/node-fetch) 调用火山引擎大模型 API
-  - 暴露一个 POST 接口：`/api/ai-eval`，中转到火山引擎 Ark Chat Completions 接口
+- **前端**：HTML + ES Module（Vite）、React 岛屿（灵感画布）+ [@xyflow/react](https://reactflow.dev)、Tailwind CDN、Marked、localStorage
+- **测试**：Vitest（Domain / Migration）
+- **后端**：Express 薄代理 `POST /api/ai-eval` → 火山引擎 Ark
 
 ---
 
-### 项目结构（简要）
+### 项目结构
 
 ```text
 .
-├── ceo-schedule.html        # 主页面：CEO Schedule System UI
-├── css
-│   └── ceo-schedule.css     # 自定义样式
-├── js
-│   ├── ceo-schedule.js      # 前端核心逻辑：任务/里程碑/反思/导出
-│   └── ai-eval.js           # AI 日报 & AI 反思，调用本地 AI 代理
-├── ai-server.js             # Node.js AI 代理（封装火山引擎调用）
-├── package.json             # Node 依赖与脚本
-└── README.md                # 项目说明（本文件）
+├── ceo-schedule.html              # 主页面（布局）
+├── css/ceo-schedule.css
+├── src/
+│   ├── main.js                    # 入口：bootstrap + window.app
+│   ├── domain/                    # 日程 / 灵感 DAG / 里程碑
+│   ├── application/               # ScheduleService、IdeaInboxService、Export…
+│   ├── infrastructure/            # Repository、Migration → v2（按日 ideas/milestones）
+│   ├── ui/views/ · ui/components/
+│   ├── ui/react/                  # 灵感 DAG 画布（React + React Flow 岛屿）
+│   └── ai/ai-eval-client.js
+├── ai-server.js                   # AI 代理入口
+├── ai-server/routes/ai-eval.js
+├── vite.config.mjs
+├── package.json
+└── js/                            # 已废弃 shim（勿直接引用）
 ```
 
----
+**localStorage 键**
 
-### 环境要求
+| 键 | 内容 |
+|----|------|
+| `ceoSchedule` | 按日：`required` / `optional` / `ideas` / `milestones` / reflection / aiEval |
+| `ceoSchemaVersion` | schema 版本（v2 = 灵感与里程碑按日隔离） |
 
-- Node.js（推荐 18+）
-- 现代浏览器（Chrome / Edge / Safari 等）
-- 可访问火山引擎 Ark API 的网络环境（仅 AI 功能需要）
+`ceoIdeas` / `ceoMilestones` 为旧键；打开应用时会迁回各日并清空。
 
 ---
 
 ### 快速开始
 
-#### 1. 安装依赖
-
 ```bash
 npm install
-```
 
-#### 2. 配置火山引擎 API
+# 终端 1：前端（必须用 Vite，才能加载 ES Module）
+npm run dev
+# → http://localhost:5173/ceo-schedule.html
 
-在启动服务前，先设置环境变量（示例）：
-
-```bash
-export VOLCENGINE_API_URL="https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-export VOLCENGINE_MODEL_ID="你的模型 ID"
-export VOLCENGINE_API_KEY="你的 API Key"
-```
-
-> 建议始终通过环境变量配置密钥，**不要在代码仓库中直接写死真实的 API Key**。
-
-#### 3. 启动本地 AI 代理
-
-```bash
+# 终端 2（可选）：AI 代理
+# 配置 .env 中的 VOLCENGINE_MODEL_ID / VOLCENGINE_API_KEY
 npm start
-# 等价于：node ai-server.js
 ```
 
-启动成功后，终端会看到：
-
-```text
-AI 评估代理已启动: http://localhost:2233/api/ai-eval
+```bash
+npm test          # Domain / Migration 单测
+npm run build     # 产出 dist/
 ```
 
-#### 4. 打开前端页面
+> 不要再直接双击打开 `ceo-schedule.html`（`type=module` 依赖 Vite 开发服务器）。
 
-- 直接在浏览器中打开 `ceo-schedule.html`；或  
-- 启动一个本地静态服务器，通过 `http://localhost:xxxx/ceo-schedule.html` 访问。
-
-只要浏览器能访问 `http://localhost:2233/api/ai-eval`，AI 功能就可以正常工作。
+> **访问地址固定为 `http://localhost:5173`**。localStorage 按「协议 + 域名 + 端口」隔离，换端口（`8080` / `8765` / `python -m http.server`）或改用 `127.0.0.1` 都会进入另一份空存储，看起来就像数据丢了。`vite.config.mjs` 已开启 `strictPort`，5173 被占用时会直接报错而不是静默换端口。
 
 ---
 
-### 使用说明（简要）
+### 使用说明（灵感箱）
 
-- **切换日期**：右上角左右箭头切换日期，「今天」按钮快速回到今日。
-- **添加任务**：在「必做任务 / 选做任务 / 灵感收集箱」点击 `+` 输入内容回车，支持带时间文本自动排序。
-- **编辑任务**：双击任务打开编辑弹窗，可修改内容、时间、备注或删除。
-- **拖拽任务**：任务可在三列间拖动，调整分类。
-- **同步昨日任务**：点击「同步任务」将昨日未完成的必做/选做任务同步到今日。
-- **每日感悟 & 标签**：选择状态标签，点击「编辑」用 Markdown 记录感悟。
-- **AI 日报**：在「AI 日报」区域点击「生成日报」，完成后可一键复制。
-- **AI 反思**：在「AI 反思」区域点击「生成反思」，生成《CEO的反思》。
-- **导出 MD**：右下角「导出 MD」按钮可导出当日完整记录为 `.md` 文件。
+1. 翻到目标日期，把暂时做不了的事拖进「灵感收集箱」，或点 `+` 新建（只属于当天）。
+2. **DAG 模式（默认）**：标题旁点 **DAG / 列表** 切换；从节点右侧手柄拖到另一节点左侧 = 设置前序依赖；拖动节点保存布局；点「列入今日」或双击「编辑」。
+3. **列表模式**：按就绪状态浏览；编辑弹窗可设 DDL 与日任务前序。
+4. 前序全部完成且日期已到 → 进入「可捡起来」，角标/横幅提醒。
 
 ---
 
-### 数据存储与隐私
+### 数据与隐私
 
-- 所有任务、里程碑、感悟、AI 结果都通过浏览器 `localStorage` 存储在本地：
-  - `ceoSchedule`：按日期存储每日任务、灵感、反思、AI 结果。
-  - `ceoMilestones`：存储全局里程碑列表。
-- 默认不上传到任何服务器；仅在使用 AI 功能时，通过本地代理调用火山引擎。
-- 请自行评估输入内容是否包含敏感信息，并按风险习惯使用。
+- 默认仅存本机；AI 调用才经本地代理出网。
+- 定期用「导出 JSON」备份；历史一键导入见 `restore.html` + `backup/ceos-full-history.json`。
 
 ---
 
 ### 常见问题
 
-- **AI 按钮没有响应？**
-  - 确认 `npm start` 已运行，终端中有 `AI 评估代理已启动`。
-  - 浏览器能访问 `http://localhost:2233/api/ai-eval`。
-  - `ai-server.js` 中的模型 ID 和 API Key 配置正确。
-
-- **换电脑或清缓存后数据丢失？**
-  - 目前数据只在浏览器本地，清理浏览数据或更换设备会丢失。
-  - 建议定期用「导出 MD」备份到 Obsidian / Notion / Git 仓库。
+- **页面空白 / 模块加载失败？** 请用 `npm run dev`，不要用 `file://`。
+- **AI 无响应？** 确认 `npm start` 与 `.env` 密钥。
+- **灵感怎么按天了？** schema v2 起灵感与里程碑都挂在 `ceoSchedule[日期]` 下；打开应用会把旧的全局 `ceoIdeas` / `ceoMilestones` 迁回各日。
 
 ---
 
-### 授权协议
-
-（示例）本项目默认以 **MIT License** 开源，你可以自由使用、修改和分发，但需保留原始版权声明。若需改为闭源或内部项目，可自行调整本段内容。
-
----
-
-**每个人都是自己的 CEO。** 希望这个工具能帮你更有意识地经营自己的时间、精力和认知。
-
+**每个人都是自己的 CEO。**

@@ -1,4 +1,11 @@
 /**
+ * @typedef {Object} Subtask
+ * @property {string} id
+ * @property {string} text
+ * @property {boolean} completed
+ */
+
+/**
  * @typedef {Object} DailyTask
  * @property {string} id
  * @property {string} text
@@ -7,6 +14,8 @@
  * @property {boolean} pinned
  * @property {string} note
  * @property {string} recurrence
+ * @property {string} projectId
+ * @property {Subtask[]} subtasks
  */
 
 /**
@@ -40,6 +49,35 @@ export function parseTime(text) {
 
 /**
  * @param {string} text
+ * @param {Partial<Subtask>} [overrides]
+ * @returns {Subtask}
+ */
+export function createSubtask(text, overrides = {}) {
+  return {
+    id: overrides.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    text: String(text || '').trim(),
+    completed: !!overrides.completed
+  };
+}
+
+/**
+ * @param {any} raw
+ * @returns {Subtask[]}
+ */
+export function normalizeSubtasks(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((s) => s && (s.id || s.text))
+    .map((s) =>
+      createSubtask(s.text || '', {
+        id: s.id,
+        completed: !!s.completed
+      })
+    );
+}
+
+/**
+ * @param {string} text
  * @param {Date} baseDate
  * @param {Partial<DailyTask>} [overrides]
  * @returns {DailyTask}
@@ -55,15 +93,31 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     time = Date.now();
   }
 
+  const { subtasks: rawSubtasks, ...rest } = overrides;
   return {
-    id: overrides.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: rest.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text,
     completed: false,
     time,
     pinned: false,
     note: '',
     recurrence: '',
-    ...overrides
+    ...rest,
+    projectId: typeof rest.projectId === 'string' ? rest.projectId : '',
+    subtasks: normalizeSubtasks(rawSubtasks)
+  };
+}
+
+/**
+ * Shallow-clone a task including a deep copy of subtasks (for sync).
+ * @param {DailyTask|any} task
+ * @returns {DailyTask}
+ */
+export function cloneDailyTask(task) {
+  return {
+    ...task,
+    projectId: typeof task?.projectId === 'string' ? task.projectId : '',
+    subtasks: normalizeSubtasks(task?.subtasks).map((s) => ({ ...s }))
   };
 }
 

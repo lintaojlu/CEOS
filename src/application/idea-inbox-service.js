@@ -2,13 +2,12 @@ import { createIdeaNode } from '../domain/ideas/idea-node.js';
 import { validateDependsOn } from '../domain/ideas/dag-validator.js';
 import { partitionIdeas, getBlockers, isIdeaReady } from '../domain/ideas/readiness.js';
 import { createDailyTask } from '../domain/schedule/daily-task.js';
-import { syncPrevDayIdeas } from '../domain/schedule/schedule-day.js';
-import { todayKey, getDateKey, addDays } from '../domain/shared/date-key.js';
+import { todayKey } from '../domain/shared/date-key.js';
 import { Events } from './event-bus.js';
 
 /**
- * Ideas are day-scoped: each ScheduleDay owns its ideas[].
- * The inbox / DAG always reflect the currently viewed day.
+ * Ideas are one global inbox on the workspace.
+ * Predecessor tasks are the currently viewed day's unfinished required/optional.
  */
 export class IdeaInboxService {
   /**
@@ -24,14 +23,15 @@ export class IdeaInboxService {
   }
 
   load() {
-    // Ideas live inside schedule days; nothing separate to load.
+    // Ideas live on the workspace loaded by ScheduleService.
   }
 
   /** @returns {import('../domain/ideas/idea-node.js').IdeaNode[]} */
   get nodes() {
-    const day = this.scheduleService.getCurrentData();
-    if (!Array.isArray(day.ideas)) day.ideas = [];
-    return day.ideas;
+    if (!Array.isArray(this.scheduleService.workspace.ideas)) {
+      this.scheduleService.workspace.ideas = [];
+    }
+    return this.scheduleService.workspace.ideas;
   }
 
   persist() {
@@ -110,7 +110,14 @@ export class IdeaInboxService {
       pinned: idea.pinned
     });
     this.scheduleService.insertTask(list, task);
-    idea.completed = true;
+    // Picked up ≠ done: remove from inbox instead of marking completed.
+    const ideas = this.nodes.filter((n) => n.id !== ideaId);
+    ideas.forEach((n) => {
+      n.dependsOn = (n.dependsOn || []).filter(
+        (r) => !(r.scope === 'idea' && r.id === ideaId)
+      );
+    });
+    this.scheduleService.workspace.ideas = ideas;
     this.persist();
     return { task, idea };
   }
@@ -130,13 +137,13 @@ export class IdeaInboxService {
   }
 
   delete(id) {
-    const day = this.scheduleService.getCurrentData();
-    day.ideas = (day.ideas || []).filter((n) => n.id !== id);
-    day.ideas.forEach((n) => {
+    const ideas = this.nodes.filter((n) => n.id !== id);
+    ideas.forEach((n) => {
       n.dependsOn = (n.dependsOn || []).filter(
         (r) => !(r.scope === 'idea' && r.id === id)
       );
     });
+    this.scheduleService.workspace.ideas = ideas;
     this.persist();
   }
 
@@ -196,7 +203,7 @@ export class IdeaInboxService {
       dateKey,
       list,
       id: task.id,
-      label: `${list === 'required' ? '必做' : '选做'} · ${task.text}`
+        label: `${list === 'required' ? '必做' : '选做'} · ${this.scheduleService.taskTitle(task)}`
     }));
 
     return [...ideas, ...daily];
@@ -206,24 +213,6 @@ export class IdeaInboxService {
     this.eventBus.on(Events.TASK_COMPLETED, () => {
       this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'task:completed' });
     });
-  }
-
-  /**
-   * Explicit only: copy unfinished ideas from yesterday into the current day.
-   * @returns {number} how many ideas were added
-   */
-  syncPrevDayIdeas() {
-    const prevKey = getDateKey(addDays(this.scheduleService.currentDate, -1));
-    const currentKey = this.scheduleService.getDateKey();
-    const prev = this.scheduleService.data[prevKey];
-    if (!prev) return 0;
-    const current = this.scheduleService.getCurrentData();
-    const before = (current.ideas || []).length;
-    syncPrevDayIdeas(prev, current, { prevKey, currentKey });
-    const added = (current.ideas || []).length - before;
-    if (added > 0) this.persist();
-    else this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'sync:noop' });
-    return added;
   }
 
   /**
@@ -255,7 +244,7 @@ export class IdeaInboxService {
     const ideas = this.nodes;
     const to = ideas.find((n) => n.id === toId);
     const from = ideas.find((n) => n.id === fromId);
-    if (!to || !from) return { error: '灵感不存在（仅可连接当天灵感）' };
+    if (!to || !from) return { error: '灵感不存在' };
 
     const deps = [...(to.dependsOn || [])];
     if (deps.some((r) => r.scope === 'idea' && r.id === fromId)) {

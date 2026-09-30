@@ -147,7 +147,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <button onclick="app.syncPrevDayTasks()" class="action action-mono" title="将昨日未完成的必做/选做任务同步到今日">
+                            <button onclick="app.syncPrevDayTasks()" class="action action-mono" title="将昨日未完成的必做和选做同步到今日">
                                 同步任务
                             </button>
                             <button onclick="app.clearTodayTasks()" class="action action-quiet action-icon action-danger" title="清空当日所有任务">
@@ -173,7 +173,7 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div id="requiredTasks" class="space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
+                            <div id="requiredTasks" class="task-list-viewport space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
                                 ondragover="app.handleTaskDragOver(event)"
                                 ondragenter="app.handleTaskDragEnter(event)"
                                 ondragleave="app.handleTaskDragLeave(event)"
@@ -202,7 +202,7 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div id="optionalTasks" class="space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
+                            <div id="optionalTasks" class="task-list-viewport space-y-0.5 min-h-[2rem] rounded-lg transition-colors task-drop-zone"
                                 ondragover="app.handleTaskDragOver(event)"
                                 ondragenter="app.handleTaskDragEnter(event)"
                                 ondragleave="app.handleTaskDragLeave(event)"
@@ -220,7 +220,7 @@
                     </div>
                 </section>
 
-                <!-- 灵感收集箱（按日 DAG：翻日期只看当天，点「同步灵感」才从昨日拷贝） -->
+                <!-- 灵感收集箱（全局一份；前序可以是任意灵感，或当前查看日的未完成任务） -->
                 <section class="glass p-4 md:p-5">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
@@ -231,9 +231,6 @@
                             </h2>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <button type="button" onclick="app.syncPrevDayIdeas()" class="action action-mono" title="将昨日未完成的灵感同步到今日（依赖边按当日重映射）">
-                                同步灵感
-                            </button>
                             <div class="seg" role="group" aria-label="灵感视图切换">
                                 <button type="button" id="ideasViewCanvasBtn" onclick="app.setIdeasViewMode('canvas')" aria-pressed="true" title="DAG 依赖图">DAG</button>
                                 <button type="button" id="ideasViewListBtn" onclick="app.setIdeasViewMode('list')" aria-pressed="false" title="列表视图">列表</button>
@@ -272,46 +269,23 @@
                 </section>
             </div>
 
-                <!-- 底部一行：AI 反思 | AI 日报生成（同一行，左右平行） -->
+                <!-- 底部一行：项目 | AI 日报 -->
             <div class="flex flex-col md:flex-row gap-3">
-                <!-- AI 反思：《CEO的反思》 -->
                 <section class="flex-1 glass p-4 md:p-5">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
-                            <div class="kicker mb-1"><b>04</b><span>Reflection</span></div>
-                            <h2 class="section-title">AI 反思</h2>
-                        </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            <button 
-                                type="button"
-                                id="aiReflectionBtn"
-                                onclick="aiEval.generateReflection()"
-                                class="action action-mono">
-                                生成反思
-                            </button>
-                            <button 
-                                type="button"
-                                id="reflectionEditBtn"
-                                onclick="app.toggleReflectionEdit()"
-                                class="action action-quiet action-mono">
-                                编辑
-                            </button>
+                            <div class="kicker mb-1"><b>04</b><span>Projects</span></div>
+                            <h2 class="section-title">项目</h2>
                         </div>
                     </div>
-                    <div class="flex flex-wrap gap-1.5 mb-2">
-                        <button type="button" data-reflection-tag="效率很高" onclick="app.setReflectionTag('效率很高')" class="reflection-tag chip chip-button">效率很高</button>
-                        <button type="button" data-reflection-tag="需要改进" onclick="app.setReflectionTag('需要改进')" class="reflection-tag chip chip-button">需要改进</button>
-                        <button type="button" data-reflection-tag="有点摆烂" onclick="app.setReflectionTag('有点摆烂')" class="reflection-tag chip chip-button">有点摆烂</button>
-                    </div>
-                    <p id="aiReflectionStatus" class="text-xs text-zinc-500 leading-relaxed min-h-[1.2rem] mb-2">
-                        基于今日任务与记录，生成一篇标题为《CEO的反思》的日终总结，可继续编辑保存。
+                    <p class="text-xs text-zinc-500 leading-relaxed mb-3">
+                        项目全局保存。拆出的任务会在今日必做里留一份，清单中显示为「【项目名】任务标题」。
                     </p>
-                    <div id="dailyReflectionDisplay" class="reflection-markdown paper-well w-full h-[400px] p-3.5 text-sm leading-relaxed overflow-y-auto"></div>
-                    <textarea id="dailyReflection" 
-                        class="hidden field w-full min-h-[340px] p-3.5 text-sm resize-y leading-relaxed"
-                        placeholder="支持 Markdown，如 **粗体**、- 列表..."
-                        oninput="app.saveReflection()"
-                        onblur="app.reflectionEditDone()"></textarea>
+                    <input type="text" id="projectNameInput"
+                        class="field w-full px-3 py-2 text-sm mb-3"
+                        placeholder="新项目名称，回车创建"
+                        onkeypress="app.handleProjectInput(event)">
+                    <div id="projectsList" class="max-h-[400px] overflow-y-auto"></div>
                 </section>
                 <!-- AI 日报生成 -->
                 <section class="flex-1 glass p-4 md:p-5">
@@ -413,7 +387,7 @@
                         <label class="field-label mb-1.5">前序任务</label>
                         <div id="taskEditPredecessors" class="paper-well max-h-40 overflow-y-auto px-2.5 py-1.5">
                         </div>
-                        <p class="text-[11px] text-zinc-600 mt-1.5 leading-relaxed">仅显示当日未完成的灵感与必做/选做任务</p>
+                        <p class="text-[11px] text-zinc-600 mt-1.5 leading-relaxed">前序可以是未完成的灵感，或当天未完成的必做/选做</p>
                     </div>
                 </div>
                 <div>

@@ -6,13 +6,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "start": "node --env-file=.env ai-server.js"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@xyflow/react": "^12.11.6",
-    "express": "^4.18.2",
-    "node-fetch": "^2.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

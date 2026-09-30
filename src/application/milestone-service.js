@@ -2,9 +2,8 @@ import { createMilestone, sortMilestonesByDate } from '../domain/milestone/miles
 import { Events } from './event-bus.js';
 
 /**
- * Milestones are day-scoped: stored on ScheduleDay.milestones for the milestone's target date.
- * The viewed day only shows that day's milestones; editing never rewrites another day's list
- * except when the target date itself changes (move between buckets).
+ * Milestones are one global list on the workspace.
+ * The timeline shows every milestone; the date field is the target date.
  */
 export class MilestoneService {
   /**
@@ -18,7 +17,7 @@ export class MilestoneService {
   }
 
   load() {
-    // Live inside schedule days.
+    // Live on the workspace loaded by ScheduleService.
   }
 
   persist() {
@@ -26,115 +25,50 @@ export class MilestoneService {
     this.eventBus.emit(Events.MILESTONES_UPDATED, {});
   }
 
-  /**
-   * Aggregate milestones from every day (export / rare overview only).
-   * Prefer listForDay for the main UI — days stay decoupled.
-   * @returns {import('../domain/milestone/milestone.js').Milestone[]}
-   */
-  listAll() {
-    /** @type {import('../domain/milestone/milestone.js').Milestone[]} */
-    const all = [];
-    const seen = new Set();
-    Object.keys(this.scheduleService.data || {}).forEach((dateKey) => {
-      const day = this.scheduleService.data[dateKey];
-      (day?.milestones || []).forEach((m) => {
-        if (!m || !m.id || seen.has(m.id)) return;
-        seen.add(m.id);
-        all.push(m);
-      });
-    });
-    return sortMilestonesByDate(all.slice());
-  }
-
-  /** Current viewed day's milestones (day-scoped UI). */
-  get milestones() {
-    return this.listForDay(this.scheduleService.getDateKey());
-  }
-
-  /**
-   * @param {string} dateKey
-   * @returns {import('../domain/milestone/milestone.js').Milestone[]}
-   */
-  listForDay(dateKey) {
-    const day = this.scheduleService.data[dateKey];
-    return Array.isArray(day?.milestones) ? day.milestones : [];
-  }
-
-  /**
-   * Ensure the schedule day for `date` exists and return its milestones array.
-   * @param {string} date
-   */
-  _bucketForDate(date) {
-    const dateKey = date || this.scheduleService.getDateKey();
-    // Temporarily switch ensure via scheduleRepo
-    if (!this.scheduleService.data[dateKey]) {
-      this.scheduleService.data[dateKey] = {
-        required: [],
-        optional: [],
-        ideas: [],
-        milestones: [],
-        reflection: '',
-        reflectionTags: [],
-        aiEval: ''
-      };
+  /** @returns {import('../domain/milestone/milestone.js').Milestone[]} */
+  _list() {
+    if (!Array.isArray(this.scheduleService.workspace.milestones)) {
+      this.scheduleService.workspace.milestones = [];
     }
-    const day = this.scheduleService.data[dateKey];
-    if (!Array.isArray(day.milestones)) day.milestones = [];
-    return day;
+    return this.scheduleService.workspace.milestones;
+  }
+
+  /** @returns {import('../domain/milestone/milestone.js').Milestone[]} */
+  listAll() {
+    return sortMilestonesByDate(this._list().slice());
+  }
+
+  /** Full timeline, independent of the viewed day. */
+  get milestones() {
+    return this.listAll();
   }
 
   add(title, date) {
-    const day = this._bucketForDate(date);
-    day.milestones.push(createMilestone(title, date));
-    sortMilestonesByDate(day.milestones);
+    const list = this._list();
+    list.push(createMilestone(title, date));
+    sortMilestonesByDate(list);
     this.persist();
   }
 
   update(id, title, date) {
-    // Find which day currently owns this milestone
-    let ownerKey = null;
-    let milestone = null;
-    Object.keys(this.scheduleService.data || {}).forEach((dateKey) => {
-      const day = this.scheduleService.data[dateKey];
-      const found = (day?.milestones || []).find((m) => m.id === id);
-      if (found) {
-        ownerKey = dateKey;
-        milestone = found;
-      }
-    });
-    if (!milestone || !ownerKey) return;
-
+    const milestone = this._list().find((m) => m.id === id);
+    if (!milestone) return;
     milestone.title = title;
     milestone.date = date;
-
-    // If target date changed, move to the new day's bucket
-    if (date && date !== ownerKey) {
-      const oldDay = this.scheduleService.data[ownerKey];
-      oldDay.milestones = (oldDay.milestones || []).filter((m) => m.id !== id);
-      const newDay = this._bucketForDate(date);
-      newDay.milestones.push(milestone);
-      sortMilestonesByDate(newDay.milestones);
-    } else {
-      sortMilestonesByDate(this.scheduleService.data[ownerKey].milestones);
-    }
+    sortMilestonesByDate(this._list());
     this.persist();
   }
 
   delete(id) {
-    Object.keys(this.scheduleService.data || {}).forEach((dateKey) => {
-      const day = this.scheduleService.data[dateKey];
-      if (!day?.milestones) return;
-      day.milestones = day.milestones.filter((m) => m.id !== id);
-    });
+    const workspace = this.scheduleService.workspace;
+    workspace.milestones = this._list().filter((m) => m.id !== id);
     this.persist();
   }
 
   toggle(id) {
-    Object.keys(this.scheduleService.data || {}).forEach((dateKey) => {
-      const day = this.scheduleService.data[dateKey];
-      const m = (day?.milestones || []).find((x) => x.id === id);
-      if (m) m.completed = !m.completed;
-    });
+    const milestone = this._list().find((m) => m.id === id);
+    if (!milestone) return;
+    milestone.completed = !milestone.completed;
     this.persist();
   }
 }

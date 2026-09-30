@@ -40,7 +40,7 @@ export class IdeaInboxView {
       completed.forEach((n) => parts.push(this.renderIdeaItem(n, 'completed')));
     }
     if (!ready.length && !waiting.length && !completed.length) {
-      parts.push(`<div class="text-xs text-zinc-500 py-3 leading-relaxed">当天暂无灵感。把暂时做不了的事放这里；翻日期只看当天，互不影响。</div>`);
+      parts.push(`<div class="text-xs text-zinc-500 py-3 leading-relaxed">暂无灵感。把暂时做不了的事放这里，设好前序或日期后再捡起来。</div>`);
     }
 
     container.innerHTML = parts.join('');

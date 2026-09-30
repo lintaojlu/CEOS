@@ -21,7 +21,8 @@ export class ExportService {
     return {
       schemaVersion: this.getSchemaVersion(),
       exportedAt: new Date().toISOString(),
-      schedule: this.scheduleService.data
+      schedule: this.scheduleService.data,
+      workspace: this.scheduleService.workspace
     };
   }
 
@@ -55,7 +56,7 @@ export class ExportService {
     if (data.required.length > 0) {
       data.required.forEach((t) => {
         const time = formatTime(new Date(t.time));
-        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${t.text}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
+        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${this.scheduleService.taskTitle(t)}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
       });
     } else {
       md += `> 暂无任务\n`;
@@ -66,7 +67,7 @@ export class ExportService {
     if (data.optional.length > 0) {
       data.optional.forEach((t) => {
         const time = formatTime(new Date(t.time));
-        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${t.text}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
+        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${this.scheduleService.taskTitle(t)}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
       });
     } else {
       md += `> 暂无任务\n`;
@@ -80,7 +81,7 @@ export class ExportService {
     };
     const { ready, waiting, completed } = partitionIdeas(this.ideaInboxService.getNodes(), ctx);
 
-    md += `## 💡 灵感收集箱（当日）\n\n`;
+    md += `## 💡 灵感收集箱\n\n`;
     const renderIdea = (t, status) => {
       const due = t.dueDate ? ` DDL:${t.dueDate}` : '';
       const deps =

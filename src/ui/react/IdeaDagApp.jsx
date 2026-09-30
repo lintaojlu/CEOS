@@ -82,7 +82,7 @@ export function IdeaDagApp({ app }) {
   if (viewModel.empty) {
     return (
       <div className="ideas-dag-canvas h-[360px] flex items-center justify-center px-6 text-center text-xs text-zinc-500 leading-relaxed">
-        暂无灵感。点 + 添加；翻日期只显示当天。在 DAG 上可连接当天的前驱 → 后继。
+        暂无灵感。点 + 添加。在 DAG 上可把一条灵感连到另一条灵感上。
       </div>
     );
   }

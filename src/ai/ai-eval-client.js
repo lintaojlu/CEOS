@@ -58,6 +58,14 @@ export function createAiEval(getApp) {
     }
   }
 
+  function taskLabel(task) {
+    const app = getApp();
+    if (app && app.scheduleService && typeof app.scheduleService.taskTitle === 'function') {
+      return app.scheduleService.taskTitle(task);
+    }
+    return (task && (task.text || task.title)) || '';
+  }
+
   function formatTasks(list) {
     if (!list || list.length === 0) return '（无）';
     return list
@@ -76,7 +84,7 @@ export function createAiEval(getApp) {
         }
         const note = t.note ? `（${t.note}）` : '';
         const timePart = timeStr ? ` @ ${timeStr}` : '';
-        const content = t.text || t.title || '';
+        const content = taskLabel(t);
         const due = t.dueDate ? ` DDL:${t.dueDate}` : '';
         return `- [${status}] ${content}${timePart}${due}${note}`;
       })
@@ -89,7 +97,7 @@ export function createAiEval(getApp) {
     if (!done.length) return '（今日暂无已完成任务）';
     return done
       .map((t) => {
-        const content = t.text || t.title || '';
+        const content = taskLabel(t);
         const note = t.note ? `（${t.note}）` : '';
         return `- ${content}${note}`;
       })
@@ -130,44 +138,11 @@ export function createAiEval(getApp) {
       '已完成的选做任务：',
       formatDoneTasks(data.optional),
       '',
-      '灵感收集箱（当日）：',
+      '灵感收集箱：',
       formatTasks(data.ideas),
       '',
       '每日感悟原文：',
       data.reflection || '（今日暂未填写感悟）'
-    ].join('\n');
-  }
-
-  function buildReflectionPrompt() {
-    const data = getCurrentDayData();
-    const app = getApp();
-    const date = app && app.currentDate ? app.currentDate : new Date();
-    const dateStr = date.toISOString().split('T')[0];
-    const progressLabelEl = $('progressLabel');
-    const progressText = progressLabelEl ? progressLabelEl.textContent.trim() : '';
-
-    return [
-      '你是一位长期辅导创业者做复盘与自我觉察的教练，现在请根据下面的信息，帮这位 CEO 写一篇当日的总结与自我反思。',
-      '这篇文章的标题必须固定为：《CEO的反思》。',
-      '',
-      `日期：${dateStr}`,
-      data.reflectionTags && data.reflectionTags.length ? `今日标签：${data.reflectionTags.join('、')}` : '',
-      progressText ? `任务完成情况概览：${progressText}` : '',
-      '',
-      '今日所有必做任务：',
-      formatTasks(data.required),
-      '',
-      '今日所有选做任务：',
-      formatTasks(data.optional),
-      '',
-      '灵感收集箱（当日）：',
-      formatTasks(data.ideas),
-      '【写作要求】',
-      '1. 标题使用单独一行：《CEO的反思》。',
-      '2. 全文保持精简，整体控制在 200-400 字之间。',
-      '3. 开头用 1-2 句话整体回顾今天。',
-      '4. 中间用 2-4 条短句分别写做得好与可改进之处。',
-      '5. 结尾写明天的一个小承诺。'
     ].join('\n');
   }
 
@@ -222,49 +197,6 @@ export function createAiEval(getApp) {
     }
   }
 
-  async function generateReflection() {
-    const statusEl = $('aiReflectionStatus');
-    const btnEl = $('aiReflectionBtn');
-    const hasDisplay = $('dailyReflectionDisplay');
-    const originalBtnText = btnEl ? btnEl.textContent : '';
-    try {
-      if (btnEl) {
-        btnEl.disabled = true;
-        btnEl.textContent = '生成中...';
-        btnEl.classList.add('opacity-70', 'cursor-not-allowed');
-      }
-      if (statusEl) statusEl.textContent = 'AI 正在生成《CEO的反思》，请稍候...';
-      const prompt = buildReflectionPrompt();
-      console.log('[AI 反思] 发送 Prompt:', prompt);
-      const answer = await callViaProxy(prompt);
-      console.log('[AI 反思] 接收 Answer:', answer);
-      const app = getApp();
-      if (app && typeof app.setReflectionFromAi === 'function') {
-        app.setReflectionFromAi(answer);
-      } else if (app && typeof app.getCurrentData === 'function') {
-        const data = app.getCurrentData();
-        data.reflection = answer || '';
-        app.saveData();
-        if (typeof app.renderReflection === 'function') app.renderReflection();
-      } else if (hasDisplay) {
-        hasDisplay.innerHTML = renderMarkdown(answer || '');
-      }
-      if (statusEl) statusEl.textContent = '已生成《CEO的反思》，你可以直接使用或继续微调。';
-    } catch (err) {
-      console.error(err);
-      if (statusEl) {
-        statusEl.textContent =
-          err && err.message ? `AI 反思生成失败：${err.message}` : 'AI 反思生成失败，请稍后重试。';
-      }
-    } finally {
-      if (btnEl) {
-        btnEl.disabled = false;
-        btnEl.textContent = originalBtnText || '生成AI反思';
-        btnEl.classList.remove('opacity-70', 'cursor-not-allowed');
-      }
-    }
-  }
-
   async function copyTodayReport() {
     const resultEl = $('aiEvalResult');
     if (!resultEl) return;
@@ -306,5 +238,5 @@ export function createAiEval(getApp) {
     }
   }
 
-  return { evaluateToday, copyTodayReport, generateReflection };
+  return { evaluateToday, copyTodayReport };
 }

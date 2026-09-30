@@ -9,7 +9,7 @@ import { findIdeaById } from './idea-graph.js';
 /**
  * @typedef {Object} ReadinessContext
  * @property {Record<string, ScheduleDay>} schedule
- * @property {IdeaNode[]} ideas - same-day ideas only (days are decoupled)
+ * @property {IdeaNode[]} ideas - the global inbox
  * @property {string} todayKey - wall-clock today (for DDL)
  * @property {string} [dayKey] - the schedule day these ideas belong to
  */

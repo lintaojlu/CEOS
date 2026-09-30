@@ -1,4 +1,4 @@
-import { normalizeScheduleDay, createEmptyScheduleDay } from '../../domain/schedule/schedule-day.js';
+import { normalizeScheduleDay, createEmptyScheduleDay } from '../../data/schedule-record.js';
 
 const KEY = 'ceoSchedule';
 
@@ -32,18 +32,10 @@ export class ScheduleRepository {
    * @param {string} dateKey
    */
   ensureDay(data, dateKey) {
-    if (!data[dateKey]) {
-      data[dateKey] = createEmptyScheduleDay();
-    } else if (!Array.isArray(data[dateKey].ideas) || !Array.isArray(data[dateKey].milestones)) {
-      // Only normalize when the day is still in a legacy / incomplete shape.
-      data[dateKey] = normalizeScheduleDay(data[dateKey]);
+    if (!data[dateKey] || !Array.isArray(data[dateKey].required) || !Array.isArray(data[dateKey].optional)) {
+      data[dateKey] = normalizeScheduleDay(data[dateKey] || {});
     }
-    const day = data[dateKey];
-    if (!Array.isArray(day.ideas)) day.ideas = [];
-    if (!Array.isArray(day.milestones)) day.milestones = [];
-    if (!Array.isArray(day.required)) day.required = [];
-    if (!Array.isArray(day.optional)) day.optional = [];
-    return day;
+    return data[dateKey];
   }
 }
 

@@ -44,7 +44,7 @@ export class TaskModal {
       const task = data[type].find((t) => t.id === id);
       if (!task) return;
       if (modalTitle) modalTitle.textContent = '编辑任务';
-      if (titleEl) titleEl.value = task.text || '';
+      if (titleEl) titleEl.value = this.app.scheduleService.taskTitle(task);
       if (timeEl) {
         const d = new Date(task.time);
         const hh = d.getHours().toString().padStart(2, '0');
@@ -72,7 +72,7 @@ export class TaskModal {
     const selected = new Set((idea.dependsOn || []).map(taskRefKey));
     const candidates = this.app.ideaInboxService.listPredecessorCandidates(idea.id);
     if (!candidates.length) {
-      listEl.innerHTML = '<div class="text-xs text-zinc-500 py-1">暂无可选前序（当日无其他未完成灵感或任务）</div>';
+      listEl.innerHTML = '<div class="text-xs text-zinc-500 py-1">暂无可选前序（没有其他未完成灵感，当天也没有未完成任务）</div>';
       return;
     }
     listEl.innerHTML = candidates

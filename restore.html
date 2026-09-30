@@ -30,7 +30,7 @@
 <main>
   <div class="kicker">Import</div>
   <h1>一键导入全部历史数据</h1>
-  <p>写入当前源 <code id="origin"></code>。灵感与里程碑<strong>挂在各自的日期下</strong>，互不合并成全局列表。同 id 已存在则跳过。</p>
+  <p>写入当前源 <code id="origin"></code>。备份里的灵感、里程碑和项目会先按日期写入，打开日程后收成全局一份。同 id 已存在则跳过。</p>
 
   <div class="panel">
     <h2>档案内容</h2>
@@ -38,9 +38,9 @@
     <div class="note">
       请打开 <code>http://localhost:5173/restore.html</code> 再导入。
       <ol>
-        <li>翻到哪天，只看到那天的灵感；删 9/16 不影响 9/18。</li>
-        <li>里程碑存在「目标日期」那天；当前查看日只展示当天的里程碑。</li>
-        <li>「同步任务」只拷必做/选做，绝不拷灵感或里程碑。</li>
+        <li>打开日程后，灵感、项目、里程碑全局各一份，翻日期不会换成另一份。</li>
+        <li>必做和选做仍按日隔离。</li>
+        <li>「同步任务」只拷未完成的必做/选做，不拷灵感、项目或里程碑。</li>
       </ol>
     </div>
     <p style="margin-top:22px">
@@ -163,7 +163,7 @@ $('go').onclick = () => {
     '<pre>新增日期 ' + addedDays + ' 天\n新增任务 ' + addedTasks +
     ' 条\n新增灵感 ' + addedIdeas + ' 条\n新增里程碑 ' + addedMs +
     ' 个\n补回感悟/日报 ' + filledTexts + ' 处</pre>' +
-    '<p>导入完成。<a href="/ceo-schedule.html">打开日程</a>，翻到 2026-09-16 可看到当天灵感。</p>' +
+    '<p>导入完成。<a href="/ceo-schedule.html">打开日程</a>后，灵感、项目和里程碑会收成全局一份。</p>' +
     '<p style="color:var(--muted);font-size:12px">导入前快照在 <code>ceoBackupBeforeRestore</code>。</p>';
 };
 </script>

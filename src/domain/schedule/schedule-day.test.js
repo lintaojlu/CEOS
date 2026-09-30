@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeStreakDays, syncPrevDayTasks, syncPrevDayIdeas, createEmptyScheduleDay } from './schedule-day.js';
+import { computeStreakDays, syncPrevDayTasks, syncPrevDay } from './schedule-day.js';
+import { createEmptyScheduleDay, normalizeScheduleDay } from '../../data/schedule-record.js';
 import { getDateKey, addDays } from '../shared/date-key.js';
 
 describe('syncPrevDayTasks', () => {
@@ -30,8 +31,9 @@ describe('syncPrevDayTasks', () => {
     const current = createEmptyScheduleDay();
     syncPrevDayTasks(prev, current);
     expect(current.required).toHaveLength(1);
-    expect(current.ideas).toEqual([]);
-    expect(current.milestones).toEqual([]);
+    expect(current.required[0].id).toBe('r1');
+    expect(current.ideas).toBeUndefined();
+    expect(current.milestones).toBeUndefined();
   });
 
   it('skips ids already present on the current day', () => {
@@ -50,68 +52,82 @@ describe('syncPrevDayTasks', () => {
     expect(current.required).toHaveLength(1);
     expect(current.required[0].text).toBe('already here');
   });
-});
 
-describe('syncPrevDayIdeas', () => {
-  it('copies unfinished ideas and drops deps pointing at unsynced ideas', () => {
+  it('deep-copies subtasks so days do not share references', () => {
+    const sub = { id: 's1', text: 'step', completed: false };
     const prev = {
       ...createEmptyScheduleDay(),
-      ideas: [
-        { id: 'i1', text: 'done', completed: true },
-        { id: 'i2', text: 'open', completed: false, note: 'n', dependsOn: [{ scope: 'idea', id: 'i1' }] }
-      ]
-    };
-    const current = createEmptyScheduleDay();
-    syncPrevDayIdeas(prev, current, { prevKey: '2026-09-16', currentKey: '2026-09-17' });
-    expect(current.ideas.map((n) => n.id)).toEqual(['i2']);
-    expect(current.ideas[0].note).toBe('n');
-    // i1 was completed and not copied — dangling cross-day idea dep is dropped
-    expect(current.ideas[0].dependsOn).toEqual([]);
-  });
-
-  it('keeps idea deps when both ideas sync, remaps daily deps to current day', () => {
-    const prev = {
-      ...createEmptyScheduleDay(),
-      required: [{ id: 't1', text: 'task', completed: false }],
-      ideas: [
-        { id: 'a', text: 'A', completed: false, dependsOn: [] },
+      required: [
         {
-          id: 'b',
-          text: 'B',
+          id: 'r1',
+          text: 'parent',
           completed: false,
-          dependsOn: [
-            { scope: 'idea', id: 'a' },
-            { scope: 'daily', dateKey: '2026-09-16', list: 'required', id: 't1' }
-          ]
+          subtasks: [sub]
         }
       ]
     };
-    const current = {
-      ...createEmptyScheduleDay(),
-      required: [{ id: 't1', text: 'task', completed: false }]
-    };
-    syncPrevDayIdeas(prev, current, { prevKey: '2026-09-16', currentKey: '2026-09-17' });
-    const b = current.ideas.find((n) => n.id === 'b');
-    expect(b.dependsOn).toEqual([
-      { scope: 'idea', id: 'a' },
-      { scope: 'daily', dateKey: '2026-09-17', list: 'required', id: 't1' }
-    ]);
+    const current = createEmptyScheduleDay();
+    syncPrevDayTasks(prev, current);
+    expect(current.required[0].subtasks).toEqual([{ id: 's1', text: 'step', completed: false }]);
+    expect(current.required[0].subtasks).not.toBe(prev.required[0].subtasks);
+    expect(current.required[0].subtasks[0]).not.toBe(sub);
+    current.required[0].subtasks[0].completed = true;
+    expect(sub.completed).toBe(false);
   });
 
-  it('skips ids already on the current day and never touches milestones', () => {
+  it('keeps the original task id and projectId', () => {
     const prev = {
       ...createEmptyScheduleDay(),
-      ideas: [{ id: 'i1', text: 'open', completed: false }],
-      milestones: [{ id: 'm1', title: 'x', date: '2026-09-16', completed: false }]
+      required: [
+        {
+          id: 'r1',
+          text: '写计划',
+          completed: false,
+          projectId: 'p-old',
+          subtasks: []
+        },
+        { id: 'r2', text: 'done', completed: true, projectId: 'p-old' }
+      ]
     };
-    const current = {
+    const current = createEmptyScheduleDay();
+    syncPrevDayTasks(prev, current);
+    expect(current.required.map((t) => t.id)).toEqual(['r1']);
+    expect(current.required[0].projectId).toBe('p-old');
+    expect(current.required[0]).not.toBe(prev.required[0]);
+    expect(current.projects).toBeUndefined();
+  });
+});
+
+describe('syncPrevDay', () => {
+  it('copies only unfinished tasks and leaves ideas and projects alone', () => {
+    const prev = {
       ...createEmptyScheduleDay(),
-      ideas: [{ id: 'i1', text: 'already', completed: false }]
+      required: [
+        { id: 'r1', text: '写计划', completed: false, projectId: 'p-old' },
+        { id: 'r2', text: 'done', completed: true, projectId: 'p-old' }
+      ]
     };
-    syncPrevDayIdeas(prev, current, { prevKey: '2026-09-16', currentKey: '2026-09-17' });
-    expect(current.ideas).toHaveLength(1);
-    expect(current.ideas[0].text).toBe('already');
-    expect(current.milestones).toEqual([]);
+    const current = createEmptyScheduleDay();
+    syncPrevDay(prev, current);
+    expect(current.required.map((t) => t.id)).toEqual(['r1']);
+    expect(current.required[0].projectId).toBe('p-old');
+    expect(current.ideas).toBeUndefined();
+    expect(current.projects).toBeUndefined();
+  });
+});
+
+describe('normalizeScheduleDay', () => {
+  it('keeps tasks and drops ideas, milestones, and projects', () => {
+    const day = normalizeScheduleDay({
+      required: [{ id: 't1', text: 'a', completed: false }],
+      ideas: [{ id: 'i1', text: 'idea' }],
+      milestones: [{ id: 'm1', title: 'm', date: '2026-09-16' }],
+      projects: [{ id: 'p1', name: 'CEOS', tasks: [] }]
+    });
+    expect(day.required.map((t) => t.id)).toEqual(['t1']);
+    expect(day.ideas).toBeUndefined();
+    expect(day.milestones).toBeUndefined();
+    expect(day.projects).toBeUndefined();
   });
 });
 

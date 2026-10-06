@@ -733,15 +733,75 @@ export class ScheduleService {
    */
   listIncompleteDailyTasks() {
     const dateKey = this.getDateKey();
-    const day = this.getCurrentData();
-    /** @type {Array<{ dateKey: string, list: 'required'|'optional', task: any }>} */
+    return this.listIncompleteOnDate(dateKey).map(({ list, task }) => ({ dateKey, list, task }));
+  }
+
+  /**
+   * Incomplete required/optional on a specific date (e.g. real today for pomodoro).
+   * @param {string} dateKey
+   * @returns {Array<{ list: 'required'|'optional', task: any }>}
+   */
+  listIncompleteOnDate(dateKey) {
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    /** @type {Array<{ list: 'required'|'optional', task: any }>} */
     const out = [];
     ['required', 'optional'].forEach((list) => {
       (day[list] || []).forEach((task) => {
-        if (!task.completed) out.push({ dateKey, list: /** @type {any} */ (list), task });
+        if (!task.completed) out.push({ list: /** @type {any} */ (list), task });
       });
     });
     return out;
+  }
+
+  /**
+   * @param {string} dateKey
+   * @param {'required'|'optional'} list
+   * @param {string} taskId
+   * @returns {any|null}
+   */
+  findTaskOnDate(dateKey, list, taskId) {
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    return (day[list] || []).find((t) => t.id === taskId) || null;
+  }
+
+  /**
+   * Award one pomodoro on a specific day's task copy. Does not touch project tasks.
+   * @param {string} dateKey
+   * @param {'required'|'optional'} list
+   * @param {string} taskId
+   * @returns {boolean}
+   */
+  incrementPomodoro(dateKey, list, taskId) {
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    const task = (day[list] || []).find((t) => t.id === taskId);
+    if (!task) return false;
+    const n = typeof task.pomodoros === 'number' && task.pomodoros > 0 ? Math.floor(task.pomodoros) : 0;
+    task.pomodoros = n + 1;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type: list, id: taskId, reason: 'pomodoro' });
+    return true;
+  }
+
+  /**
+   * Toggle a subtask on a specific date's copy and mirror to the project task.
+   * Other date copies are left alone.
+   * @param {string} dateKey
+   * @param {'required'|'optional'} list
+   * @param {string} taskId
+   * @param {string} subId
+   */
+  toggleSubtaskOnDate(dateKey, list, taskId, subId) {
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    const task = (day[list] || []).find((t) => t.id === taskId);
+    if (!task) return null;
+    if (!Array.isArray(task.subtasks)) task.subtasks = [];
+    const sub = task.subtasks.find((s) => s.id === subId);
+    if (!sub) return null;
+    sub.completed = !sub.completed;
+    this._mirrorSubtaskCompleted(taskId, subId, sub.completed);
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type: list, id: taskId });
+    return sub;
   }
 
   parseTime = parseTime;

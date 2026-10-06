@@ -1,17 +1,18 @@
 /**
  * 界面偏好：当前页、灵感视图、日历粒度。替代旧的 ceoIdeasViewMode。
+ * 页面名单须与 router.PAGES 一致，否则记下的页会被丢回首页。
  */
 
 const KEY = 'ceoUiPrefs';
 const LEGACY_IDEAS_VIEW_KEY = 'ceoIdeasViewMode';
 
-export const UI_PAGES = ['home', 'tasks', 'ideas', 'calendar'];
+export const UI_PAGES = ['home', 'tasks', 'pomodoro', 'ideas', 'calendar'];
 export const IDEA_VIEW_MODES = ['canvas', 'list'];
 export const CALENDAR_MODES = ['week', 'month', 'year'];
 
 /**
  * @typedef {Object} UiPrefs
- * @property {'home'|'tasks'|'ideas'|'calendar'} page
+ * @property {'home'|'tasks'|'pomodoro'|'ideas'|'calendar'} page
  * @property {'canvas'|'list'} ideasViewMode
  * @property {'week'|'month'|'year'} calendarMode
  */

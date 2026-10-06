@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="https://github.com/lintaojlu/ceos_frontend/stargazers"><img src="https://img.shields.io/github/stars/lintaojlu/ceos_frontend?style=flat-square" alt="stars"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/lintaojlu/ceos_frontend?style=flat-square" alt="license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2563eb?style=flat-square" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white" alt="Tauri 2">
   <img src="https://img.shields.io/badge/React%20Flow-12-FF0072?style=flat-square" alt="React Flow">
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite">
@@ -72,6 +72,12 @@ Most to-do apps mix yesterday's leftovers into today, and good ideas disappear i
 
 <p align="center">
   <img src="docs/assets/screenshots/ai-report.png" alt="An AI daily review" width="520" />
+</p>
+
+**Activity.** Active days, the current streak, the longest streak, and a heatmap of how much of each day's required list got done.
+
+<p align="center">
+  <img src="docs/assets/screenshots/activity.png" alt="Activity stats and a completion heatmap" width="860" />
 </p>
 
 ## Quick start

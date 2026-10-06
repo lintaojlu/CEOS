@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lintaojlu/ceos_frontend/stargazers"><img src="https://img.shields.io/github/stars/lintaojlu/ceos_frontend?style=flat-square" alt="stars"></a>
+  <a href="https://github.com/lintaojlu/CEOS/stargazers"><img src="https://img.shields.io/github/stars/lintaojlu/CEOS?style=flat-square" alt="stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2563eb?style=flat-square" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white" alt="Tauri 2">
   <img src="https://img.shields.io/badge/React%20Flow-12-FF0072?style=flat-square" alt="React Flow">
@@ -193,8 +193,8 @@ src-tauri/                 Tauri 2 桌面壳
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=lintaojlu/ceos_frontend&type=Date&theme=dark" />
-    <img src="https://api.star-history.com/svg?repos=lintaojlu/ceos_frontend&type=Date" alt="Star 增长图" width="700" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=lintaojlu/CEOS&type=Date&theme=dark" />
+    <img src="https://api.star-history.com/svg?repos=lintaojlu/CEOS&type=Date" alt="Star 增长图" width="700" />
   </picture>
 </p>
 

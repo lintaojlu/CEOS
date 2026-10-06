@@ -15,6 +15,7 @@
  * @property {string} note
  * @property {string} recurrence
  * @property {string} projectId
+ * @property {number} pomodoros
  * @property {Subtask[]} subtasks
  */
 
@@ -93,7 +94,11 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     time = Date.now();
   }
 
-  const { subtasks: rawSubtasks, ...rest } = overrides;
+  const { subtasks: rawSubtasks, pomodoros: rawPomodoros, ...rest } = overrides;
+  const pomodoros =
+    typeof rawPomodoros === 'number' && Number.isFinite(rawPomodoros) && rawPomodoros > 0
+      ? Math.floor(rawPomodoros)
+      : 0;
   return {
     id: rest.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text,
@@ -104,12 +109,14 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     recurrence: '',
     ...rest,
     projectId: typeof rest.projectId === 'string' ? rest.projectId : '',
+    pomodoros,
     subtasks: normalizeSubtasks(rawSubtasks)
   };
 }
 
 /**
  * Shallow-clone a task including a deep copy of subtasks (for sync).
+ * Synced copies always start with pomodoros = 0.
  * @param {DailyTask|any} task
  * @returns {DailyTask}
  */
@@ -117,6 +124,7 @@ export function cloneDailyTask(task) {
   return {
     ...task,
     projectId: typeof task?.projectId === 'string' ? task.projectId : '',
+    pomodoros: 0,
     subtasks: normalizeSubtasks(task?.subtasks).map((s) => ({ ...s }))
   };
 }

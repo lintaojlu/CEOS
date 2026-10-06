@@ -1,5 +1,5 @@
 import { escapeHtml } from '../../domain/shared/escape-html.js';
-import { formatTime } from '../../domain/shared/date-key.js';
+import { formatTime, todayKey } from '../../domain/shared/date-key.js';
 import { normalizeSubtasks } from '../../domain/schedule/daily-task.js';
 
 export class DailyTasksView {
@@ -65,6 +65,15 @@ export class DailyTasksView {
         ? `<span class="task-subtask-count" onclick="event.stopPropagation(); app.toggleTaskExpand('${type}', '${task.id}')" title="展开子任务">${doneCount}/${subtasks.length}</span>`
         : '';
     const chevronClass = expanded ? 'task-chevron is-open' : 'task-chevron';
+    const viewingToday = this.app.scheduleService.getDateKey() === todayKey();
+    const focusBtn =
+      viewingToday && !task.completed
+        ? `<button type="button" onclick="event.stopPropagation(); app.focusPomodoroTask('${type}', '${task.id}')" class="action action-quiet action-mono" title="开始专注">专注</button>`
+        : '';
+    const pomoCount =
+      typeof task.pomodoros === 'number' && task.pomodoros > 0
+        ? `<span class="pomodoro-count" title="今日番茄数">${task.pomodoros}</span>`
+        : '';
 
     return `
       <div class="task-block" data-id="${task.id}" data-type="${type}">
@@ -90,6 +99,8 @@ export class DailyTasksView {
             ${task.note ? `<div class="text-xs text-zinc-500 mt-1 pl-0 leading-relaxed">${escapeHtml(task.note)}</div>` : ''}
           </div>
           <div class="flex items-center gap-1 shrink-0">
+            ${pomoCount}
+            ${focusBtn}
             <button onclick="event.stopPropagation(); app.pinTask('${type}', '${task.id}')" class="action action-quiet action-icon ${pinClass}" title="置顶">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12l7-7 7 7"/>

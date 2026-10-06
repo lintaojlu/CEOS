@@ -74,6 +74,10 @@
             
             <!-- 右上：Streak + 日期（等高） -->
             <div class="flex items-center gap-2">
+                <button type="button" id="pomodoroHeaderBadge"
+                     class="hidden action action-mono h-[52px] px-3 shrink-0"
+                     onclick="app.goToPomodoro()"
+                     title="番茄钟进行中"></button>
                 <div id="streakDisplay"
                      class="flex items-center justify-center gap-1.5 px-3 h-[52px] rounded-xl border border-dark-500 bg-dark-800 text-xs text-zinc-400 shrink-0"
                      title="截止今日连续有必做/选做任务的天数（灵感不计入）">
@@ -220,11 +224,24 @@
                     </div>
                 </section>
 
+                <!-- 番茄钟：始终对着真实今天的未完成必做/选做 -->
+                <section id="pomodoroSection" class="glass p-4 md:p-5">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                            <div class="kicker mb-1"><b>03</b><span>Pomodoro</span></div>
+                            <h2 class="section-title">番茄钟</h2>
+                        </div>
+                    </div>
+                    <div id="pomodoroPanel">
+                        <!-- PomodoroView fills this -->
+                    </div>
+                </section>
+
                 <!-- 灵感收集箱（全局一份；前序可以是任意灵感，或当前查看日的未完成任务） -->
                 <section class="glass p-4 md:p-5">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
-                            <div class="kicker mb-1"><b>03</b><span>Idea graph</span></div>
+                            <div class="kicker mb-1"><b>04</b><span>Idea graph</span></div>
                             <h2 class="section-title flex items-center gap-2">
                                 灵感收集箱
                                 <span id="ideasReadyBadge" class="hidden chip chip-accent"></span>
@@ -274,7 +291,7 @@
                 <section class="flex-1 glass p-4 md:p-5">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
-                            <div class="kicker mb-1"><b>04</b><span>Projects</span></div>
+                            <div class="kicker mb-1"><b>05</b><span>Projects</span></div>
                             <h2 class="section-title">项目</h2>
                         </div>
                     </div>
@@ -291,7 +308,7 @@
                 <section class="flex-1 glass p-4 md:p-5">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
-                            <div class="kicker mb-1"><b>05</b><span>Daily report</span></div>
+                            <div class="kicker mb-1"><b>06</b><span>Daily report</span></div>
                             <h2 class="section-title">AI 日报</h2>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">

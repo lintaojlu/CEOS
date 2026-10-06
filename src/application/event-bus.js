@@ -39,5 +39,6 @@ export const Events = {
   IDEAS_UPDATED: 'ideas:updated',
   IDEAS_VIEW_MODE: 'ideas:view-mode',
   MILESTONES_UPDATED: 'milestones:updated',
-  REFLECTION_UPDATED: 'reflection:updated'
+  REFLECTION_UPDATED: 'reflection:updated',
+  POMODORO_UPDATED: 'pomodoro:updated'
 };

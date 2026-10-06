@@ -3,19 +3,22 @@ import { ScheduleRepository } from '../infrastructure/storage/schedule-repositor
 import { WorkspaceRepository } from '../infrastructure/storage/workspace-repository.js';
 import { IdeaRepository } from '../infrastructure/storage/idea-repository.js';
 import { MilestoneRepository } from '../infrastructure/storage/milestone-repository.js';
+import { PomodoroRepository } from '../infrastructure/storage/pomodoro-repository.js';
 import { MigrationRunner } from '../infrastructure/migration/migration-runner.js';
 import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
 import { MilestoneService } from './milestone-service.js';
 import { ExportService } from './export-service.js';
+import { PomodoroService } from './pomodoro-service.js';
 import { DailyTasksView } from '../ui/views/daily-tasks-view.js';
 import { IdeaInboxView } from '../ui/views/idea-inbox-view.js';
 import { MilestonesView } from '../ui/views/milestones-view.js';
 import { ReflectionView } from '../ui/views/reflection-view.js';
 import { ProjectsView } from '../ui/views/projects-view.js';
+import { PomodoroView } from '../ui/views/pomodoro-view.js';
 import { TaskModal } from '../ui/components/task-modal.js';
-import { getDateKey } from '../domain/shared/date-key.js';
+import { getDateKey, todayKey } from '../domain/shared/date-key.js';
 
 export class ScheduleApp {
   constructor() {
@@ -24,6 +27,7 @@ export class ScheduleApp {
     this.workspaceRepo = new WorkspaceRepository(this.adapter);
     this.ideaRepo = new IdeaRepository(this.adapter);
     this.milestoneRepo = new MilestoneRepository(this.adapter);
+    this.pomodoroRepo = new PomodoroRepository(this.adapter);
     this.eventBus = new EventBus();
 
     this.scheduleService = new ScheduleService({
@@ -42,6 +46,12 @@ export class ScheduleApp {
       eventBus: this.eventBus
     });
 
+    this.pomodoroService = new PomodoroService({
+      pomodoroRepo: this.pomodoroRepo,
+      scheduleService: this.scheduleService,
+      eventBus: this.eventBus
+    });
+
     this.exportService = new ExportService({
       scheduleService: this.scheduleService,
       ideaInboxService: this.ideaInboxService,
@@ -54,6 +64,7 @@ export class ScheduleApp {
     this.milestonesView = new MilestonesView(this);
     this.reflectionView = new ReflectionView(this);
     this.projectsView = new ProjectsView(this);
+    this.pomodoroView = new PomodoroView(this);
     this.taskModal = new TaskModal(this);
 
     this.editingMilestoneId = null;
@@ -82,6 +93,7 @@ export class ScheduleApp {
     this.scheduleService.load();
     this.ideaInboxService.load();
     this.milestoneService.load();
+    this.pomodoroService.load();
     this.ideaInboxService.subscribeToTaskCompletion();
 
     this.eventBus.on(Events.DATE_CHANGED, () => this.renderAll());
@@ -90,18 +102,26 @@ export class ScheduleApp {
       this.dailyTasksView.updateStreak();
       this.ideaInboxView.render();
       this.projectsView.render();
+      this.pomodoroView.render();
     });
     this.eventBus.on(Events.IDEAS_UPDATED, () => {
       this.ideaInboxView.render();
       this.dailyTasksView.updateStreak();
     });
     this.eventBus.on(Events.MILESTONES_UPDATED, () => this.milestonesView.render());
+    this.eventBus.on(Events.POMODORO_UPDATED, () => {
+      // Timer ticks often; task rows refresh via TASKS_UPDATED when a count changes.
+      this.pomodoroView.render();
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         this.scheduleService.persist();
         this.ideaInboxService.persist();
         this.milestoneService.persist();
+        this.pomodoroService.persist();
+      } else if (document.visibilityState === 'visible') {
+        this.pomodoroService.tick();
       }
     });
 
@@ -159,10 +179,58 @@ export class ScheduleApp {
   renderAll() {
     this.dailyTasksView.updateDateDisplay();
     this.dailyTasksView.render();
+    this.pomodoroView.render();
     this.ideaInboxView.render();
     this.milestonesView.render();
     this.projectsView.render();
     this.reflectionView.render();
+  }
+
+  /** Scroll to the pomodoro section (this layout has no multi-page router). */
+  goToPomodoro() {
+    const el = document.getElementById('pomodoroSection');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /**
+   * @param {'required'|'optional'} list
+   * @param {string} taskId
+   */
+  selectPomodoroTask(list, taskId) {
+    this.pomodoroService.selectTask(list, taskId);
+  }
+
+  startPomodoro() {
+    this.pomodoroService.start();
+    this.goToPomodoro();
+  }
+
+  /**
+   * Task-row「专注」: jump to pomodoro and start (voids other work / ends break).
+   * @param {'required'|'optional'} list
+   * @param {string} taskId
+   */
+  focusPomodoroTask(list, taskId) {
+    this.pomodoroService.focusTask(list, taskId);
+    this.goToPomodoro();
+  }
+
+  abandonPomodoro() {
+    this.pomodoroService.abandon();
+  }
+
+  skipPomodoroBreak() {
+    this.pomodoroService.skipBreak();
+  }
+
+  /**
+   * Subtask toggle on today's copy from the pomodoro panel.
+   * @param {'required'|'optional'} list
+   * @param {string} taskId
+   * @param {string} subId
+   */
+  togglePomodoroSubtask(list, taskId, subId) {
+    this.scheduleService.toggleSubtaskOnDate(todayKey(), list, taskId, subId);
   }
 
   // --- Facade for HTML onclick / AI ---

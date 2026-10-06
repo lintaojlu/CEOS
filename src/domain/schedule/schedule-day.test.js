@@ -96,6 +96,25 @@ describe('syncPrevDayTasks', () => {
     expect(current.required[0]).not.toBe(prev.required[0]);
     expect(current.projects).toBeUndefined();
   });
+
+  it('resets pomodoros to 0 on sync clone', () => {
+    const prev = {
+      ...createEmptyScheduleDay(),
+      required: [
+        {
+          id: 'r1',
+          text: '专注',
+          completed: false,
+          pomodoros: 4,
+          subtasks: []
+        }
+      ]
+    };
+    const current = createEmptyScheduleDay();
+    syncPrevDayTasks(prev, current);
+    expect(current.required[0].pomodoros).toBe(0);
+    expect(prev.required[0].pomodoros).toBe(4);
+  });
 });
 
 describe('syncPrevDay', () => {

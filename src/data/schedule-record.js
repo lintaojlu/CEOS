@@ -20,6 +20,7 @@
  * @property {string} note
  * @property {string} recurrence
  * @property {string} projectId
+ * @property {number} pomodoros
  * @property {SubtaskRecord[]} subtasks
  */
 
@@ -72,6 +73,20 @@ function normalizeSubtasks(raw) {
  * @param {any} raw
  * @returns {DailyTaskRecord[]}
  */
+/**
+ * @param {any} raw
+ * @returns {number}
+ */
+export function normalizePomodoros(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.floor(n);
+}
+
+/**
+ * @param {any} raw
+ * @returns {DailyTaskRecord[]}
+ */
 function normalizeTasks(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -85,6 +100,7 @@ function normalizeTasks(raw) {
       note: t.note || '',
       recurrence: t.recurrence || '',
       projectId: typeof t.projectId === 'string' ? t.projectId : '',
+      pomodoros: normalizePomodoros(t.pomodoros),
       subtasks: normalizeSubtasks(t.subtasks)
     }));
 }

@@ -17,6 +17,7 @@
  * @property {string|null} dueDate
  * @property {TaskRefRecord[]} dependsOn
  * @property {boolean} completed
+ * @property {boolean} archived
  * @property {boolean} pinned
  * @property {{ x: number, y: number }|null} position
  */
@@ -107,6 +108,7 @@ export function normalizeIdeas(raw) {
       text: t.text || '',
       note: t.note || '',
       completed: !!t.completed,
+      archived: !!t.archived,
       pinned: !!t.pinned,
       createdAt: typeof t.createdAt === 'number' ? t.createdAt : typeof t.time === 'number' ? t.time : Date.now(),
       dueDate: t.dueDate ?? null,

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="CEOS">
+  <rect width="128" height="128" rx="28" fill="#FFFFFF"/>
+  <path d="M84 42H64A22 22 0 0 0 64 86H84" fill="none" stroke="#111111" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="80" cy="64" r="6.5" fill="#111111"/>
+</svg>

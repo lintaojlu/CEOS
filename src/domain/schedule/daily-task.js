@@ -18,6 +18,29 @@
  * @property {Subtask[]} subtasks
  */
 
+/** 任务正文里出现的时间。先匹配更长的写法，避免「3点半」被收成「3点」。 */
+const TIME_MENTION = /(上午|下午|晚上|中午|凌晨)?\s*(?:\d{1,2}\s*[:：]\s*\d{2}(?:\s*(?:am|pm))?|\d{1,2}\s*点半|\d{1,2}\s*点(?:\s*\d{1,2}\s*分)?|\d{1,2}\s*(?:am|pm))/gi;
+
+/**
+ * 把正文拆成普通文字和时间片段。时间留在原处，后面的文字紧跟着它。
+ * @param {string} text
+ * @returns {{ text: string, time: boolean }[]}
+ */
+export function splitTimeMentions(text) {
+  const source = String(text || '');
+  const parts = [];
+  let last = 0;
+  TIME_MENTION.lastIndex = 0;
+  for (const match of source.matchAll(TIME_MENTION)) {
+    const start = match.index ?? 0;
+    if (start > last) parts.push({ text: source.slice(last, start), time: false });
+    parts.push({ text: match[0], time: true });
+    last = start + match[0].length;
+  }
+  if (last < source.length || parts.length === 0) parts.push({ text: source.slice(last), time: false });
+  return parts;
+}
+
 /**
  * @param {string} text
  * @returns {{ hours: number, minutes: number } | null}

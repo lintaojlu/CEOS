@@ -23,6 +23,7 @@
  * @property {string|null} dueDate - YYYY-MM-DD
  * @property {TaskRef[]} dependsOn
  * @property {boolean} completed
+ * @property {boolean} archived
  * @property {boolean} pinned
  * @property {IdeaPosition|null} [position]
  */
@@ -51,6 +52,7 @@ export function createIdeaNode(input) {
     dueDate: input.dueDate ?? null,
     dependsOn: Array.isArray(input.dependsOn) ? input.dependsOn : [],
     completed: !!input.completed,
+    archived: !!input.archived,
     pinned: !!input.pinned,
     position
   };

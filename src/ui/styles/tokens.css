@@ -1,0 +1,32 @@
+:root {
+  --bg: #ffffff;
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --card-2: #f4f4f5;
+  --well: #f4f4f5;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.16);
+  --text: #111111;
+  --text-soft: #3f3f46;
+  --muted: #71717a;
+  --dim: #a1a1aa;
+  --accent: #111111;
+  --accent-strong: #000000;
+  --accent-soft: #f4f4f5;
+  --good: #111111;
+  --warn: #e14a0e;
+  --warn-soft: rgba(225, 74, 14, 0.08);
+  --bad: #e14a0e;
+  --mention: #2563eb;
+  --heat-0: #e4e4e7;
+  --heat-1: #d6e2f5;
+  --heat-2: #93b4f5;
+  --heat-3: #3b6fe8;
+  --heat-4: #1d4ed8;
+  --radius: 16px;
+  --shadow: none;
+  --font-display: "Fraunces", "Songti SC", "STSong", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}

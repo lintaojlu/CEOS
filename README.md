@@ -1,163 +1,197 @@
-## CEOS：CEO Schedule System
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-banner-dark.svg" />
+    <img src="docs/assets/logo-banner.svg" alt="CEOS" width="460" />
+  </picture>
+</p>
 
-**Slogan：每个人都是自己的 CEO**
+<p align="center">
+  <strong>Run yourself like a company.</strong><br/>
+  A local-first daily planner with an idea DAG and an AI daily review.
+</p>
 
-CEOS 是一个为技术型 CEO / 创业者设计的每日时间与认知管理工具：用一套轻量的「里程碑 + 日程 + 灵感 DAG + 反思 + AI 日报」体系，帮助你像运营公司一样运营自己和事业。
+<p align="center">
+  <a href="README.zh-CN.md">简体中文</a> · English
+</p>
 
----
+<p align="center">
+  <a href="https://github.com/lintaojlu/ceos_frontend/stargazers"><img src="https://img.shields.io/github/stars/lintaojlu/ceos_frontend?style=flat-square" alt="stars"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/lintaojlu/ceos_frontend?style=flat-square" alt="license"></a>
+  <img src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white" alt="Tauri 2">
+  <img src="https://img.shields.io/badge/React%20Flow-12-FF0072?style=flat-square" alt="React Flow">
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite">
+</p>
 
-### 项目亮点
+<p align="center">
+  <a href="#why-ceos">Why</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#demo">Demo</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#how-it-works">How it works</a>
+</p>
 
-- **日日清机制**：必做/选做按日管理；暂时做不了的事进入灵感箱，设 DDL 或前序后再捡起。
-- **灵感 DAG**：灵感全局一份；可依赖其他灵感，或当前查看日的必做/选做；就绪后应用内提醒。
-- **分层前端架构**：Domain / Application / Infrastructure / UI，可用 Vitest 单测核心规则。
-- **每日 AI 复盘**：根据任务与感悟生成团队日报与《CEO的反思》。
+<p align="center">
+  <img src="docs/assets/screenshots/daily-tasks.png" alt="A day in CEOS, with required and optional tasks" width="860" />
+</p>
 
----
+## Why CEOS
 
-### 设计原则：按日解耦
+Most to-do apps mix yesterday's leftovers into today, and good ideas disappear into a flat list. CEOS keeps each day self-contained, parks ideas in a dependency graph until they are ready, and writes the day's review for you. Your data stays on your machine.
 
-必做/选做按日隔离（例如 9/17 与 9/18 的任务互不相关）。灵感、项目、里程碑全局各一份。**只有**用户点击「同步任务」时，才会把前一天未完成的必做/选做拷到当前日，并沿用原来的任务 id；已完成的任务、灵感、项目、里程碑都不会被拷贝。
+## Features
 
----
+- **A clean slate each day.** Required and optional tasks belong to one date. Nothing carries over unless you copy it.
+- **An idea DAG.** Ideas live in one global graph. Give an idea a predecessor or a date, and it surfaces when both are satisfied.
+- **Projects and milestones.** A project task and its daily copy share one id. Checking either one, or editing the title, note, or subtasks, updates both the project and the day you are viewing. Milestones sit on a single timeline.
+- **An AI daily review and four insights.** Turn the day's tasks into a report, and ask the model for a short read on completion, rhythm, projects, and ideas.
+- **A home dashboard.** A daily quote, milestones, the report, insights, and a year of activity shown as a heatmap.
+- **Local-first.** Everything is stored in `localStorage`. The network is used only when you generate a report or insights, and the app calls the model directly.
 
-### 功能模块
+## Demo
 
-- **目标里程碑（Milestones）**
-  - 全局一份时间轴，每条里程碑自带目标日期。
+**Daily tasks.** Required and optional lists for one date, with progress, subtasks, and recurrence.
 
-- **任务清单（必做 / 选做）**
-  - 自然语言时间解析、拖拽、置顶、周期、完成勾选。
-  - 「同步任务」只拷贝昨日未完成的必做/选做，保留原任务 id。已完成任务不拷贝。
+<p align="center">
+  <img src="docs/assets/screenshots/daily-tasks.png" alt="Required and optional tasks for a single day" width="860" />
+</p>
 
-- **项目**
-  - 全局一份。项目里的任务和当日清单是同一个任务 id 的两份记录，完成状态互相更新。
-  - 从项目添加任务时，当日副本落在当前查看日的必做。用 `【项目名】标题` 新建时，落在正在输入的那一列，并在项目里补一条同 id 任务。
+**Idea graph.** Every idea on one canvas. Drag between handles to set a predecessor, and pick an idea up into today once it is ready.
 
-- **灵感收集箱（DAG）**
-  - 全局一份，不随日期切换。
-  - 每条灵感可设 **DDL**（到日才可捡起）与 **前序**（全部未完成灵感，或当前查看日未完成的必做/选做）。
-  - **画布 / DAG 视图（默认）**：React Flow 可视化节点与依赖边；右上角 **DAG | 列表** 可切换。
-  - **列表视图**：分区 **可捡起来 / 等待中 / 已完成**；标题角标显示「可捡起 N」。
-  - 就绪时显示应用内横幅；「列入今日」写入当前查看日的必做。
-  - 从必做/选做拖入灵感箱 = 从当天清单移出，放进灵感箱。
+<p align="center">
+  <img src="docs/assets/screenshots/idea-dag.png" alt="The idea DAG canvas" width="860" />
+</p>
 
-- **每日感悟 & 标签 / AI 日报 / 导出**
-  - JSON 导出含按日 `schedule` 与全局 `workspace`。
+**Projects.** Projects are global. Adding a task from a project drops a copy into today's required list.
 
----
+<p align="center">
+  <img src="docs/assets/screenshots/projects.png" alt="The projects panel" width="520" />
+</p>
 
-### 架构
+**AI daily review.** A report generated from the day's tasks and notes.
 
-```text
-UI  →  Application (ScheduleApp / Services / EventBus)
-         →  Domain (纯函数：就绪规则、环检测、同步)
-         →  Data (`src/data`：按日记录与全局 workspace 的形状与归一化)
-         →  Infrastructure (localStorage Repository + Migration)
-```
+<p align="center">
+  <img src="docs/assets/screenshots/ai-report.png" alt="An AI daily review" width="520" />
+</p>
 
-| 层 | 职责 | 禁止 |
-|----|------|------|
-| `src/data/` | 存储模型：`ScheduleDayRecord`、`WorkspaceRecord` 及归一化 | 同步、就绪、DOM、localStorage |
-| `src/domain/` | 业务规则（无 IO） | 定义存储形状、DOM、localStorage、fetch |
-| `src/application/` | 用例、事件、组合根 | 直接操作 DOM |
-| `src/infrastructure/` | 持久化与 schema 迁移，只读写 data 模型 | UI、业务规则 |
-| `src/ui/` | 视图与弹窗 | 直接读写 localStorage |
-
-**就绪规则**：未完成 + 全部前序已完成（引用丢失视为已满足）+ 无 DDL 或 DDL ≤ 今天。
-
----
-
-### 技术栈
-
-- **前端**（本目录）：HTML + ES Module（Vite）、React 岛屿（灵感画布）+ [@xyflow/react](https://reactflow.dev)、Tailwind CDN、Marked、localStorage
-- **测试**：Vitest（Domain / Migration）
-- **后端**（同级目录 `../ceos_backend`，独立 git）：Express 薄代理 `POST /api/ai-eval` → 火山引擎 Ark
-
----
-
-### 项目结构
-
-```text
-.
-├── ceo-schedule.html              # 主页面（布局）
-├── css/ceo-schedule.css
-├── src/
-│   ├── main.js                    # 入口：bootstrap + window.app
-│   ├── data/                      # ScheduleDayRecord、WorkspaceRecord
-│   ├── domain/                    # 日程 / 灵感 DAG / 里程碑规则
-│   ├── application/               # ScheduleService、IdeaInboxService、Export…
-│   ├── infrastructure/            # Repository、Migration → v4（workspace，同名项目合并）
-│   ├── ui/views/ · ui/components/
-│   ├── ui/react/                  # 灵感 DAG 画布（React + React Flow 岛屿）
-│   └── ai/ai-eval-client.js
-├── vite.config.mjs
-├── package.json
-└── js/                            # 已废弃 shim（勿直接引用）
-```
-
-AI 代理在同级目录 `../ceos_backend`（`ai-server.js`、`ai-server/routes/ai-eval.js`），使用单独的 git 仓库。
-
-**localStorage 键**
-
-| 键 | 内容 |
-|----|------|
-| `ceoSchedule` | 按日：`required` / `optional` / reflection / aiEval |
-| `ceoWorkspace` | 全局：`ideas` / `milestones` / `projects`（项目任务与当日任务同 id） |
-| `ceoSchemaVersion` | schema 版本（v4 = 全局 workspace，同名项目合并成一个） |
-
-`ceoIdeas` / `ceoMilestones` 为旧键。打开应用时会先收回各日（v2），再收成 `ceoWorkspace`（v3）。v4 把历史上每天各建一份、名称相同的项目合并成一个。
-
----
-
-### 快速开始
+## Quick start
 
 ```bash
-# 在本目录（ceos_frontend）
 npm install
-npm run dev
-# → http://localhost:5173/ceo-schedule.html
-
-# 终端 2（可选）：AI 代理，在同级目录 ceos_backend
-cd ../ceos_backend
-npm install
-# 配置 .env 中的 VOLCENGINE_MODEL_ID / VOLCENGINE_API_KEY
-npm start
+npm run dev        # http://localhost:5173/ceo-schedule.html
+npm run desktop    # desktop window, requires Rust
 ```
 
-```bash
-npm test          # Domain / Migration 单测
-npm run build     # 产出 dist/
+<details>
+<summary>Optional: AI review</summary>
+
+Open Settings in the sidebar and fill in the model endpoint, model id, and API key. They stay in this machine's `localStorage`. The default endpoint is Volcengine Ark (`https://ark.cn-beijing.volces.com/api/v3`). Use Test connection before generating a report or insights.
+
+</details>
+
+## Architecture
+
+```mermaid
+flowchart LR
+  window[Tauri 2 window] --> ui[React shell and four pages]
+  ui --> schedApp[ScheduleApp]
+  schedApp --> domain[Domain rules]
+  schedApp --> repo[Repository]
+  repo --> records[Data records]
+  repo --> store[(localStorage)]
+  schedApp --> llm[LLM client]
+  llm -->|HTTPS chat completions| ark[OpenAI-compatible model]
 ```
 
-> 不要再直接双击打开 `ceo-schedule.html`（`type=module` 依赖 Vite 开发服务器）。
+| Layer | Responsibility |
+|---|---|
+| `src/ui/` | Sidebar, pages, and the React Flow idea canvas |
+| `src/application/` | Use cases, events, and the composition root |
+| `src/domain/` | Pure rules: readiness, sync, stats, calendar, prompts |
+| `src/data/` | Shape of a day's record and the global workspace |
+| `src/infrastructure/` | `localStorage`, schema migration, and the model client |
 
-> **访问地址固定为 `http://localhost:5173`**。localStorage 按「协议 + 域名 + 端口」隔离，换端口（`8080` / `8765` / `python -m http.server`）或改用 `127.0.0.1` 都会进入另一份空存储，看起来就像数据丢了。`vite.config.mjs` 已开启 `strictPort`，5173 被占用时会直接报错而不是静默换端口。
+## How it works
 
----
+Tasks are scoped to a day. Ideas, projects, and milestones are global and never move when you change the date.
 
-### 使用说明（灵感箱）
+| | Where it lives | Moves with the date |
+|---|---|---|
+| Required and optional tasks, notes, AI review | `ceoSchedule[date]` | Yes, one record per day |
+| Ideas, projects, milestones | `ceoWorkspace` | No, one global copy |
 
-1. 把暂时做不了的事拖进「灵感收集箱」，或点 `+` 新建。灵感不随日期切换。
-2. **DAG 模式（默认）**：标题旁点 **DAG / 列表** 切换；从节点右侧手柄拖到另一节点左侧 = 设置前序依赖；拖动节点保存布局；点「列入今日」或双击「编辑」。
-3. **列表模式**：按就绪状态浏览；编辑弹窗可设 DDL，前序可以是其他灵感或当天未完成任务。
-4. 前序全部完成且日期已到 → 进入「可捡起来」，角标/横幅提醒。
+**Sync tasks** copies the unfinished required and optional tasks from a day you choose into the day you are viewing. It keeps their original ids. Completed tasks are skipped, and the source day cannot be the day you are viewing.
 
----
+An idea becomes ready when it is unfinished, every predecessor is done, and its date is today or earlier. Predecessors can be any idea, or an unfinished task from the day you are viewing.
 
-### 数据与隐私
+## Tech stack
 
-- 默认仅存本机；AI 调用才经本地代理出网。
-- 定期用「导出 JSON」备份；历史一键导入见 `restore.html` + `backup/ceos-full-history.json`。
+A React app on Vite, with [React Flow](https://reactflow.dev) for the idea canvas, [Tauri 2](https://tauri.app) for the desktop window, and Vitest for the domain rules. Reports and insights call an OpenAI-compatible model, such as [Volcengine Ark](https://www.volcengine.com/product/ark), directly from the app.
 
----
+## Details
 
-### 常见问题
+<details>
+<summary>Project layout</summary>
 
-- **页面空白 / 模块加载失败？** 请用 `npm run dev`，不要用 `file://`。
-- **AI 无响应？** 在 `../ceos_backend` 确认 `npm start` 与 `.env` 密钥。
-- **灵感、项目、里程碑存在哪？** schema v3 起它们在 `ceoWorkspace`，全局各一份。只有必做/选做按日隔离，并用「同步任务」拷贝未完成项。
+```text
+ceo-schedule.html          shell page
+src/
+  main.jsx                 bootstrap
+  data/                    record shapes
+  domain/                  day, idea DAG, stats, calendar, prompts
+  application/             schedule, ideas, insights, report, transfer
+  infrastructure/          repository, migration, model client
+  ui/                      sidebar, four pages, idea canvas
+src-tauri/                 Tauri 2 shell
+```
 
----
+</details>
 
-**每个人都是自己的 CEO。**
+<details>
+<summary>Storage keys</summary>
+
+| Key | Holds |
+|---|---|
+| `ceoSchedule` | Per day: required tasks, optional tasks, notes, AI review |
+| `ceoWorkspace` | Global: ideas, milestones, projects |
+| `ceoSchemaVersion` | Schema version. v4 is the global workspace |
+| `ceoLlmSettings` | Model endpoint, model id, and API key |
+| `ceoInsights` | Cached insight text, by day |
+| `ceoUiPrefs` | Last page, idea view, calendar scale |
+
+</details>
+
+<details>
+<summary>Data and privacy</summary>
+
+Data stays in `localStorage` on your machine. A report or an insight is the only request that leaves the machine, and it goes straight to the model endpoint you configured. Export a JSON backup from Settings whenever you want a copy.
+
+</details>
+
+<details>
+<summary>FAQ</summary>
+
+**The page is blank.** Open it through `npm run dev` or `npm run desktop`. The modules need the dev server, so opening the file directly will not work.
+
+**My data disappeared.** Storage is separated by protocol, host, and port. Always use `http://localhost:5173`. The desktop window uses its own storage, separate from your browser. Move data between them with the JSON export.
+
+**The AI review does nothing.** Open Settings, fill in the model id and API key, and use Test connection.
+
+</details>
+
+## Contributing
+
+Issues and pull requests are welcome. If CEOS is useful to you, consider starring it so others can find it.
+
+## Star history
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=lintaojlu/ceos_frontend&type=Date&theme=dark" />
+    <img src="https://api.star-history.com/svg?repos=lintaojlu/ceos_frontend&type=Date" alt="Star history chart" width="700" />
+  </picture>
+</p>
+
+## License
+
+[MIT](LICENSE)

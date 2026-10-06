@@ -55,11 +55,7 @@ export class IdeaInboxService {
   }
 
   partition() {
-    return partitionIdeas(this.nodes, this.getContext());
-  }
-
-  readyCount() {
-    return this.partition().ready.length;
+    return partitionIdeas(this.nodes.filter(Boolean), this.getContext());
   }
 
   /**
@@ -273,9 +269,16 @@ export class IdeaInboxService {
     return { idea: to };
   }
 
-  getDagViewModel() {
-    const ideas = this.nodes;
-    const { ready, waiting, completed } = partitionIdeas(ideas, this.getContext());
+  /**
+   * @param {{ ready?: boolean, waiting?: boolean, completed?: boolean }} [filter]
+   */
+  getDagViewModel(filter = { ready: true, waiting: true, completed: false }) {
+    const parts = this.partition();
+    const ideas = [];
+    if (filter.ready) ideas.push(...parts.ready);
+    if (filter.completed) ideas.push(...parts.completed);
+    if (filter.waiting) ideas.push(...parts.waiting);
+    const { ready, waiting, completed } = parts;
     /** @type {Record<string, 'ready'|'waiting'|'completed'>} */
     const statusById = {};
     ready.forEach((n) => {

@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeStreakDays, syncPrevDayTasks, syncPrevDay } from './schedule-day.js';
+import { syncPrevDayTasks, syncPrevDay } from './schedule-day.js';
 import { createEmptyScheduleDay, normalizeScheduleDay } from '../../data/schedule-record.js';
-import { getDateKey, addDays } from '../shared/date-key.js';
 
 describe('syncPrevDayTasks', () => {
   it('copies unfinished required/optional only', () => {
@@ -128,38 +127,5 @@ describe('normalizeScheduleDay', () => {
     expect(day.ideas).toBeUndefined();
     expect(day.milestones).toBeUndefined();
     expect(day.projects).toBeUndefined();
-  });
-});
-
-describe('computeStreakDays', () => {
-  const dayWithTask = () => ({ required: [{ id: '1', text: 'x' }], optional: [] });
-  const emptyDay = () => ({ required: [], optional: [] });
-  const keyFor = (offset) => getDateKey(addDays(new Date(), offset));
-
-  it('counts consecutive days ending today', () => {
-    const schedule = {
-      [keyFor(0)]: dayWithTask(),
-      [keyFor(-1)]: dayWithTask(),
-      [keyFor(-2)]: dayWithTask()
-    };
-    expect(computeStreakDays(schedule, getDateKey)).toBe(3);
-  });
-
-  it('breaks the chain on a day without tasks', () => {
-    const schedule = {
-      [keyFor(0)]: dayWithTask(),
-      [keyFor(-1)]: emptyDay(),
-      [keyFor(-2)]: dayWithTask()
-    };
-    expect(computeStreakDays(schedule, getDateKey)).toBe(1);
-  });
-
-  it('counts optional-only days', () => {
-    const schedule = { [keyFor(0)]: { required: [], optional: [{ id: '1', text: 'x' }] } };
-    expect(computeStreakDays(schedule, getDateKey)).toBe(1);
-  });
-
-  it('is zero when today has no tasks', () => {
-    expect(computeStreakDays({ [keyFor(-1)]: dayWithTask() }, getDateKey)).toBe(0);
   });
 });

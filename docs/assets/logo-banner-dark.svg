@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="160" viewBox="0 0 760 160" role="img" aria-label="CEOS - Everyone is their own CEO">
+  <rect width="760" height="160" rx="16" fill="#0C0A09"/>
+  <svg x="24" y="28" width="104" height="104" viewBox="0 0 128 128">
+    <rect width="128" height="128" rx="28" fill="#FFFFFF"/>
+    <path d="M84 42H64A22 22 0 0 0 64 86H84" fill="none" stroke="#111111" stroke-width="15" stroke-linecap="round"/>
+    <circle cx="80" cy="64" r="6.5" fill="#111111"/>
+  </svg>
+  <text x="156" y="78" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="52" font-weight="700" fill="#FAFAF9" letter-spacing="2">CEOS</text>
+  <text x="158" y="116" font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="20" fill="#A8A29E">Everyone is their own CEO</text>
+</svg>

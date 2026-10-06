@@ -2,7 +2,7 @@ import { createEmptyWorkspace } from '../data/workspace-record.js';
 import { getDateKey, addDays, todayKey } from '../domain/shared/date-key.js';
 import { createDailyTask, createSubtask, sortTasks, parseTime, normalizeSubtasks } from '../domain/schedule/daily-task.js';
 import { parseProjectTitle, formatProjectTaskTitle } from '../domain/schedule/project-title.js';
-import { syncPrevDay, computeStreakDays } from '../domain/schedule/schedule-day.js';
+import { syncPrevDay } from '../domain/schedule/schedule-day.js';
 import { Events } from './event-bus.js';
 
 export class ScheduleService {
@@ -71,7 +71,6 @@ export class ScheduleService {
     const task = createDailyTask(title, this.currentDate, { projectId: project ? project.id : '' });
     data[type].push(task);
     if (project) this._attachProjectTask(project, task, type);
-    sortTasks(data[type]);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
     return task;
@@ -163,7 +162,6 @@ export class ScheduleService {
     const day = this.getCurrentData();
     const task = createDailyTask(title, this.currentDate, { projectId });
     day.required.push(task);
-    sortTasks(day.required);
     this._attachProjectTask(project, task, 'required');
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type: 'required' });
@@ -204,6 +202,32 @@ export class ScheduleService {
         type,
         id
       });
+    }
+    return task;
+  }
+
+  /**
+   * Toggle a task on one stored day without changing the viewed day.
+   * The project copy, and the viewed day's copy when it shares the id, stay in sync.
+   * @param {string} dateKey
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   */
+  toggleTaskOnDate(dateKey, type, id) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    const task = (day[type] || []).find((item) => item.id === id);
+    if (!task) return null;
+    task.completed = !task.completed;
+    this._mirrorTaskCompleted(id, task.completed);
+    if (dateKey !== this.getDateKey()) {
+      const daily = this._findDailyTask(id);
+      if (daily && daily.type === type) daily.task.completed = task.completed;
+    }
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
+    if (task.completed) {
+      this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id });
     }
     return task;
   }
@@ -267,10 +291,32 @@ export class ScheduleService {
     }
     Object.assign(task, patch);
     if (!Array.isArray(task.subtasks)) task.subtasks = [];
-    if (patch.time != null) sortTasks(data[type]);
+    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     return task;
+  }
+
+  /**
+   * Edit the project copy. The viewed day's same-id row follows. Other days stay.
+   * @param {string} projectId
+   * @param {string} taskId
+   * @param {{ text?: string, note?: string }} patch
+   */
+  updateProjectTask(projectId, taskId, patch) {
+    const found = this._findProjectTask(projectId, taskId);
+    if (!found) return null;
+    if (patch.text != null) {
+      const parsed = parseProjectTitle(patch.text);
+      const title = (parsed ? parsed.text : String(patch.text)).trim();
+      if (!title) return null;
+      found.task.text = title;
+    }
+    if (patch.note != null) found.task.note = String(patch.note);
+    this._mirrorContentToDaily(found.task);
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
+    return found.task;
   }
 
   /**
@@ -298,6 +344,7 @@ export class ScheduleService {
     if (!task) return null;
     const sub = createSubtask(trimmed);
     task.subtasks.push(sub);
+    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
     return sub;
@@ -334,6 +381,7 @@ export class ScheduleService {
     const trimmed = String(text || '').trim();
     if (!trimmed) return sub;
     sub.text = trimmed;
+    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
     return sub;
@@ -348,6 +396,7 @@ export class ScheduleService {
     const task = this._findTask(type, taskId);
     if (!task) return;
     task.subtasks = task.subtasks.filter((s) => s.id !== subId);
+    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
   }
@@ -358,18 +407,37 @@ export class ScheduleService {
    * @param {'required'|'optional'} toType
    */
   moveTask(fromType, id, toType) {
-    if (fromType === toType) return;
+    this.placeTask(fromType, id, toType, null);
+  }
+
+  /**
+   * 按当前查看日的数组顺序摆放。beforeId 为空时放到目标列末尾。
+   * @param {'required'|'optional'} fromType
+   * @param {string} id
+   * @param {'required'|'optional'} toType
+   * @param {string|null} beforeId
+   */
+  placeTask(fromType, id, toType, beforeId) {
     const data = this.getCurrentData();
-    const list = data[fromType];
-    const idx = list.findIndex((t) => t.id === id);
-    if (idx === -1) return;
-    const [task] = list.splice(idx, 1);
-    data[toType].push(task);
-    sortTasks(data[toType]);
-    const projectTask = this._findProjectTaskById(id);
-    if (projectTask) projectTask.list = toType;
+    const fromList = data[fromType];
+    if (!fromList || !data[toType]) return;
+    const fromIdx = fromList.findIndex((task) => task.id === id);
+    if (fromIdx === -1) return;
+    if (fromType === toType && beforeId === id) return;
+    const [task] = fromList.splice(fromIdx, 1);
+    const toList = data[toType];
+    let insertAt = toList.length;
+    if (beforeId) {
+      const beforeIdx = toList.findIndex((item) => item.id === beforeId);
+      if (beforeIdx !== -1) insertAt = beforeIdx;
+    }
+    toList.splice(insertAt, 0, task);
+    if (fromType !== toType) {
+      const projectTask = this._findProjectTaskById(id);
+      if (projectTask) projectTask.list = toType;
+    }
     this.persist();
-    this.eventBus.emit(Events.TASK_MOVED, { fromType, toType, id });
+    if (fromType !== toType) this.eventBus.emit(Events.TASK_MOVED, { fromType, toType, id });
     this.eventBus.emit(Events.TASKS_UPDATED, {});
   }
 
@@ -397,22 +465,57 @@ export class ScheduleService {
     const data = this.getCurrentData();
     if (data[type].some((t) => t.id === task.id)) return;
     data[type].push(task);
-    sortTasks(data[type]);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
   }
 
-  /** Manual only: unfinished required/optional from yesterday, same task id. */
-  syncPrevDayTasks() {
-    const prevKey = getDateKey(addDays(this.currentDate, -1));
-    const prevData = this.data[prevKey];
-    if (!prevData) return;
+  /**
+   * Unfinished required/optional on a stored day.
+   * @param {string} dateKey
+   * @returns {number}
+   */
+  countOpenTasks(dateKey) {
+    const day = this.data[dateKey];
+    if (!day) return 0;
+    const open = (list) => (Array.isArray(list) ? list.filter((t) => t && !t.completed).length : 0);
+    return open(day.required) + open(day.optional);
+  }
+
+  /**
+   * Days other than the viewed day that still have unfinished required/optional.
+   * Newest first.
+   * @returns {{ dateKey: string, openCount: number }[]}
+   */
+  listSyncSources() {
+    const currentKey = this.getDateKey();
+    return Object.keys(this.data)
+      .filter((dateKey) => /^\d{4}-\d{2}-\d{2}$/.test(dateKey) && dateKey !== currentKey)
+      .map((dateKey) => ({ dateKey, openCount: this.countOpenTasks(dateKey) }))
+      .filter((row) => row.openCount > 0)
+      .sort((a, b) => (a.dateKey < b.dateKey ? 1 : a.dateKey > b.dateKey ? -1 : 0));
+  }
+
+  /**
+   * Copy unfinished required/optional from a chosen day onto the viewed day.
+   * Same task id. Completed tasks, ideas, projects, and milestones stay put.
+   * @param {string} sourceKey
+   * @returns {boolean}
+   */
+  syncTasksFrom(sourceKey) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(sourceKey || '')) return false;
+    if (sourceKey === this.getDateKey()) return false;
+    const source = this.data[sourceKey];
+    if (!source) return false;
     const data = this.getCurrentData();
-    syncPrevDay(prevData, data);
-    sortTasks(data.required);
-    sortTasks(data.optional);
+    syncPrevDay(source, data);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, {});
+    return true;
+  }
+
+  /** Manual only: unfinished required/optional from the day before the viewed day. */
+  syncPrevDayTasks() {
+    return this.syncTasksFrom(getDateKey(addDays(this.currentDate, -1)));
   }
 
   /**
@@ -507,6 +610,31 @@ export class ScheduleService {
   }
 
   /**
+   * Copy title, note, and subtasks onto the project row with the same id.
+   * @param {import('../domain/schedule/daily-task.js').DailyTask|null|undefined} daily
+   */
+  _mirrorContentToProject(daily) {
+    if (!daily?.projectId) return;
+    const projectTask = this._findProjectTaskById(daily.id);
+    if (!projectTask) return;
+    projectTask.text = daily.text || '';
+    projectTask.note = daily.note || '';
+    projectTask.subtasks = normalizeSubtasks(daily.subtasks).map((sub) => ({ ...sub }));
+  }
+
+  /**
+   * Copy title, note, and subtasks onto the viewed day's row. Other days stay.
+   * @param {{ id: string, text?: string, note?: string, subtasks?: any[] }} projectTask
+   */
+  _mirrorContentToDaily(projectTask) {
+    const daily = this._findDailyTask(projectTask.id);
+    if (!daily) return;
+    daily.task.text = projectTask.text || '';
+    daily.task.note = projectTask.note || '';
+    daily.task.subtasks = normalizeSubtasks(projectTask.subtasks).map((sub) => ({ ...sub }));
+  }
+
+  /**
    * @param {string} projectId
    * @param {string} taskId
    * @param {string} text
@@ -519,6 +647,7 @@ export class ScheduleService {
     if (!Array.isArray(found.task.subtasks)) found.task.subtasks = [];
     const sub = createSubtask(trimmed);
     found.task.subtasks.push(sub);
+    this._mirrorContentToDaily(found.task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
     return sub;
@@ -552,6 +681,7 @@ export class ScheduleService {
     const found = this._findProjectTask(projectId, taskId);
     if (!found) return;
     found.task.subtasks = (found.task.subtasks || []).filter((s) => s.id !== subId);
+    this._mirrorContentToDaily(found.task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
   }
@@ -586,10 +716,6 @@ export class ScheduleService {
     const data = this.getCurrentData();
     data.aiEval = typeof text === 'string' ? text : '';
     this.persist();
-  }
-
-  getStreakDays() {
-    return computeStreakDays(this.data, getDateKey);
   }
 
   getProgress() {

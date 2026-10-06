@@ -29,7 +29,7 @@ export function syncPrevDayTasks(prev, current) {
 }
 
 /**
- * Copy yesterday's unfinished required/optional onto the current day.
+ * Copy a source day's unfinished required/optional onto the current day.
  * Ideas, projects, and milestones are not copied.
  * @param {ScheduleDay|null|undefined} prev
  * @param {ScheduleDay} current
@@ -37,27 +37,4 @@ export function syncPrevDayTasks(prev, current) {
  */
 export function syncPrevDay(prev, current) {
   return syncPrevDayTasks(prev, current);
-}
-
-/**
- * Consecutive days with daily tasks, counting back from today.
- * Ideas do not extend the streak.
- * @param {Record<string, ScheduleDay>} schedule
- * @param {(d: Date) => string} getDateKeyFn
- * @returns {number}
- */
-export function computeStreakDays(schedule, getDateKeyFn) {
-  let d = new Date();
-  let count = 0;
-  for (let i = 0; i < 365; i++) {
-    const dayData = schedule[getDateKeyFn(d)];
-    const hasTasks =
-      dayData &&
-      ((dayData.required && dayData.required.length > 0) ||
-        (dayData.optional && dayData.optional.length > 0));
-    if (!hasTasks) break;
-    count++;
-    d.setDate(d.getDate() - 1);
-  }
-  return count;
 }

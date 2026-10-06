@@ -64,6 +64,28 @@ describe('project tasks share an id with the daily copy', () => {
     expect(service.workspace.projects).toHaveLength(1);
   });
 
+  it('copies unfinished tasks from a chosen day, not only yesterday', () => {
+    const service = createService();
+    const origin = service.currentDate;
+    const originKey = getDateKey(origin);
+    service.addTask('required', '留下');
+    service.addTask('optional', '做完了');
+    service.getCurrentData().optional[0].completed = true;
+    service.setCurrentDate(addDays(origin, 3));
+    service.addTask('required', '当天的');
+
+    expect(service.listSyncSources().map((row) => row.dateKey)).toContain(originKey);
+    expect(service.syncTasksFrom(service.getDateKey())).toBe(false);
+    expect(service.syncTasksFrom(originKey)).toBe(true);
+
+    const required = service.getCurrentData().required.map((t) => t.text);
+    expect(required).toContain('留下');
+    expect(required).toContain('当天的');
+    expect(service.getCurrentData().optional).toEqual([]);
+    expect(service.syncTasksFrom(originKey)).toBe(true);
+    expect(service.getCurrentData().required.filter((t) => t.text === '留下')).toHaveLength(1);
+  });
+
   it('links a bracket title to a project task and keeps the project task when the day row is deleted', () => {
     const service = createService();
     const task = service.addTask('optional', '【CEOS】写计划');
@@ -96,7 +118,7 @@ describe('project tasks share an id with the daily copy', () => {
     const project = service.addProject('CEOS');
     const task = service.addProjectTask(project.id, '父任务');
     const sub = service.addSubtask('required', task.id, '步骤');
-    project.tasks[0].subtasks.push({ ...sub });
+    expect(project.tasks[0].subtasks.map((item) => item.id)).toEqual([sub.id]);
 
     service.toggleProjectSubtask(project.id, task.id, sub.id);
     expect(project.tasks[0].subtasks[0].completed).toBe(true);
@@ -104,5 +126,63 @@ describe('project tasks share an id with the daily copy', () => {
 
     service.toggleTask('required', task.id);
     expect(project.tasks[0].completed).toBe(true);
+  });
+
+  it('mirrors title and note between the viewed day and the project, and leaves other days', () => {
+    const service = createService();
+    const project = service.addProject('CEOS');
+    const task = service.addProjectTask(project.id, '写计划');
+    const today = service.currentDate;
+    const todayKey = getDateKey(today);
+
+    service.updateTask('required', task.id, { text: '【CEOS】改清单', note: '清单备注' });
+    expect(service.getCurrentData().required[0].text).toBe('改清单');
+    expect(project.tasks[0].text).toBe('改清单');
+    expect(project.tasks[0].note).toBe('清单备注');
+
+    service.setCurrentDate(addDays(today, 1));
+    service.updateProjectTask(project.id, task.id, { text: '改项目', note: '项目备注' });
+    expect(project.tasks[0].text).toBe('改项目');
+    expect(service.data[todayKey].required[0].text).toBe('改清单');
+    expect(service.data[todayKey].required[0].note).toBe('清单备注');
+
+    service.setCurrentDate(today);
+    service.updateProjectTask(project.id, task.id, { text: '再改项目', note: '新备注' });
+    expect(service.getCurrentData().required[0].text).toBe('再改项目');
+    expect(service.getCurrentData().required[0].note).toBe('新备注');
+    expect(project.tasks[0]).not.toBe(service.getCurrentData().required[0]);
+  });
+
+  it('mirrors subtask text, adds, and deletes both ways', () => {
+    const service = createService();
+    const project = service.addProject('CEOS');
+    const task = service.addProjectTask(project.id, '父任务');
+    const sub = service.addSubtask('required', task.id, '步骤');
+
+    service.updateSubtask('required', task.id, sub.id, '改步骤');
+    expect(project.tasks[0].subtasks[0].text).toBe('改步骤');
+
+    const added = service.addProjectSubtask(project.id, task.id, '项目步骤');
+    expect(service.getCurrentData().required[0].subtasks.map((item) => item.text)).toEqual(['改步骤', '项目步骤']);
+
+    service.deleteProjectSubtask(project.id, task.id, added.id);
+    expect(service.getCurrentData().required[0].subtasks.map((item) => item.id)).toEqual([sub.id]);
+
+    service.deleteSubtask('required', task.id, sub.id);
+    expect(project.tasks[0].subtasks).toEqual([]);
+  });
+
+  it('keeps drag order inside a column and when moving between columns', () => {
+    const service = createService();
+    const first = service.addTask('required', '甲');
+    const second = service.addTask('required', '乙');
+    const third = service.addTask('required', '丙');
+    service.placeTask('required', third.id, 'required', first.id);
+    expect(service.getCurrentData().required.map((task) => task.text)).toEqual(['丙', '甲', '乙']);
+
+    const fourth = service.addTask('optional', '丁');
+    service.placeTask('required', first.id, 'optional', fourth.id);
+    expect(service.getCurrentData().required.map((task) => task.id)).toEqual([third.id, second.id]);
+    expect(service.getCurrentData().optional.map((task) => task.text)).toEqual(['甲', '丁']);
   });
 });

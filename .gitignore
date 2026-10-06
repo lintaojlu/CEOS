@@ -16,7 +16,12 @@ logs/
 # 构建产物
 dist/
 build/
+src-tauri/target/
 
 # macOS
 .DS_Store
+
+# 用户数据，与 src/、src-tauri/ 分开
+/data/**/*.json
+/data/*.json
 

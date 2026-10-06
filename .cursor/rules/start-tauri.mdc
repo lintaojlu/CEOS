@@ -1,0 +1,18 @@
+---
+description: 用户说启动时打开 Tauri 桌面窗口，不要只开网页
+alwaysApply: true
+---
+
+# 启动指桌面端
+
+用户说「启动」「拉起」或「打开应用」时，启动 Tauri 桌面窗口。不要只跑 Vite 网页。
+
+在 `ceos_frontend` 里执行：
+
+```bash
+export PATH="$HOME/.cargo/bin:$PATH"
+export CEOS_NO_BROWSER=1
+npm run desktop
+```
+
+这会先起 Vite（`http://localhost:5173/`），再打开 CEO Schedule 窗口。不要另外再开一个只给浏览器的 `npm run dev`。5173 已被占用时，先确认是不是这次桌面端自己的 Vite。

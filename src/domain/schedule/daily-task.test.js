@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createDailyTask, createSubtask, normalizeSubtasks } from './daily-task.js';
+import { createDailyTask, createSubtask, normalizeSubtasks, splitTimeMentions } from './daily-task.js';
 
 describe('createDailyTask', () => {
   it('defaults to an empty subtasks array', () => {
@@ -16,6 +16,18 @@ describe('createDailyTask', () => {
     expect(task.subtasks[1].text).toBe('b');
     expect(task.subtasks[1].completed).toBe(false);
     expect(task.subtasks[1].id).toBeTruthy();
+  });
+});
+
+describe('splitTimeMentions', () => {
+  it('keeps a mentioned time in place so the task text follows it', () => {
+    expect(splitTimeMentions('15:00 和客户开会')).toEqual([
+      { text: '15:00', time: true },
+      { text: ' 和客户开会', time: false }
+    ]);
+    expect(splitTimeMentions('下午3点和客户开会').map((part) => part.text).join('')).toBe('下午3点和客户开会');
+    expect(splitTimeMentions('下午3点和客户开会').filter((part) => part.time).map((part) => part.text)).toEqual(['下午3点']);
+    expect(splitTimeMentions('写方案')).toEqual([{ text: '写方案', time: false }]);
   });
 });
 

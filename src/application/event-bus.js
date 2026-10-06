@@ -39,5 +39,9 @@ export const Events = {
   IDEAS_UPDATED: 'ideas:updated',
   IDEAS_VIEW_MODE: 'ideas:view-mode',
   MILESTONES_UPDATED: 'milestones:updated',
-  REFLECTION_UPDATED: 'reflection:updated'
+  REFLECTION_UPDATED: 'reflection:updated',
+  INSIGHTS_UPDATED: 'insights:updated',
+  LLM_SETTINGS_UPDATED: 'llm-settings:updated',
+  UI_PREFS_UPDATED: 'ui-prefs:updated',
+  REPORT_UPDATED: 'report:updated'
 };

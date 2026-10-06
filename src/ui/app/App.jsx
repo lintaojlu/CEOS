@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar.jsx';
 import { SettingsModal } from '../modals/SettingsModal.jsx';
 import { HomePage } from '../pages/home/HomePage.jsx';
 import { TasksPage } from '../pages/tasks/TasksPage.jsx';
+import { PomodoroPage } from '../pages/pomodoro/PomodoroPage.jsx';
 import { IdeasPage } from '../pages/ideas/IdeasPage.jsx';
 import { CalendarPage } from '../pages/calendar/CalendarPage.jsx';
 
@@ -38,6 +39,7 @@ function Shell() {
       <main className="main">
         {page === 'home' ? <HomePage /> : null}
         {page === 'tasks' ? <TasksPage /> : null}
+        {page === 'pomodoro' ? <PomodoroPage /> : null}
         {page === 'ideas' ? <IdeasPage /> : null}
         {page === 'calendar' ? <CalendarPage /> : null}
       </main>

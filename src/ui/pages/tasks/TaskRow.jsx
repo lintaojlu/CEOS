@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { normalizeSubtasks } from '../../../domain/schedule/daily-task.js';
+import { todayKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
+import { navigate } from '../../app/router.js';
 import { Checkbox } from '../../components/Checkbox.jsx';
 import { TaskText } from './TaskText.jsx';
 
@@ -11,6 +13,13 @@ export function TaskRow({ task, type, onEdit, dropEdge, onReorderStart }) {
   const done = subtasks.filter((item) => item.completed).length;
   const recurrence = task.recurrence === 'daily' ? '每日' : task.recurrence === 'weekdays' ? '工作日' : '';
   const edge = dropEdge === 'before' ? ' is-drop-before' : dropEdge === 'after' ? ' is-drop-after' : '';
+  const viewingToday = app.scheduleService.getDateKey() === todayKey();
+  const pomodoros = typeof task.pomodoros === 'number' && task.pomodoros > 0 ? task.pomodoros : 0;
+
+  function focus() {
+    app.pomodoroService.focusTask(type, task.id);
+    navigate('pomodoro');
+  }
 
   return (
     <div className={`task-block${edge}`}>
@@ -34,6 +43,10 @@ export function TaskRow({ task, type, onEdit, dropEdge, onReorderStart }) {
           </div>
           {task.note ? <div className="card-note">{task.note}</div> : null}
         </div>
+        {pomodoros > 0 ? <span className="pomo-count" title="今日番茄数">{pomodoros}</span> : null}
+        {viewingToday && !task.completed ? (
+          <button type="button" className="btn btn-quiet btn-mono" onClick={focus}>专注</button>
+        ) : null}
       </div>
       {open ? (
         <div className="subtasks">

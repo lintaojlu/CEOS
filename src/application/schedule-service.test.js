@@ -186,3 +186,37 @@ describe('project tasks share an id with the daily copy', () => {
     expect(service.getCurrentData().optional.map((task) => task.text)).toEqual(['甲', '丁']);
   });
 });
+
+describe('pomodoros on daily tasks', () => {
+  it('incrementPomodoro only mutates the given date copy and leaves project tasks without pomodoros', () => {
+    const service = createService();
+    const project = service.addProject('CEOS');
+    const task = service.addProjectTask(project.id, '番茄');
+    const key = getDateKey(service.currentDate);
+    expect(service.incrementPomodoro(key, 'required', task.id)).toBe(true);
+    expect(service.getCurrentData().required[0].pomodoros).toBe(1);
+    expect(project.tasks[0].pomodoros).toBeUndefined();
+  });
+
+  it('sync clone starts pomodoros at 0', () => {
+    const service = createService();
+    const task = service.addTask('required', '带次数');
+    const key = getDateKey(service.currentDate);
+    service.incrementPomodoro(key, 'required', task.id);
+    service.incrementPomodoro(key, 'required', task.id);
+    expect(service.data[key].required[0].pomodoros).toBe(2);
+
+    service.setCurrentDate(addDays(service.currentDate, 1));
+    service.syncPrevDayTasks();
+    expect(service.getCurrentData().required[0].pomodoros).toBe(0);
+    expect(service.data[key].required[0].pomodoros).toBe(2);
+  });
+
+  it('incrementPomodoro is a no-op after the task is deleted', () => {
+    const service = createService();
+    const task = service.addTask('optional', '将删');
+    const key = getDateKey(service.currentDate);
+    service.deleteTask('optional', task.id);
+    expect(service.incrementPomodoro(key, 'optional', task.id)).toBe(false);
+  });
+});

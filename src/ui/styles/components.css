@@ -25,6 +25,25 @@
 }
 .nav-item:hover { background: var(--well); color: var(--text); }
 .nav-item.is-active { background: var(--well); color: var(--text); }
+.nav-icon-wrap { position: relative; display: inline-flex; flex: none; }
+.nav-pomo-time {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.nav-pomo-dot {
+  display: none;
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
 .sidebar-foot { margin-top: auto; }
 .main { flex: 1; min-width: 0; overflow: auto; padding: 28px 32px 56px; }
 .page { width: 100%; display: flex; flex-direction: column; gap: 16px; }
@@ -306,9 +325,44 @@ button.heat { padding: 0; border: 0; cursor: pointer; }
 .idea-node-completed .idea-node-label { text-decoration: line-through; color: var(--dim); }
 .idea-node-ddl { color: var(--muted); font-family: var(--font-mono); font-size: 10px; }
 
+.pomo-timer {
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1;
+  margin: 4px 0 12px;
+}
+.pomo-task-title { margin: 0; color: var(--text); font-size: 15px; }
+.pomo-count {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.pomo-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-soft);
+}
+.pomo-pick:hover { background: var(--well); color: var(--text); }
+.pomo-pick.is-selected { border-color: var(--line-strong); background: var(--well); color: var(--text); }
+.pomo-pick-title { flex: 1; min-width: 0; }
+
 @media (max-width: 960px) {
   .sidebar { width: 72px; }
-  .brand-copy, .nav-label, .sidebar-foot span { display: none; }
+  .brand-copy, .nav-label, .sidebar-foot span, .nav-pomo-time { display: none; }
+  .nav-pomo-dot { display: block; }
   .split, .columns-2, .calendar-layout, .stat-grid, .year-grid { grid-template-columns: 1fr; }
   .main { padding: 18px 14px 40px; }
 }

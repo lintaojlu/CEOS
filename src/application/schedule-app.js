@@ -10,6 +10,7 @@ import { MilestoneRepository } from '../infrastructure/storage/milestone-reposit
 import { LlmSettingsRepository } from '../infrastructure/storage/llm-settings-repository.js';
 import { InsightsRepository } from '../infrastructure/storage/insights-repository.js';
 import { UiPrefsRepository } from '../infrastructure/storage/ui-prefs-repository.js';
+import { PomodoroRepository } from '../infrastructure/storage/pomodoro-repository.js';
 import { MigrationRunner } from '../infrastructure/migration/migration-runner.js';
 import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
@@ -22,6 +23,7 @@ import { InsightService } from './insight-service.js';
 import { DailyReportService } from './daily-report-service.js';
 import { TaskTransferService } from './task-transfer-service.js';
 import { UiPrefsService } from './ui-prefs-service.js';
+import { PomodoroService } from './pomodoro-service.js';
 
 export class ScheduleApp {
   constructor() {
@@ -88,6 +90,12 @@ export class ScheduleApp {
       repo: new UiPrefsRepository(this.adapter),
       eventBus: this.eventBus
     });
+
+    this.pomodoroService = new PomodoroService({
+      pomodoroRepo: new PomodoroRepository(this.adapter),
+      scheduleService: this.scheduleService,
+      eventBus: this.eventBus
+    });
   }
 
   bootstrap() {
@@ -100,10 +108,12 @@ export class ScheduleApp {
     this.scheduleService.load();
     this.ideaInboxService.load();
     this.milestoneService.load();
+    this.pomodoroService.load();
     this.ideaInboxService.subscribeToTaskCompletion();
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') this.persist();
+      else if (document.visibilityState === 'visible') this.pomodoroService.tick();
     });
   }
 
@@ -111,6 +121,7 @@ export class ScheduleApp {
     this.scheduleService.persist();
     this.ideaInboxService.persist();
     this.milestoneService.persist();
+    this.pomodoroService.persist();
   }
 }
 

@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { createDailyTask, createSubtask, normalizeSubtasks, splitTimeMentions } from './daily-task.js';
+import { createDailyTask, createSubtask, normalizeSubtasks, splitTimeMentions, cloneDailyTask } from './daily-task.js';
 
 describe('createDailyTask', () => {
-  it('defaults to an empty subtasks array', () => {
+  it('defaults to an empty subtasks array and zero pomodoros', () => {
     const task = createDailyTask('hello', new Date('2026-09-21'));
     expect(task.subtasks).toEqual([]);
+    expect(task.pomodoros).toBe(0);
   });
 
   it('normalizes provided subtasks', () => {
@@ -39,5 +40,15 @@ describe('createSubtask / normalizeSubtasks', () => {
   it('normalizeSubtasks returns [] for non-arrays', () => {
     expect(normalizeSubtasks(null)).toEqual([]);
     expect(normalizeSubtasks(undefined)).toEqual([]);
+  });
+});
+
+describe('cloneDailyTask', () => {
+  it('resets pomodoros to 0 for sync copies', () => {
+    const task = createDailyTask('x', new Date('2026-09-21'), { pomodoros: 3 });
+    expect(task.pomodoros).toBe(3);
+    const cloned = cloneDailyTask(task);
+    expect(cloned.pomodoros).toBe(0);
+    expect(cloned.id).toBe(task.id);
   });
 });

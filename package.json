@@ -8,9 +8,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "desktop": "tauri dev"
+    "desktop": "tauri dev",
+    "package:mac": "bash scripts/package-mac.sh"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.12.2",
     "@xyflow/react": "^12.11.6",
     "marked": "^18.0.14",
     "react": "^19.3.0",

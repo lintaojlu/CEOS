@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-append-agent-log"
+description = "Append one line to the developer agent log"
+commands.allow = ["append_agent_log"]

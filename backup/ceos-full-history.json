@@ -1,0 +1,5403 @@
+{
+  "schemaVersion": 2,
+  "recoveredAt": "2026-09-17T20:01:08.742Z",
+  "note": "Ideas and milestones are day-scoped under schedule[date]. No global ceoIdeas/ceoMilestones.",
+  "sources": [
+    {
+      "source": "Arc / file://",
+      "newDates": 39,
+      "tasks": 487,
+      "ideas": 24,
+      "milestones": 6
+    },
+    {
+      "source": "Arc / localhost:2233",
+      "newDates": 0,
+      "tasks": 1,
+      "ideas": 0,
+      "milestones": 0
+    },
+    {
+      "source": "Arc / localhost:8080",
+      "newDates": 1,
+      "tasks": 0,
+      "ideas": 0,
+      "milestones": 0
+    },
+    {
+      "source": "Dia / localhost:8765",
+      "newDates": 1,
+      "tasks": 11,
+      "ideas": 7,
+      "milestones": 2
+    }
+  ],
+  "dateRange": [
+    "2026-02-23",
+    "2026-10-03"
+  ],
+  "schedule": {
+    "2026-02-23": {
+      "required": [
+        {
+          "id": "1771879600219",
+          "text": "我试试",
+          "completed": false,
+          "time": 1771879600218,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [
+        "效率很高"
+      ],
+      "aiEval": "### 今日复盘与建议\n\n#### 1. 整体评估  \n今日整体状态积极但执行力不足，虽有系统完成作为亮点，但核心任务未推进，存在行动与计划脱节的问题。\n\n#### 2. 关键亮点  \n- **系统完成**：成功交付一项系统性任务，体现专注力与结果导向能力。  \n- **心态积极**：保持“心情不错”的状态，为复杂工作提供了情绪基础。  \n\n#### 3. 改进建议  \n- **优先级错位**：必做任务全天零完成，需警惕“用次要事务填充时间”的逃避倾向。建议明日首先用30分钟拆分必做任务的最小可执行单元。  \n- **记录薄弱**：灵感与想法栏空白，易流失潜在机会。建议随身记录工具（如语音备忘录），每日强制填写3条碎片灵感。  \n- **目标模糊**：任务描述缺乏具体内容（如“@ 03:26”），建议用动词+量化结果（例：“敲定XX合同初稿”）。  \n\n#### 4. 明日小行动  \n**晨间10分钟规划**：选择一项必做任务，设定【11:00前必须完成】的死线，并提前告知助理监督。  \n\n---  \n执行力是目标与结果之间的唯一桥梁，请立即锚定明日第一项必做任务的具体动作。"
+    },
+    "2026-02-24": {
+      "required": [
+        {
+          "id": "1771874828803",
+          "text": "@Jasper 推进awe的互动程序",
+          "completed": true,
+          "time": 1771874828803,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771907192693",
+          "text": "财务核算",
+          "completed": true,
+          "time": 1771907192693,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771907205627",
+          "text": "投融资进展推进",
+          "completed": true,
+          "time": 1771907205627,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "录音卡PRD",
+          "completed": false,
+          "time": 1771913820000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915159578",
+          "text": "备用金申请",
+          "completed": true,
+          "time": 1771915159578,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771919633524",
+          "text": "宝石、皮革定料",
+          "completed": false,
+          "time": 1771919580000,
+          "pinned": true,
+          "note": "宝石切割、皮料尽可能规整\n手机BU问信息",
+          "recurrence": ""
+        },
+        {
+          "id": "1771920981676",
+          "text": "许工汇报",
+          "completed": true,
+          "time": 1771920981676,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923010963",
+          "text": "ticnote测试（免费转写）",
+          "completed": false,
+          "time": 1771923010963,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923316366",
+          "text": "耿丽珊、于元简历评估-市场",
+          "completed": false,
+          "time": 1771923300000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771882338541",
+          "text": "姚-面试",
+          "completed": true,
+          "time": 1771929300000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915060694",
+          "text": "20:00直播",
+          "completed": false,
+          "time": 1771934400000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771874768384",
+          "text": "财务报销",
+          "completed": false,
+          "time": 1771874768384,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771907327541",
+          "text": "寄快递给sbo 学校注册",
+          "completed": false,
+          "time": 1771907327541,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771907418873",
+          "text": "贾维斯是什么我在做什么小红书笔记",
+          "completed": false,
+          "time": 1771907418873,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913764032",
+          "text": "马年kickoff",
+          "completed": false,
+          "time": 1771913764032,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913869642",
+          "text": "AI吊坠PRD",
+          "completed": false,
+          "time": 1771913869642,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同",
+          "completed": false,
+          "time": 1771915193745,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771874502923",
+          "text": "18:30瑜伽课",
+          "completed": false,
+          "time": 1771929000000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1771883396691",
+          "text": "尽快完成BP",
+          "note": "",
+          "createdAt": 1771883396691,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1771914734318",
+          "text": "招聘优先级：营销/社媒、HRBP、销售、财务BP",
+          "note": "",
+          "createdAt": 1771914734318,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1771923486206",
+          "text": "全年营销日历做起来！硅谷发布会和刘晶晶对接",
+          "note": "",
+          "createdAt": 1771923486206,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1771907418873",
+          "text": "贾维斯是什么我在做什么小红书笔记",
+          "note": "",
+          "createdAt": 1771907418873,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "createdAt": 1771923900000,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1771874502923",
+          "text": "18:30瑜伽课",
+          "note": "",
+          "createdAt": 1771929000000,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [
+        {
+          "id": "1771877472961",
+          "title": "产品ID完成",
+          "date": "2026-02-24",
+          "completed": false
+        }
+      ],
+      "reflection": "总结3点：\n- 要多在徐工面前晃，有事没事沟通\n- 投融资 1 号位非常关键，现在招\n- 直播做预售",
+      "reflectionTags": [
+        "心情不错"
+      ],
+      "aiEval": "1. 整体评估：\n今日任务完成率50%，心情状态不错但执行力有待提升，未完成事项中存在关键任务（如PRD和手机BU信息收集）。\n\n2. 关键亮点：\n√ 完成6项必做任务，保持基础执行力\n√ 保持积极心态（标注\"心情不错\"）\n√ 提炼出3条有价值的每日感悟（特别是投融资1号位的招聘意识）\n\n3. 改进建议：\n→ 优先级问题：两个未完成的关键任务（PRD和手机BU信息）应优先处理，建议使用\"吃青蛙法则\"早晨优先攻克\n→ 任务颗粒度：如\"宝石切割、皮料尽可能规整\"这类任务需拆解为可执行步骤（例：1.联系供应商A要规格表 2.对比三家样品）\n→ 时间黑洞：选做任务中混入行政事务（毕业采集通知），建议立即处理或委托助理\n→ 灵感管理：3条未记录灵感建议用语音速记（每条不超过30秒）\n\n4. 明日小行动：\n明早第一件事：用45分钟完成PRD的Version1框架（不追求完美），完成后立即发给相关人预约反馈时间。\n\n[行动提示] 现在可以立即：\n1. 设置明早PRD写作的日历提醒\n2. 将\"手机BU问信息\"拆解为3个具体动作\n3. 处理/委派毕业采集事项（耗时5分钟）"
+    },
+    "2026-02-25": {
+      "required": [
+        {
+          "id": "1771919633524",
+          "text": "宝石、皮革定料",
+          "completed": true,
+          "time": 1771919580000,
+          "pinned": true,
+          "note": "宝石切割、皮料尽可能规整\n手机BU问信息",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915060694",
+          "text": "20:00直播",
+          "completed": true,
+          "time": 1771934400000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771985094064",
+          "text": "推进朱雨桐hrbp入职",
+          "completed": true,
+          "time": 1771985040000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923010963",
+          "text": "ticnote测试（免费转写）",
+          "completed": true,
+          "time": 1772009400000,
+          "pinned": false,
+          "note": "功能可借鉴",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923316366",
+          "text": "耿丽珊、于元简历评估，不予录用",
+          "completed": true,
+          "time": 1772009700000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772040989295",
+          "text": "追觅新人入职SOP",
+          "completed": true,
+          "time": 1772040989295,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772043966006",
+          "text": "链接湖北基金，准备BP材料",
+          "completed": true,
+          "time": 1772043966006,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772044054984",
+          "text": "面试1个pr、2个hrbp 其中一人为一象限",
+          "completed": true,
+          "time": 1772044054984,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772044138988",
+          "text": "指定全指标高端化的策略，并且实现到硬件、软件、外观、服务和价格中",
+          "completed": true,
+          "time": 1772044138988,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772046668383",
+          "text": "和保险BU建联，探讨合作/采购机会",
+          "completed": true,
+          "time": 1772046668383,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771874768384",
+          "text": "财务报销",
+          "completed": false,
+          "time": 1771874768384,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771907327541",
+          "text": "寄快递给sbo 学校注册",
+          "completed": true,
+          "time": 1771907327541,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913764032",
+          "text": "马年kickoff",
+          "completed": true,
+          "time": 1771913764032,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "录音卡PRD",
+          "completed": false,
+          "time": 1771913820000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913869642",
+          "text": "AI吊坠PRD",
+          "completed": false,
+          "time": 1771913869642,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同",
+          "completed": false,
+          "time": 1771915193745,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986753094",
+          "text": "商标注册",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化脚本",
+          "completed": false,
+          "time": 1771988649768,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1771987297191",
+          "text": "vibe coding一时爽，一直用一直爽",
+          "note": "想到需求就提，提了就改，改了就用",
+          "createdAt": 1771987297191,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1771988564886",
+          "text": "海外隐私政策问题",
+          "note": "",
+          "createdAt": 1771988564886,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [
+        {
+          "id": "1771882654917",
+          "title": "PRD完成",
+          "date": "2026-02-25",
+          "completed": false
+        }
+      ],
+      "reflection": "《CEO的反思》\n\n今天精力主要投注于产品策略、团队搭建与外部合作，从凌晨到深夜，节奏紧凑，完成了所有必做任务，整体状态高效但略显紧绷。\n\n✅ **做得好的地方**\n- **策略与执行并重**：成功制定了“全指标高端化”的清晰策略，并已分解到具体模块，体现了战略到落地的快速闭环。\n- **团队建设有进展**：推进了关键HRBP入职，并完成了多场面试，为组织扩张打下基础。\n- **资源链接积极**：主动与湖北基金、保险BU建联，持续为业务开拓资金与合作伙伴。\n\n⚠️ **可以改进的地方**\n- **选做任务积压严重**：合同、PRD、报销等重要不紧急事务大量未完成（如鲸鱼合同、AI吊坠PRD），存在拖延风险。\n- **灵感未及时转化**：诸多有价值的想法（如招聘优先级、全年营销日历）仅停留在记录阶段，未安排下一步行动。\n- **自我管理被忽略**：瑜伽课未参加，毕业图像采集等重要个人事务也未处理，需平衡工作与生活。\n\n【明天的一个小承诺】\n明天将优先处理积压的“重要不紧急”任务，并为灵感设定具体下一步。\n- 🕒 **上午第一件事**：专注1.5小时，完成“录音卡PRD”的初版框架。\n- 📅 **日程化灵感**：将“招聘优先级”和“全年营销日历”想法，分别安排15分钟与产品、营销负责人快速同步，确定负责人。\n- 📸 **个人事务不拖延**：上午10点前，登录小程序完成毕业图像采集。",
+      "reflectionTags": [
+        "效率很高"
+      ],
+      "aiEval": "AI吊坠BU 2.24 日报\n\n左侧\n- 完成宝石、皮革等核心物料定料，明确宝石切割与皮料规整要求\n- 完成与手机BU的信息对接，确保供应链协同\n- 完成20:00直播任务\n- 完成ticnote产品功能测试，获取免费转写等功能的直接参考\n- 完成“全指标高端化策略”的制定，并已分解落实到硬件、软件、外观、服务及定价模块\n- 完成与保险BU的建联，初步探讨了潜在合作与采购机会\n- 推进团队组建，完成1名PR、2名HRBP的面试（其中1人来自一象限），完成耿丽珊、于元简历评估（不予录用），并推进朱雨桐HRBP的入职流程\n\n右侧\n- 链接湖北基金，已开始准备相关BP材料"
+    },
+    "2026-02-26": {
+      "required": [
+        {
+          "id": "1772097883427",
+          "text": "推进外壳材料采购",
+          "completed": true,
+          "time": 1772097883427,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772098704243",
+          "text": "推进 2 人入职，hrbp、国内营销",
+          "completed": true,
+          "time": 1772098704243,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772098797554",
+          "text": "推进AWE相关事项",
+          "completed": true,
+          "time": 1772098797554,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772098824739",
+          "text": "推进BP制作",
+          "completed": true,
+          "time": 1772098800000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772098820325",
+          "text": "推进产品手册制作",
+          "completed": true,
+          "time": 1772098800000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772116924944",
+          "text": "企业苹果开发者账号的异常处理",
+          "completed": true,
+          "time": 1772116920000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771874768384",
+          "text": "财务报销",
+          "completed": true,
+          "time": 1771874768384,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同",
+          "completed": false,
+          "time": 1771915193745,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986753094",
+          "text": "商标注册",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1772043996273",
+          "text": "皮料推进",
+          "note": "",
+          "createdAt": 1772043996273,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772044003020",
+          "text": "AWE资料推进",
+          "note": "",
+          "createdAt": 1772044003020,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "《CEO的反思》\n\n今天主要精力聚焦在核心业务的“推进”上，从供应链、招聘到市场活动，所有必做任务均已完成，执行力在线。但选做清单与灵感池大量积压，反映出在任务优先级与个人时间管理上存在明显张力。\n\n✅ **做得好的地方**\n- **高效闭环核心事务**：成功推进了关键的材料采购、人员入职及AWE筹备，确保了业务主线的进度。\n- **紧急问题响应迅速**：晚间处理企业开发者账号异常，体现了对技术基建问题的重视与及时行动力。\n\n⚠️ **可以改进的地方**\n- **陷入“推进”陷阱**：多项任务停留在“推进”状态，缺乏明确的下一步和完成标准（如BP、PRD），易导致进度模糊。\n- **重要不紧急事项被无限推迟**：合同、财务报销、商标等合规与行政基础工作被持续搁置，存在潜在风险。\n- **灵感未转化为行动**：诸多有价值的想法（如招聘优先级、营销日历）仅被记录，未分配资源或纳入计划，浪费了思考的动能。\n\n【明天的一个小承诺】\n明天将专注于“完成”而非“推进”，并为被忽略的领域腾出空间：\n🎯 **定义“完成”**：为“BP制作”任务明确下一具体交付物（如：完成初稿前3页）及截止时间。\n🕒 **封锁“基础时间”**：上午首小时，专注处理一项被拖延的选做任务（优先处理“鲸鱼合同”）。\n🧘 **个人日程优先**：将18:30的瑜伽课视为重要会议，准时参加，为身心充电。",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 2.26 日报\n\n左侧\n- 推进AWE展会相关事项，完成前期筹备与资源对接\n- 完成产品手册制作，用于后续渠道与营销展示\n- 完成企业苹果开发者账号异常处理，保障软件侧开发环境正常\n- 推进外壳材料采购，已与3家供应商完成初步询价与技术沟通\n- 推进团队组建，完成2人入职（HRBP、国内营销）\n\n右侧\n- 推进BP（商业计划书）制作，已完成初版框架与核心内容撰写"
+    },
+    "2026-02-27": {
+      "required": [
+        {
+          "id": "1772208682977",
+          "text": "小红书个人IP内容运营",
+          "completed": true,
+          "time": 1772122260000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986753094",
+          "text": "推进商标注册",
+          "completed": true,
+          "time": 1772159520000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772182484708",
+          "text": "制作月会初版PPT",
+          "completed": true,
+          "time": 1772182440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772208044137",
+          "text": "推进营销品牌人员入职",
+          "completed": true,
+          "time": 1772208044137,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772208229032",
+          "text": "制定AWE私域运营、曝光转化方案",
+          "completed": true,
+          "time": 1772208229032,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772208245554",
+          "text": "进行AI吊坠ID评审",
+          "completed": true,
+          "time": 1772208245554,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772208750785",
+          "text": "解决软件研发遇到的技术卡点",
+          "completed": true,
+          "time": 1772208750785,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1772195497938",
+          "text": "DreameClaw",
+          "note": "demo上线，小范围内测，上报许工拿资质，全面推广，收费",
+          "createdAt": 1772195460000,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772195530109",
+          "text": "CEOS的SKill用OpenClaw管理闭环",
+          "note": "",
+          "createdAt": 1772195530109,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 2.26 日报\n\n左侧\n- 完成小红书个人IP内容的日常运营与发布\n- 推进产品商标注册事项，已提交相关申请材料\n- 完成3月月度会议初版PPT的制作\n- 推进营销品牌岗位招聘，1名候选人已确认入职意向\n- 制定完成AWE展会期间的私域运营及曝光转化初步方案\n- 完成AI吊坠ID设计内部评审，确定最终方向\n- 解决一项软件研发中的关键技术卡点，保障开发进度\n- 推进团队组建，营销品牌岗位1人确认入职意向\n\n右侧\n- 暂无进展"
+    },
+    "2026-02-28": {
+      "required": [
+        {
+          "id": "1772210250926",
+          "text": "完成月会材料",
+          "completed": false,
+          "time": 1772210220000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210786285",
+          "text": "解决苹果开发者账号的问题",
+          "completed": true,
+          "time": 1772210786285,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": true,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772248979791",
+          "text": "完成AWE引导人员面试招募",
+          "completed": true,
+          "time": 1772248920000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772251282750",
+          "text": "面试1名市场营销，能力强，执行力强，有创业背景，通过",
+          "completed": true,
+          "time": 1772251282750,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772271419409",
+          "text": "完成招聘JD海报的制作",
+          "completed": true,
+          "time": 1772271419409,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772289389571",
+          "text": "出差深圳与供应商沟通，外观比较、合同详谈",
+          "completed": true,
+          "time": 1772289360000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": false,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 2.28 日报\n\n左侧\n- 完成苹果开发者账号问题解决，为后续应用上架扫清关键障碍。\n- 完成AWE展会引导人员的面试招募工作，确保现场服务支持。\n- 面试1名市场营销候选人，能力与执行力突出且有创业背景，已通过。\n- 完成招聘JD海报的制作，用于多渠道发布以吸引人才。\n- 出差深圳完成与供应商的沟通，进行了外观细节比较与合同条款详谈。\n- 推进团队组建，今日面试通过1名市场营销候选人，并完成招聘海报制作。\n\n右侧\n- 暂无进展"
+    },
+    "2026-03-01": {
+      "required": [
+        {
+          "id": "1772210250926",
+          "text": "完成月会材料",
+          "completed": false,
+          "time": 1772210220000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772335871660",
+          "text": "完成BP文字",
+          "completed": false,
+          "time": 1772335860000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772335912900",
+          "text": "招聘",
+          "completed": false,
+          "time": 1772335860000,
+          "pinned": false,
+          "note": "财务bp、投融资boss发一发；hrbp推进入职；模特招募；改小黑简历；gtm",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": false,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772336182887",
+          "text": "租房签约",
+          "completed": false,
+          "time": 1772336182887,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337769358",
+          "text": "报销单发票等整理",
+          "completed": false,
+          "time": 1772337769358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1772335704923",
+          "text": "成为高能量人群的三个秘诀",
+          "note": "早晨1小时无信息干扰活动；不吃晚饭；睡前碳水；早睡早起",
+          "createdAt": 1772335704923,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772335773626",
+          "text": "公司管理制度",
+          "note": "1. OKR\n2. 邹忌月会，关灯、指出问题、AI统计发奖金",
+          "createdAt": 1772335773626,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772335881691",
+          "text": "每日最重要的三件事",
+          "note": "",
+          "createdAt": 1772335881691,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [
+        {
+          "id": "1771877368621",
+          "title": "团队基建完成(HR、财务、营销)",
+          "date": "2026-03-01",
+          "completed": false
+        }
+      ],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-02": {
+      "required": [
+        {
+          "id": "1772210250926",
+          "text": "完成月会材料",
+          "completed": false,
+          "time": 1772210220000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772335871660",
+          "text": "完成BP文字",
+          "completed": false,
+          "time": 1772335860000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772335912900",
+          "text": "招聘",
+          "completed": false,
+          "time": 1772335860000,
+          "pinned": false,
+          "note": "财务bp、投融资boss发一发；hrbp推进入职；模特招募；改小黑简历；gtm",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": false,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772336182887",
+          "text": "租房签约",
+          "completed": false,
+          "time": 1772336182887,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337769358",
+          "text": "报销单发票等整理",
+          "completed": false,
+          "time": 1772337769358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-03": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772210250926",
+          "text": "准备月会汇报",
+          "completed": true,
+          "time": 1772469420000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772562364931",
+          "text": "产品ID评审，推进供应商生产",
+          "completed": true,
+          "time": 1772562364931,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772562882056",
+          "text": "上周已完成DreameClaw的自部署，目前正在进行内测",
+          "completed": true,
+          "time": 1772562882056,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772562925755",
+          "text": "AWE后续传播规划",
+          "completed": true,
+          "time": 1772562925755,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772562997706",
+          "text": "对接硅谷发布会资源",
+          "completed": true,
+          "time": 1772562997706,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772563068267",
+          "text": "推进HRBP入职",
+          "completed": true,
+          "time": 1772563068267,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": false,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772336182887",
+          "text": "租房签约",
+          "completed": false,
+          "time": 1772336182887,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337769358",
+          "text": "报销单发票等整理",
+          "completed": false,
+          "time": 1772337769358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.3 日报\n\n左侧\n- 完成本月度业务汇报材料的准备，用于团队月会同步\n- 完成产品ID设计评审，并已推进至供应商端，启动生产流程\n- 完成DreameClaw功能的自部署，目前正在组织内部测试\n- 完成AWE展会后的品牌传播策略规划\n- 完成与硅谷发布会相关资源的初步对接与沟通\n- 推进团队组建，HRBP岗位已完成入职流程\n\n右侧\n- 暂无进展"
+    },
+    "2026-03-04": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772641120725",
+          "text": "面试3名财务BP，推进招募",
+          "completed": true,
+          "time": 1772554680000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599409217",
+          "text": "DreameClaw BP：内宣",
+          "completed": false,
+          "time": 1772599380000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599439009",
+          "text": "AWE展会邀请，bu已完成对120名投资人、企业家、教授、KOL及媒体的邀约",
+          "completed": true,
+          "time": 1772599380000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599444515",
+          "text": "月会材料细化",
+          "completed": true,
+          "time": 1772599440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": false,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772336182887",
+          "text": "租房签约",
+          "completed": false,
+          "time": 1772336182887,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337769358",
+          "text": "报销单发票等整理",
+          "completed": false,
+          "time": 1772337769358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.4 日报\n\n左侧\n- 完成AWE展会嘉宾邀约，已成功邀请120名投资人、企业家、教授、KOL及媒体\n- 完成3月份月度会议材料的细化与准备\n- 推进团队组建，今日完成3名财务BP岗位的面试\n\n右侧\n- 暂无进展"
+    },
+    "2026-03-05": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599409217",
+          "text": "DreameClaw BP：内宣",
+          "completed": false,
+          "time": 1772599380000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772752912673",
+          "text": "吊坠外观确认",
+          "completed": true,
+          "time": 1772666460000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772753195783",
+          "text": "推进AWE展会宣发、公益支持、布展事项",
+          "completed": true,
+          "time": 1772666760000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772752863183",
+          "text": "推进HRBP入职",
+          "completed": true,
+          "time": 1772752863183,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772753036950",
+          "text": "推进华润战投外部融资",
+          "completed": true,
+          "time": 1772753036950,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772753129597",
+          "text": "准备无锡募资讲解",
+          "completed": true,
+          "time": 1772753129597,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": false,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": false,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": false,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": false,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772336182887",
+          "text": "租房签约",
+          "completed": false,
+          "time": 1772336182887,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337769358",
+          "text": "报销单发票等整理",
+          "completed": false,
+          "time": 1772337769358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "note": "话题+自我介绍；ddl周五\n",
+          "createdAt": 1772697473038,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "note": "",
+          "createdAt": 1772697844076,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "note": "",
+          "createdAt": 1772716228680,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [
+        {
+          "id": "1772122556607",
+          "title": "产品落地",
+          "date": "2026-03-05",
+          "completed": false
+        }
+      ],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.5 日报\n\n左侧\n- 完成AI吊坠外观设计确认，进入下一阶段\n- 推进AWE展会相关事项，包括宣发、公益支持及现场布展规划\n- 推进团队组建，HRBP岗位已完成入职\n\n右侧\n- 推进与华润战投的外部融资事项，已递交相关材料\n- 完成无锡募资路演讲解材料的准备"
+    },
+    "2026-03-06": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599409217",
+          "text": "DreameClaw BP：内宣",
+          "completed": false,
+          "time": 1772599380000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771915224265",
+          "text": "万有一合合同",
+          "completed": true,
+          "time": 1771915224265,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771988649768",
+          "text": "打卡自动化处理脚本",
+          "completed": true,
+          "time": 1772075040000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": false,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1771915193745",
+          "text": "鲸鱼合同重新拟定",
+          "completed": true,
+          "time": 1772174340000,
+          "pinned": true,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772210208592",
+          "text": "推进商标注册",
+          "completed": true,
+          "time": 1772210208592,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772336182887",
+          "text": "租房签约",
+          "completed": true,
+          "time": 1772336182887,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337769358",
+          "text": "报销单发票等整理",
+          "completed": true,
+          "time": 1772337769358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1772770271199",
+          "text": "恶补投融资知识",
+          "note": "",
+          "createdAt": 1772770271199,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1772781438351",
+          "text": "小红书笔记：OpenClaw最大的想象力在于机器调度机器",
+          "note": "",
+          "createdAt": 1772781438351,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-07": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772599409217",
+          "text": "DreameClaw BP：内宣",
+          "completed": true,
+          "time": 1772599380000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771913863251",
+          "text": "SKU2的PRD",
+          "completed": true,
+          "time": 1772086620000,
+          "pinned": true,
+          "note": "需要完整PRD\n分两个version",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-08": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1772942355891",
+          "text": "众筹公司合作，开始推进",
+          "note": "",
+          "createdAt": 1772942355891,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-09": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158516423",
+          "text": "右侧：内部基金路演",
+          "completed": true,
+          "time": 1772985660000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021914902",
+          "text": "培训手册",
+          "completed": true,
+          "time": 1773021914902,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773043110644",
+          "text": "与保险BU进一步洽谈合作模式",
+          "completed": true,
+          "time": 1773043110644,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773074613206",
+          "text": "鲸鱼合同闭环",
+          "completed": true,
+          "time": 1773074613206,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158565505",
+          "text": "AWE内部培训",
+          "completed": true,
+          "time": 1773158565505,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158580507",
+          "text": "费用测算，定价",
+          "completed": true,
+          "time": 1773158580506,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158646461",
+          "text": "清华系天空工场早期成员访谈策划",
+          "completed": true,
+          "time": 1773158646461,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158777919",
+          "text": "推进一名HRBP的内部活水",
+          "completed": true,
+          "time": 1773158777919,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158796175",
+          "text": "AWE期间公益项目策划",
+          "completed": true,
+          "time": 1773158796175,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773158876322",
+          "text": "咨询海外agency公司，确定众筹周期、价格、服务，确定独立站打法",
+          "completed": true,
+          "time": 1773158876322,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.9 日报\n\n左侧\n- 完成内部基金路演，向内部投资方同步了项目进展与规划\n- 完成产品培训手册初版，为后续市场与销售团队提供标准材料\n- 与保险BU完成新一轮合作洽谈，明确了初步的合作模式与接口\n- 完成与“鲸鱼”合作方的合同签署，实现关键合作闭环\n- 完成AWE展会相关的内部培训，确保团队熟悉展会流程与话术\n- 完成产品初步费用测算与定价方案，为后续商业决策提供依据\n- 完成对清华系天空工场早期成员的访谈策划，预计下周执行\n- 完成AWE期间公益项目的初步策划案\n- 咨询并确定了海外众筹agency，明确了众筹周期、价格与服务内容，确定了独立站运营打法\n- 推进团队组建，完成1名HRBP的内部活水流程\n\n右侧\n- 暂无进展"
+    },
+    "2026-03-10": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-11": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-12": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [
+        {
+          "id": "1771874566529",
+          "title": "AWE展会",
+          "date": "2026-03-12",
+          "completed": false
+        }
+      ],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-13": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-14": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1773498419391",
+          "text": "追觅品牌9类申请",
+          "completed": false,
+          "time": 1773498419390,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-15": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1773498419391",
+          "text": "追觅品牌9类申请",
+          "completed": false,
+          "time": 1773498419390,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [
+        {
+          "id": "1771882503865",
+          "title": "融资上会",
+          "date": "2026-03-15",
+          "completed": false
+        }
+      ],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-16": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": false,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": false,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": false,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": false,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021140068",
+          "text": "AI分享",
+          "completed": false,
+          "time": 1773021140068,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773637723988",
+          "text": "晚上7点和john请教，先整理好问题",
+          "completed": false,
+          "time": 1773615600000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773637778311",
+          "text": "产品排期规划",
+          "completed": false,
+          "time": 1773637778311,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773652916736",
+          "text": "魔搭资料",
+          "completed": false,
+          "time": 1773652916736,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1773498419391",
+          "text": "追觅品牌9类申请",
+          "completed": false,
+          "time": 1773498419390,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-17": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772599373736",
+          "text": "融资",
+          "completed": true,
+          "time": 1772599320000,
+          "pinned": false,
+          "note": "追觅首个美元基金预计会在3月份落地，整体盘800万美金+800万美金（追觅出\n资）；\n四号割草、厨电、泳池已经在准备材料申请投放了，请一号各BG抓紧推进相关\nBU申请，资源有限，需要抓紧申请；\n愛係\n具体可以联系美金基金负责人毛日宏，也可以把需求反馈给我集中和他申请",
+          "recurrence": ""
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772641541403",
+          "text": "DreameClaw经验分享",
+          "completed": true,
+          "time": 1772641541403,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772716228680",
+          "text": "南通募资，基金落在哪个BU，分担落产线的压力",
+          "completed": true,
+          "time": 1772716228680,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772905706549",
+          "text": "AWE物料准备",
+          "completed": true,
+          "time": 1772905680000,
+          "pinned": false,
+          "note": "1. 展册、台签\n2. 互动程序\n3. 培训手册\n4. 产品\n5. 礼品\n5. 着装、酒店、嘉宾酒店和专车\n6. VIP名单填写",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773637723988",
+          "text": "晚上7点和john请教，先整理好问题",
+          "completed": true,
+          "time": 1773615600000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773637778311",
+          "text": "产品排期规划",
+          "completed": false,
+          "time": 1773637778311,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773824686245",
+          "text": "实现定价策略",
+          "completed": true,
+          "time": 1773738240000,
+          "pinned": false,
+          "note": "对标plaud制定国内外定价",
+          "recurrence": ""
+        },
+        {
+          "id": "1773824678288",
+          "text": "拉通产品时间线",
+          "completed": true,
+          "time": 1773738240000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773824665983",
+          "text": "准备将产品上海科技与产业经贸局的展厅",
+          "completed": true,
+          "time": 1773738240000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773824744495",
+          "text": "推进认证",
+          "completed": true,
+          "time": 1773738300000,
+          "pinned": false,
+          "note": "制定国内外认证计划",
+          "recurrence": ""
+        },
+        {
+          "id": "1773652916736",
+          "text": "魔搭资料",
+          "completed": true,
+          "time": 1773739260000,
+          "pinned": false,
+          "note": "确定魔搭论坛行程，准备演讲材料",
+          "recurrence": ""
+        },
+        {
+          "id": "1773826416323",
+          "text": "推进香港主体注册",
+          "completed": true,
+          "time": 1773826416323,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1773498419391",
+          "text": "追觅品牌9类申请",
+          "completed": false,
+          "time": 1773498419390,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.17 日报\n\n左侧\n- 完成AWE展会物料清单制定，涵盖展册、互动程序、培训手册、产品、礼品等6大项\n- 完成产品国内外定价策略制定，明确对标Plaud\n- 完成产品整体开发时间线的拉通与对齐\n- 推进产品认证计划，已制定国内外认证方案\n- 推进魔搭社区论坛行程，已确定行程并开始准备演讲材料\n- 推进香港公司主体注册事宜\n- 完成向DreameClaw团队的经验请教与学习\n- 团队组建方面，推进产品上海科技与产业经贸局的展厅入驻准备\n\n右侧\n- 推进南通募资事项，明确基金归属以分担产线压力\n- 明确首个美元基金（规模800万美金+800万美金）预计3月落地，已同步各BG申请流程与对接人"
+    },
+    "2026-03-18": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021093835",
+          "text": "AWE嘉宾确定",
+          "completed": false,
+          "time": 1773021093835,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773637778311",
+          "text": "产品排期规划",
+          "completed": false,
+          "time": 1773637778311,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": false,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": false,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1773498419391",
+          "text": "追觅品牌9类申请",
+          "completed": false,
+          "time": 1773498419390,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1773797711247",
+          "text": "现在的AI，他只记住了0.1个我",
+          "note": "1. 他知道我在做AI吊坠，但他不知道我这些天和团队迭代的产品定义；他只是记住了我让他记住的，非常被动。\n2. ",
+          "createdAt": 1773797711247,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-19": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697473038",
+          "text": "南京AI硬件展出席分享！",
+          "completed": false,
+          "time": 1772697473038,
+          "pinned": false,
+          "note": "话题+自我介绍；ddl周五\n",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京论坛分享主题",
+          "completed": false,
+          "time": 1773021906358,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773881875730",
+          "text": "与新微资本、湖北基金（光谷）建联，路演",
+          "completed": true,
+          "time": 1773881820000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773888102753",
+          "text": "天空工场创投拟投推荐表",
+          "completed": false,
+          "time": 1773888060000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773900654434",
+          "text": "汽车配件bu首次建联，探索合作可能",
+          "completed": true,
+          "time": 1773900600000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773900661085",
+          "text": "供应商资源整合，直播销售平台搭建",
+          "completed": true,
+          "time": 1773900660000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773900666634",
+          "text": "推进pr顾问入职",
+          "completed": true,
+          "time": 1773900660000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773913014412",
+          "text": "推进销售渠道建立",
+          "completed": true,
+          "time": 1773913014412,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773925510269",
+          "text": "更新BP",
+          "completed": true,
+          "time": 1773925510269,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        },
+        {
+          "id": "1771986720046",
+          "text": "国内追觅品牌授权",
+          "completed": true,
+          "time": 1771986720000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772337598854",
+          "text": "录音芯片功耗对比",
+          "completed": true,
+          "time": 1772337540000,
+          "pinned": false,
+          "note": "艾聆科技产品解锁试用；鲸鱼确定功耗计算方式以及方案功耗",
+          "recurrence": ""
+        },
+        {
+          "id": "1773498419391",
+          "text": "推进子品牌美国、欧盟注册",
+          "completed": true,
+          "time": 1773930360000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1773912291294",
+          "text": "找教授当顾问",
+          "note": "",
+          "createdAt": 1773912291294,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.19 日报\n\n左侧\n- 与新微资本、湖北光谷基金完成建联并进行了路演\n- 与汽车配件BU完成首次建联，开始探索潜在合作机会\n- 完成供应商资源整合，并搭建起直播销售平台\n- 推进PR顾问入职流程，预计近期完成\n- 推进销售渠道建立，已与多家潜在渠道方接洽\n- 完成商业计划书（BP）的更新与优化\n- 完成追觅品牌国内授权事宜\n- 完成录音芯片功耗对比分析（完成艾聆科技产品解锁试用，鲸鱼方案已确定功耗计算方式及具体功耗值）\n- 推进子品牌在美国及欧盟的商标注册流程\n- 团队组建：推进PR顾问入职流程\n\n右侧\n- 暂无进展"
+    },
+    "2026-03-20": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021906358",
+          "text": "南京AI硬件论坛准备",
+          "completed": true,
+          "time": 1773972300000,
+          "pinned": false,
+          "note": "准备圆桌论坛、20分钟演讲、直播，同时争取产品露出权益，左侧右侧并行",
+          "recurrence": ""
+        },
+        {
+          "id": "1773888102753",
+          "text": "申请天空工场创投拟投推荐",
+          "completed": true,
+          "time": 1773974460000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774070448041",
+          "text": "推进招聘，构建Agent招聘工作流，批量筛选人才，通过该方式已推进 3 人面试（第一象限产品、海外营销）",
+          "completed": true,
+          "time": 1773984000000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774070248164",
+          "text": "推进销售渠道落地，对接北京若干家直播带货公司、渠道经销商等，推进采购意向确定",
+          "completed": true,
+          "time": 1774070248164,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774070278761",
+          "text": "推进清华江教授、吴教授成为公司顾问",
+          "completed": true,
+          "time": 1774070278761,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774070488681",
+          "text": "推进武汉新基金的拟投和上会",
+          "completed": true,
+          "time": 1774070488681,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774070519726",
+          "text": "拆解全年营收目标，制定营销和产品战略",
+          "completed": true,
+          "time": 1774070519726,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1773991359110",
+          "text": "拆解何同学的视频脚本",
+          "note": "",
+          "createdAt": 1773991359109,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.20 日报\n\n左侧\n- 完成南京AI硬件论坛准备工作，包括圆桌论坛、20分钟演讲及直播内容，并争取到产品露出权益\n- 推进销售渠道落地，对接北京多家直播带货公司及渠道经销商，并已推进采购意向确定\n- 拆解全年营收目标，完成年度营销与产品战略的制定\n- 推进清华江教授、吴教授签约成为公司顾问事项\n- 推进招聘工作，构建Agent招聘工作流以批量筛选人才，并已通过此方式推进3人面试（方向：第一象限产品、海外营销）\n\n右侧\n- 申请天空工场创投的拟投推荐\n- 推进武汉新基金的拟投与上会流程"
+    },
+    "2026-03-21": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-22": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-23": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-24": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-25": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-26": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-27": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1772697844076",
+          "text": "全球创新创业大赛项目邀请：清华xlab宣传，bp准备",
+          "completed": false,
+          "time": 1772697844076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-28": {
+      "required": [
+        {
+          "id": "1772252161316",
+          "text": "每日BU数据填报",
+          "completed": false,
+          "time": 1772244000000,
+          "pinned": true,
+          "note": "",
+          "recurrence": "daily"
+        },
+        {
+          "id": "1772608487393",
+          "text": "经费明细清单：要支付的款项的明细 手头有多少多少订单",
+          "completed": false,
+          "time": 1772608440000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773021081702",
+          "text": "专利申请文件提交",
+          "completed": false,
+          "time": 1773021081702,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773058003346",
+          "text": "给手机bu、保险bu、窝窝找房bu、展台（王琦）",
+          "completed": false,
+          "time": 1773058003346,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1773638194861",
+          "text": "清华xlab合作汇报方案",
+          "completed": false,
+          "time": 1773638194861,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1771923486206",
+          "text": "全年营销日历做起来！",
+          "completed": true,
+          "time": 1774688280000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705706243",
+          "text": "推进两名清华技术同学入职，同时在学习中更新学术和产业认知",
+          "completed": true,
+          "time": 1774705706243,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705718927",
+          "text": "阿里云直播分享，达成80w观看人次，正在进行后续切片传播以提升转化",
+          "completed": true,
+          "time": 1774705718927,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705842605",
+          "text": "中国区渠道对接，达成50w意向锁单",
+          "completed": true,
+          "time": 1774705842605,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705905875",
+          "text": "重新进行战略梳理，确定产品优先级和人力投入方式",
+          "completed": true,
+          "time": 1774705905875,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705912572",
+          "text": "阿里云直播分享，达成80w观看人次，正在进行后续切片传播以提升转化",
+          "completed": true,
+          "time": 1774705912572,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705930672",
+          "text": "推进两名清华技术同学入职，同时更新学术和技术认知",
+          "completed": true,
+          "time": 1774705930672,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705956892",
+          "text": "参加深圳湾科技圆桌，达成产品露出，链接了10个投资人和20个产业方",
+          "completed": true,
+          "time": 1774705956892,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705966837",
+          "text": "确定与清华计算机系江勇教授达成顾问合作",
+          "completed": true,
+          "time": 1774705966837,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774705975811",
+          "text": "推进硅谷发布会事项，办理签证",
+          "completed": true,
+          "time": 1774705975811,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774706031057",
+          "text": "制定完整的gtm策略，包含完整的对内对外两套话术",
+          "completed": true,
+          "time": 1774706031057,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1774706133196",
+          "text": "进行looki、nuna竞品深度体验",
+          "completed": true,
+          "time": 1774706100000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1771923944345",
+          "text": "毕业图像采集",
+          "completed": false,
+          "time": 1771923900000,
+          "pinned": false,
+          "note": "关于2026年6月预计毕（结）业研究生毕业图像采集工作的通知\n见院info通知：https://portal-info.sigs.tsinghua.edu.cn/2026/0224/c4408a289332/page.psp\n\n摘录部分通知内容，完整版详见链接。\n\n二、采集方式\n可在以下2种采集方式中任选其一进行。深圳校区线下组织校内集中拍摄的通知将另行发布。\n1、指定微信小程序线上采集\n于2月25日0点至4月19日24点，通过微信小程序“高校图像信息采集”登录中国图片社线上采集端口，完成手机原生相机实时采集。操作流程参考附件3-1。上传过程中学校“特征码”为：hsca6k\n2、中国图片社线下门店采集（在北京同学可选）\n于4月17日（含）前，周一至周五9:00-16:00（周末及节假日不开门），自行前往中国图片社指定门店拍照。清华大学唯一指定门店地址为：中国图片社北京分社，北京市宣外大街甲1号环球财讯中心Ａ座1层（宣武门十字路口西南角黑色大厦）。中国图片社北京分社的门店电话：63076145（无需预约）。其余分社均不为清华大学合作单位！如因个人原因未在指定门店拍摄而导致照片不符合清华统一版式及防伪要求的，视为无效照片，后果自行承担。\n参与线下门店采集的同学，拍摄过程中也须出示学信网“图像采集码”给门店摄影师。此外，请注意门店拍摄后无须自行领取冲印的照片，中国图片社北京分社直接与学校对接照片制作。",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": "AI吊坠BU 3.28 日报\n\n左侧\n- 完成全年营销日历制定，明确全年营销节奏与关键节点\n- 完成与清华计算机系江勇教授的顾问合作签约，确定其为团队顾问\n- 完成中国区渠道初步对接，达成50万元人民币的意向订单锁单\n- 完成阿里云直播分享，实现单场80万观看人次，并启动后续视频切片制作以提升转化\n- 完成产品GTM（Go-To-Market）完整策略制定，包含对内对外两套标准化沟通话术\n- 完成对Looki、Nuna两款竞品的深度体验与分析报告\n- 参加深圳湾科技圆桌会议，实现产品露出，并成功链接10位投资人及20家产业合作伙伴\n- 重新完成战略梳理工作，明确未来产品优先级与核心人力投入方向\n- 推进硅谷发布会筹备，已完成核心团队成员签证办理\n- 推进团队组建，完成两名清华技术背景同学的入职流程\n\n右侧\n- 暂无进展"
+    },
+    "2026-03-29": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-30": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-03-31": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-04-01": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-04-02": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-08-04": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-09-16": {
+      "required": [
+        {
+          "id": "1789540310076",
+          "text": "文章：习惯并行驾驶是ai时代的要求",
+          "completed": false,
+          "time": 1789540310076,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541036696",
+          "text": "esp-ai车载机器人",
+          "completed": false,
+          "time": 1789541036696,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541070661",
+          "text": "个人网站搭建（先打出来再说）",
+          "completed": false,
+          "time": 1789541070661,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541079684",
+          "text": "contextme",
+          "completed": false,
+          "time": 1789541079684,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541132344",
+          "text": "文章：deepseek反思-ai与屎山",
+          "completed": false,
+          "time": 1789541100000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541174127",
+          "text": "文章：workbuddy负责人如此傲慢？",
+          "completed": false,
+          "time": 1789541160000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789542455091",
+          "text": "Kimi投递（线性关系到“【高优】个人3d网站”这条）",
+          "completed": false,
+          "time": 1789542455091,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789542506231",
+          "text": "【腾讯】优化八字排盘fc专属system prompt（sp）",
+          "completed": false,
+          "time": 1789542506231,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "optional": [
+        {
+          "id": "1789541121892",
+          "text": "完成ceos的重新上线（利用拓扑进行管理）（任务有前驱和后继，执行时需要拓扑排序）（有些任务也可以复制成prompt直接给agent）",
+          "completed": false,
+          "time": 1789541100000,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541528098",
+          "text": "研究opc系统",
+          "completed": false,
+          "time": 1789541528098,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        },
+        {
+          "id": "1789541887690",
+          "text": "Ai-native的工作环境构建（出一个文档）",
+          "completed": false,
+          "time": 1789541887690,
+          "pinned": false,
+          "note": "",
+          "recurrence": ""
+        }
+      ],
+      "ideas": [
+        {
+          "id": "1789540331957",
+          "text": "ceos",
+          "note": "",
+          "createdAt": 1789540331957,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1789540814086",
+          "text": "深圳住房补贴",
+          "note": "",
+          "createdAt": 1789540814086,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1789541056676",
+          "text": "当ceos足够了解你时，应该主动给你推任务",
+          "note": "",
+          "createdAt": 1789541056676,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1789541190933",
+          "text": "写作内容创作的AI工具",
+          "note": "我想构建一个 AI-native 的写作界面，方便用户快速、高质量地完成写作内容。目前想到需要以下几个部分（可能还不全）：\n\n1. 知识输入部分：看到公众号文章、链接等可以直接粘贴进来，内容自动转化为 context\n2. 灵感输出窗口：有了 context 后，AI 不需要等用户提问，而是主动建议该怎么写\n3. 写作目标 / 既定大纲：把具体要求和组织好的大纲填在里面，方便和 AI 对齐本次协作的范式，更好协同完成任务\n4. Markdown 协作框：方便快速打字输入，AI 生成的文字也直接在这里呈现\n5. 辅助与生成工具：\n(a) 方便的联网搜索（搜插图、视频等来丰富内容）\n(b) 集成生图工具（快速制作封面）\n6. 记忆功能：记住每次写过的内容，熟悉用户的文笔、文风和表达方式\n7. AI 对话窗口：随时沟通调整，告知哪里写得不对、需要记住哪些事情",
+          "createdAt": 1789541190933,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1789541225883",
+          "text": "攀岩app 先pgc 再ugc 再aigc",
+          "note": "",
+          "createdAt": 1789541225883,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1789541396809",
+          "text": "文章：社会化第一步：但是第一步都是我能给别人带来什么价值，才是我想获得什么",
+          "note": "",
+          "createdAt": 1789541396809,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        },
+        {
+          "id": "1789541817185",
+          "text": "skill：定期的架构级项目优化、实时的屎山检查",
+          "note": "",
+          "createdAt": 1789541817185,
+          "dueDate": null,
+          "dependsOn": [],
+          "completed": false,
+          "pinned": false,
+          "position": null
+        }
+      ],
+      "milestones": [],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-09-21": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [
+        {
+          "id": "1789541654090",
+          "title": "八字排盘工具上线",
+          "date": "2026-09-21",
+          "completed": false
+        }
+      ],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    },
+    "2026-10-03": {
+      "required": [],
+      "optional": [],
+      "ideas": [],
+      "milestones": [
+        {
+          "id": "1789541703659",
+          "title": "工资日，下一步决策（要什么差什么怎么做）",
+          "date": "2026-10-03",
+          "completed": false
+        }
+      ],
+      "reflection": "",
+      "reflectionTags": [],
+      "aiEval": ""
+    }
+  }
+}

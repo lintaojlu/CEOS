@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { LocalStorageAdapter } from '../storage/local-storage-adapter.js';
 import { ScheduleRepository } from '../storage/schedule-repository.js';
 import { IdeaRepository } from '../storage/idea-repository.js';
-import { migrateV0ToV1, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4 } from './migrations.js';
-import { WorkspaceRepository } from '../storage/workspace-repository.js';
+import { migrateV0ToV1, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5 } from './migrations.js';
+import { TAG_PALETTE } from '../../domain/schedule/tag-palette.js';
 
 function memAdapter(seed = {}) {
   const store = { ...seed };
@@ -97,7 +97,7 @@ describe('migrations', () => {
       ceoSchemaVersion: '2'
     });
     migrateV2ToV3(adapter);
-    const workspace = new WorkspaceRepository(adapter).load();
+    const workspace = adapter.getJson('ceoWorkspace', {});
     const schedule = adapter.getJson('ceoSchedule', {});
     expect(workspace.ideas.some((n) => n.id === 'i1')).toBe(true);
     expect(workspace.milestones.some((m) => m.id === 'm1')).toBe(true);
@@ -138,12 +138,12 @@ describe('migrations', () => {
       ceoSchemaVersion: '2'
     });
     migrateV2ToV3(adapter);
-    const workspace = new WorkspaceRepository(adapter).load();
+    const workspace = adapter.getJson('ceoWorkspace', {});
     const schedule = adapter.getJson('ceoSchedule', {});
     expect(workspace.projects).toHaveLength(1);
     expect(workspace.projects[0].id).toBe('p1');
     expect(workspace.projects[0].tasks.map((t) => t.id)).toEqual(['t1', 't2', 't3']);
-    expect(schedule['2026-09-18'].required[0].projectId).toBe('p1');
+    expect(schedule['2026-09-18'].required[0].tagIds).toEqual(['p1']);
   });
 
   it('v3→v4 merges duplicate project names and rewrites daily project ids', () => {
@@ -181,7 +181,7 @@ describe('migrations', () => {
       })
     });
     migrateV3ToV4(adapter);
-    const workspace = new WorkspaceRepository(adapter).load();
+    const workspace = adapter.getJson('ceoWorkspace', {});
     const schedule = adapter.getJson('ceoSchedule', {});
     expect(workspace.projects).toHaveLength(1);
     expect(workspace.projects[0].name).toBe('垂搜知识图谱');
@@ -190,5 +190,78 @@ describe('migrations', () => {
     expect(workspace.projects[0].tasks[0].subtasks[0].completed).toBe(true);
     expect(schedule['2026-09-18'].required[0].projectId).toBe('p1');
     expect(adapter.getSchemaVersion()).toBe(4);
+  });
+
+  it('v4→v5 turns projects into tags and places orphan tasks on today', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-09T12:00:00'));
+    const adapter = memAdapter({
+      ceoSchemaVersion: '4',
+      ceoWorkspace: JSON.stringify({
+        ideas: [{ id: 'i1', text: '灵感' }],
+        milestones: [],
+        projects: [
+          {
+            id: 'p1',
+            name: '攀岩项目',
+            tasks: [
+              { id: 't-day', text: '已在当天', completed: false },
+              { id: 't-orphan', text: '实现ai', completed: false, note: '只在项目里' }
+            ]
+          },
+          { id: 'p2', name: 'ceos', tasks: [] }
+        ]
+      }),
+      ceoSchedule: JSON.stringify({
+        '2026-10-08': {
+          required: [{ id: 't-day', text: '已在当天', completed: true, projectId: 'p1' }],
+          optional: []
+        }
+      })
+    });
+    migrateV4ToV5(adapter);
+    const workspace = adapter.getJson('ceoWorkspace', {});
+    const schedule = adapter.getJson('ceoSchedule', {});
+    expect(workspace.projects).toBeUndefined();
+    expect(workspace.ideas[0].id).toBe('i1');
+    expect(workspace.tags.map((tag) => tag.name)).toEqual(['攀岩项目', 'ceos']);
+    expect(workspace.tags[0].color).toBe(TAG_PALETTE[0]);
+    expect(workspace.tags[1].color).toBe(TAG_PALETTE[1]);
+    expect(schedule['2026-10-08'].required[0].tagId).toBe('p1');
+    expect(schedule['2026-10-08'].required[0].projectId).toBeUndefined();
+    expect(schedule['2026-10-08'].required[0].completed).toBe(true);
+    const orphan = schedule['2026-10-09'].required.find((task) => task.id === 't-orphan');
+    expect(orphan.text).toBe('实现ai');
+    expect(orphan.tagIds).toEqual(['p1']);
+    expect(orphan.note).toBe('只在项目里');
+    expect(adapter.getSchemaVersion()).toBe(5);
+    vi.useRealTimers();
+  });
+
+  it('v4→v5 keeps a daily project id when the project list is already empty', () => {
+    const adapter = memAdapter({
+      ceoSchemaVersion: '4',
+      ceoWorkspace: JSON.stringify({
+        ideas: [{ id: 'i1', text: '灵感' }],
+        milestones: [],
+        tags: [{ id: 'user', name: '腾讯', color: '#1F9D8A' }],
+        projects: []
+      }),
+      ceoSchedule: JSON.stringify({
+        '2026-10-08': {
+          required: [{ id: 't1', text: '还连着项目', completed: false, projectId: 'p-old' }],
+          optional: []
+        }
+      })
+    });
+    migrateV4ToV5(adapter);
+    const workspace = adapter.getJson('ceoWorkspace', {});
+    const schedule = adapter.getJson('ceoSchedule', {});
+    expect(workspace.projects).toBeUndefined();
+    expect(workspace.tags.map((tag) => tag.name)).toEqual(['腾讯']);
+    expect(workspace.ideas[0].id).toBe('i1');
+    expect(schedule['2026-10-08'].required[0].tagId).toBe('p-old');
+    expect(schedule['2026-10-08'].required[0].projectId).toBeUndefined();
+    expect(adapter.getSchemaVersion()).toBe(5);
   });
 });

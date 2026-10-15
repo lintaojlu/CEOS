@@ -3,6 +3,8 @@
  * records. Sync, readiness, and time parsing live in the domain layer.
  */
 
+import { normalizeTagIds } from '../domain/schedule/daily-task.js';
+
 /**
  * @typedef {Object} SubtaskRecord
  * @property {string} id
@@ -19,7 +21,8 @@
  * @property {boolean} pinned
  * @property {string} note
  * @property {string} recurrence
- * @property {string} projectId
+ * @property {string[]} tagIds
+ * @property {number} pomodoros
  * @property {SubtaskRecord[]} subtasks
  */
 
@@ -33,7 +36,7 @@
 
 /**
  * A calendar day stores only that day's tasks plus that day's reflection.
- * Ideas, projects, and milestones live on WorkspaceRecord.
+ * Ideas, tags, and milestones live on WorkspaceRecord.
  * @typedef {Object} ScheduleDayRecord
  * @property {DailyTaskRecord[]} required
  * @property {DailyTaskRecord[]} optional
@@ -72,8 +75,23 @@ function normalizeSubtasks(raw) {
  * @param {any} raw
  * @returns {DailyTaskRecord[]}
  */
+/**
+ * @param {any} raw
+ * @returns {number}
+ */
+export function normalizePomodoros(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.floor(n);
+}
+
+/**
+ * @param {any} raw
+ * @returns {DailyTaskRecord[]}
+ */
 function normalizeTasks(raw) {
   if (!Array.isArray(raw)) return [];
+  const seen = new Set();
   return raw
     .filter((t) => t && t.id)
     .map((t) => ({
@@ -84,9 +102,15 @@ function normalizeTasks(raw) {
       pinned: !!t.pinned,
       note: t.note || '',
       recurrence: t.recurrence || '',
-      projectId: typeof t.projectId === 'string' ? t.projectId : '',
+      tagIds: normalizeTagIds(t),
+      pomodoros: normalizePomodoros(t.pomodoros),
       subtasks: normalizeSubtasks(t.subtasks)
-    }));
+    }))
+    .filter((task) => {
+      if (seen.has(task.id)) return false;
+      seen.add(task.id);
+      return true;
+    });
 }
 
 /**

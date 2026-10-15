@@ -1,10 +1,12 @@
 import React from 'react';
 import { Icon } from '../components/Icon.jsx';
 import { PAGES, navigate } from './router.js';
-import { useShell } from './context.jsx';
+import { useApp, useShell } from './context.jsx';
 
 export function Sidebar({ page }) {
+  const app = useApp();
   const shell = useShell();
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -20,9 +22,14 @@ export function Sidebar({ page }) {
             key={item.id}
             type="button"
             className={item.id === page ? 'nav-item is-active' : 'nav-item'}
-            onClick={() => navigate(item.id)}
+            onClick={() => {
+              if (item.id === 'home') app.insightService.refresh();
+              navigate(item.id);
+            }}
           >
-            <Icon name={item.id} />
+            <span className="nav-icon-wrap">
+              <Icon name={item.id} />
+            </span>
             <span className="nav-label">{item.label}</span>
           </button>
         ))}

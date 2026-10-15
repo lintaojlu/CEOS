@@ -1,5 +1,5 @@
 /**
- * 洞察：数字来自领域快照，句子来自 LLM，按日缓存。
+ * 洞察：数字和句子都在点首页时从日程算出来。
  */
 
 import { INSIGHT_DEFS } from '../domain/insights/insight-definitions.js';
@@ -11,15 +11,13 @@ export class InsightService {
   /**
    * @param {object} deps
    * @param {import('./schedule-service.js').ScheduleService} deps.scheduleService
-   * @param {import('./llm-service.js').LlmService} deps.llmService
-   * @param {import('../infrastructure/storage/insights-repository.js').InsightsRepository} deps.insightsRepo
    * @param {import('./event-bus.js').EventBus} deps.eventBus
    */
-  constructor({ scheduleService, llmService, insightsRepo, eventBus }) {
+  constructor({ scheduleService, eventBus }) {
     this.scheduleService = scheduleService;
-    this.llmService = llmService;
-    this.insightsRepo = insightsRepo;
     this.eventBus = eventBus;
+    /** @type {{ dateKey: string, snapshot: ReturnType<typeof buildInsightSnapshot>, texts: Record<string, string> }|null} */
+    this.view = null;
   }
 
   /** @param {string} [dateKey] */
@@ -31,36 +29,21 @@ export class InsightService {
     });
   }
 
-  /** @param {string} dateKey */
-  getCached(dateKey) {
-    return this.insightsRepo.getDay(dateKey);
+  /** 上次点首页（或首次进入首页）算出的结果。留在首页时不会自己变。 */
+  getView() {
+    return this.view;
   }
 
-  /**
-   * @param {string} dateKey
-   * @param {{ force?: boolean }} [options]
-   */
-  async generate(dateKey, { force = false } = {}) {
+  /** @param {string} [dateKey] */
+  refresh(dateKey = getDateKey(new Date())) {
     const snapshot = this.snapshot(dateKey);
-    const cached = { ...this.getCached(dateKey) };
-    const pending = INSIGHT_DEFS.filter((def) => force || !cached[def.id]?.text);
-    if (pending.length === 0) return cached;
-
-    const generatedAt = new Date().toISOString();
-    const results = await Promise.all(
-      pending.map(async (def) => {
-        const text = await this.llmService.complete({
-          system: def.system,
-          user: def.prompt(snapshot)
-        });
-        return [def.id, { text, generatedAt }];
-      })
-    );
-    results.forEach(([id, entry]) => {
-      cached[id] = entry;
+    /** @type {Record<string, string>} */
+    const texts = {};
+    INSIGHT_DEFS.forEach((def) => {
+      texts[def.id] = def.text(snapshot);
     });
-    this.insightsRepo.saveDay(dateKey, cached);
+    this.view = { dateKey, snapshot, texts };
     this.eventBus.emit(Events.INSIGHTS_UPDATED, { dateKey });
-    return cached;
+    return this.view;
   }
 }

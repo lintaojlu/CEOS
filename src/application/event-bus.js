@@ -43,5 +43,6 @@ export const Events = {
   INSIGHTS_UPDATED: 'insights:updated',
   LLM_SETTINGS_UPDATED: 'llm-settings:updated',
   UI_PREFS_UPDATED: 'ui-prefs:updated',
-  REPORT_UPDATED: 'report:updated'
+  REPORT_UPDATED: 'report:updated',
+  POMODORO_UPDATED: 'pomodoro:updated'
 };

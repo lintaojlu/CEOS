@@ -1,19 +1,19 @@
 /**
- * 界面偏好：当前页、灵感视图、日历粒度。替代旧的 ceoIdeasViewMode。
+ * 界面偏好：当前页、灵感视图、侧边栏是否收起。替代旧的 ceoIdeasViewMode。
+ * 页面名单须与 router.PAGES 一致，否则记下的页会被丢回首页。
  */
 
 const KEY = 'ceoUiPrefs';
 const LEGACY_IDEAS_VIEW_KEY = 'ceoIdeasViewMode';
 
-export const UI_PAGES = ['home', 'tasks', 'ideas', 'calendar'];
+export const UI_PAGES = ['home', 'tasks', 'ideas'];
 export const IDEA_VIEW_MODES = ['canvas', 'list'];
-export const CALENDAR_MODES = ['week', 'month', 'year'];
 
 /**
  * @typedef {Object} UiPrefs
- * @property {'home'|'tasks'|'ideas'|'calendar'} page
+ * @property {'home'|'tasks'|'ideas'} page
  * @property {'canvas'|'list'} ideasViewMode
- * @property {'week'|'month'|'year'} calendarMode
+ * @property {boolean} sidebarHidden
  */
 
 /** @param {any} raw @returns {UiPrefs} */
@@ -21,7 +21,7 @@ export function normalizeUiPrefs(raw) {
   return {
     page: UI_PAGES.includes(raw?.page) ? raw.page : 'home',
     ideasViewMode: IDEA_VIEW_MODES.includes(raw?.ideasViewMode) ? raw.ideasViewMode : 'canvas',
-    calendarMode: CALENDAR_MODES.includes(raw?.calendarMode) ? raw.calendarMode : 'month'
+    sidebarHidden: raw?.sidebarHidden === true
   };
 }
 

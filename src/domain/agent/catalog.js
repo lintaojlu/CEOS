@@ -1,0 +1,110 @@
+const DATE = { type: 'string', description: 'YYYY-MM-DD' };
+const LIST = { type: 'string', enum: ['required', 'optional'], description: 'required 是必做，optional 是选做' };
+const TAG = { type: 'string', description: '已有标签的 id，或空字符串。空字符串表示不挂标签。' };
+const SUBTASKS = { type: 'array', items: { type: 'string' }, description: '步骤正文。没有步骤时给空数组。' };
+
+/**
+ * @param {string} name
+ * @param {string} description
+ * @param {Record<string, object>} properties
+ * @param {string[]} required
+ */
+function tool(name, description, properties, required) {
+  return {
+    type: 'function',
+    function: {
+      name,
+      description,
+      parameters: { type: 'object', properties, required, additionalProperties: false }
+    }
+  };
+}
+
+export const READ_TOOLS = [
+  tool('list_tags', '列出已有标签的 id 和名字。', {}, []),
+  tool('list_ready_ideas', '列出当前可以捡起的灵感。', {}, []),
+  tool('list_day', '列出某一天的全部必做和选做，含已完成。', { date: DATE }, ['date']),
+  tool('list_open_days', '列出正在看的那一天以外、还有未完成任务的日期。只含日期、条数和标题。', {}, []),
+  tool('list_open_tasks', '列出某一天未完成任务的正文、备注和子任务。一轮最多 7 个不同日期。', { date: DATE }, ['date']),
+  tool('list_near_milestones', '列出已到期或 14 天内的未完成里程碑。只读。', { date: DATE }, ['date'])
+];
+
+const UPDATE = tool(
+  'update_task',
+  '改目标日已有的一条任务。tagId 传空字符串会摘掉标签。',
+  {
+    date: DATE,
+    taskId: { type: 'string' },
+    text: { type: 'string' },
+    note: { type: 'string' },
+    list: LIST,
+    tagId: TAG,
+    subtasks: SUBTASKS
+  },
+  ['date', 'taskId', 'text', 'note', 'list', 'tagId', 'subtasks']
+);
+
+const PICKUP = tool(
+  'pickup_idea',
+  '把一条可捡起的灵感放进某一天。收集箱里这条会消失。',
+  {
+    ideaId: { type: 'string' },
+    date: DATE,
+    list: LIST,
+    tagId: TAG,
+    text: { type: 'string' },
+    note: { type: 'string' },
+    subtasks: SUBTASKS
+  },
+  ['ideaId', 'date', 'list', 'tagId', 'text', 'note', 'subtasks']
+);
+
+const COPY = tool(
+  'copy_open_task',
+  '把过去某一天的一条未完成任务带到目标日，沿用原来的 id。来源日不动。',
+  {
+    sourceDate: DATE,
+    taskId: { type: 'string' },
+    date: DATE,
+    list: LIST,
+    tagId: TAG,
+    text: { type: 'string' },
+    note: { type: 'string' },
+    subtasks: SUBTASKS
+  },
+  ['sourceDate', 'taskId', 'date', 'list', 'tagId', 'text', 'note', 'subtasks']
+);
+
+const CREATE = tool(
+  'create_task',
+  '新建一条任务。只在用户这句话里说出了新任务时才能用。时间写在 text 里。',
+  {
+    date: DATE,
+    list: LIST,
+    text: { type: 'string' },
+    note: { type: 'string' },
+    tagId: TAG,
+    subtasks: SUBTASKS
+  },
+  ['date', 'list', 'text', 'note', 'tagId', 'subtasks']
+);
+
+const REMOVE = tool(
+  'remove_task',
+  '从某一天删掉一条任务，其他日期的副本还在。只有用户说了「就这些」或「只留」才能用。',
+  { date: DATE, taskId: { type: 'string' } },
+  ['date', 'taskId']
+);
+
+/**
+ * @param {{ allowCreate: boolean, allowRemove: boolean }} turn
+ */
+export function toolsForTurn(turn) {
+  const writes = [UPDATE, PICKUP, COPY];
+  if (turn.allowCreate) writes.push(CREATE);
+  if (turn.allowRemove) writes.push(REMOVE);
+  return [...READ_TOOLS, ...writes];
+}
+
+export const WRITE_NAMES = new Set(['create_task', 'update_task', 'remove_task', 'pickup_idea', 'copy_open_task']);
+export const READ_NAMES = new Set(READ_TOOLS.map((item) => item.function.name));

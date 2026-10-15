@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { tagPillStyle } from '../../domain/schedule/fixed-tags.js';
 import { taskRefKey } from '../../domain/ideas/idea-node.js';
 import { useApp } from '../app/context.jsx';
 import { Modal } from '../components/Modal.jsx';
+import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../keyboard/ime-enter.js';
 
 function readTask(app, type, id) {
   if (type === 'ideas') return app.ideaInboxService.getNodes().find((idea) => idea.id === id) || null;
@@ -11,6 +13,7 @@ function readTask(app, type, id) {
 
 export function TaskEditModal({ type, id, onClose }) {
   const app = useApp();
+  const ime = useImeEnterGuard();
   const task = type && id ? readTask(app, type, id) : null;
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
@@ -18,26 +21,29 @@ export function TaskEditModal({ type, id, onClose }) {
   const [recurrence, setRecurrence] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [deps, setDeps] = useState([]);
+  const [tagIds, setTagIds] = useState([]);
 
   useEffect(() => {
     if (!task || !type) return;
-    setTitle(type === 'ideas' ? task.text || '' : app.scheduleService.taskTitle(task));
+    setTitle(task.text || '');
     setNote(task.note || '');
     if (type === 'ideas') {
       setDueDate(task.dueDate || '');
       setDeps(task.dependsOn || []);
     } else {
+      setTagIds(task.tagIds || []);
       const date = new Date(task.time);
       const hh = String(date.getHours()).padStart(2, '0');
       const mm = String(date.getMinutes()).padStart(2, '0');
       setTime(`${hh}:${mm}`);
       setRecurrence(task.recurrence || '');
     }
-  }, [app, type, id, task]);
+  }, [type, id, task]);
 
   if (!type || !id || !task) return null;
   const candidates = type === 'ideas' ? app.ideaInboxService.listPredecessorCandidates(id) : [];
   const selected = new Set(deps.map(taskRefKey));
+  const tags = type === 'ideas' ? [] : app.scheduleService.workspace.tags || [];
 
   function toggleDep(candidate) {
     const key = taskRefKey(candidate);
@@ -64,7 +70,7 @@ export function TaskEditModal({ type, id, onClose }) {
       onClose();
       return;
     }
-    const patch = { text, note, recurrence };
+    const patch = { text, note, recurrence, tagIds };
     if (time) {
       const [hh, mm] = time.split(':').map((part) => parseInt(part, 10));
       const base = new Date(app.scheduleService.currentDate);
@@ -82,7 +88,7 @@ export function TaskEditModal({ type, id, onClose }) {
   }
 
   function onFormKeyDown(event) {
-    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
+    if (event.key !== 'Enter' || event.shiftKey || holdImeEnter(event, ime)) return;
     const target = event.target;
     if (target.tagName === 'SELECT' || target.tagName === 'BUTTON' || target.type === 'checkbox') return;
     event.preventDefault();
@@ -91,7 +97,12 @@ export function TaskEditModal({ type, id, onClose }) {
 
   return (
     <Modal title={type === 'ideas' ? '编辑灵感' : '编辑任务'} onClose={onClose} wide>
-      <form className="form-stack" onSubmit={(event) => { event.preventDefault(); save(); }} onKeyDown={onFormKeyDown}>
+      <form
+        className="form-stack"
+        {...imeCompositionProps(ime)}
+        onSubmit={(event) => { event.preventDefault(); if (ime.shouldIgnoreSubmit()) return; save(); }}
+        onKeyDown={onFormKeyDown}
+      >
         <label className="field-label">内容
           <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} />
         </label>
@@ -107,6 +118,22 @@ export function TaskEditModal({ type, id, onClose }) {
                 <option value="weekdays">每个工作日</option>
               </select>
             </label>
+            <div>
+              <span className="field-label">标签</span>
+              <div className="tag-board">
+                {tags.length === 0 ? <p className="empty">还没有标签。</p> : tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className={tagIds.includes(tag.id) ? 'tag-pill is-on' : 'tag-pill'}
+                    style={tagPillStyle(tag)}
+                    onClick={() => setTagIds((current) => (
+                      current.includes(tag.id) ? current.filter((item) => item !== tag.id) : [...current, tag.id]
+                    ))}
+                  >{tag.name}</button>
+                ))}
+              </div>
+            </div>
           </>
         ) : (
           <>

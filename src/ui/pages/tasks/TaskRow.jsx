@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
 import { normalizeSubtasks } from '../../../domain/schedule/daily-task.js';
+import { displayTagColor } from '../../../domain/schedule/fixed-tags.js';
+import { todayKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
+import { navigate } from '../../app/router.js';
 import { Checkbox } from '../../components/Checkbox.jsx';
+import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 import { TaskText } from './TaskText.jsx';
 
 export function TaskRow({ task, type, onEdit, dropEdge, onReorderStart }) {
   const app = useApp();
+  const ime = useImeEnterGuard();
   const [open, setOpen] = useState(false);
   const subtasks = normalizeSubtasks(task.subtasks);
   const done = subtasks.filter((item) => item.completed).length;
   const recurrence = task.recurrence === 'daily' ? '每日' : task.recurrence === 'weekdays' ? '工作日' : '';
   const edge = dropEdge === 'before' ? ' is-drop-before' : dropEdge === 'after' ? ' is-drop-after' : '';
+  const viewingToday = app.scheduleService.getDateKey() === todayKey();
+  const pomodoros = typeof task.pomodoros === 'number' && task.pomodoros > 0 ? task.pomodoros : 0;
+  const owned = new Set(task.tagIds || []);
+  const tags = (app.scheduleService.workspace.tags || []).filter((item) => owned.has(item.id));
+
+  function focus() {
+    app.pomodoroService.focusTask(type, task.id);
+    navigate('pomodoro');
+  }
 
   return (
     <div className={`task-block${edge}`}>
@@ -28,12 +42,17 @@ export function TaskRow({ task, type, onEdit, dropEdge, onReorderStart }) {
         <Checkbox checked={task.completed} onChange={() => app.scheduleService.toggleTask(type, task.id)} />
         <div className="task-main" title="双击编辑" onDoubleClick={() => onEdit(type, task.id)}>
           <div className="task-line">
-            <TaskText text={app.scheduleService.taskTitle(task)} done={task.completed} />
+            {tags.map((tag) => <span key={tag.id} className="tag-dot" style={{ background: displayTagColor(tag) }} />)}
+            <TaskText text={task.text || ''} done={task.completed} />
             {recurrence ? <span className="chip">{recurrence}</span> : null}
             {subtasks.length ? <span className="chip">{done}/{subtasks.length}</span> : null}
           </div>
           {task.note ? <div className="card-note">{task.note}</div> : null}
         </div>
+        {pomodoros > 0 ? <span className="pomo-count" title="今日番茄数">{pomodoros}</span> : null}
+        {viewingToday && !task.completed ? (
+          <button type="button" className="btn btn-quiet btn-mono" onClick={focus}>专注</button>
+        ) : null}
       </div>
       {open ? (
         <div className="subtasks">
@@ -41,8 +60,9 @@ export function TaskRow({ task, type, onEdit, dropEdge, onReorderStart }) {
             <input
               className="field"
               placeholder="添加子任务，回车确认"
+              {...imeCompositionProps(ime)}
               onKeyDown={(event) => {
-                if (event.key !== 'Enter') return;
+                if (event.key !== 'Enter' || holdImeEnter(event, ime)) return;
                 const text = event.currentTarget.value.trim();
                 if (!text) return;
                 app.scheduleService.addSubtask(type, task.id, text);

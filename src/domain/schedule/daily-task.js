@@ -14,7 +14,8 @@
  * @property {boolean} pinned
  * @property {string} note
  * @property {string} recurrence
- * @property {string} projectId
+ * @property {string[]} tagIds
+ * @property {number} pomodoros
  * @property {Subtask[]} subtasks
  */
 
@@ -100,6 +101,30 @@ export function normalizeSubtasks(raw) {
 }
 
 /**
+ * 一条任务上的标签。旧数据里的单个 tagId / projectId 收成数组。
+ * @param {any} raw
+ * @returns {string[]}
+ */
+export function normalizeTagIds(raw) {
+  const source = Array.isArray(raw?.tagIds)
+    ? raw.tagIds
+    : raw?.tagId
+      ? [raw.tagId]
+      : raw?.projectId
+        ? [raw.projectId]
+        : [];
+  const seen = new Set();
+  const ids = [];
+  source.forEach((id) => {
+    const value = typeof id === 'string' ? id.trim() : '';
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    ids.push(value);
+  });
+  return ids;
+}
+
+/**
  * @param {string} text
  * @param {Date} baseDate
  * @param {Partial<DailyTask>} [overrides]
@@ -116,7 +141,11 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     time = Date.now();
   }
 
-  const { subtasks: rawSubtasks, ...rest } = overrides;
+  const { subtasks: rawSubtasks, pomodoros: rawPomodoros, projectId: _projectId, tagId: rawTagId, ...rest } = overrides;
+  const pomodoros =
+    typeof rawPomodoros === 'number' && Number.isFinite(rawPomodoros) && rawPomodoros > 0
+      ? Math.floor(rawPomodoros)
+      : 0;
   return {
     id: rest.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text,
@@ -126,22 +155,28 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     note: '',
     recurrence: '',
     ...rest,
-    projectId: typeof rest.projectId === 'string' ? rest.projectId : '',
+    tagIds: normalizeTagIds(overrides),
+    pomodoros,
     subtasks: normalizeSubtasks(rawSubtasks)
   };
 }
 
 /**
  * Shallow-clone a task including a deep copy of subtasks (for sync).
+ * Synced copies always start with pomodoros = 0.
  * @param {DailyTask|any} task
  * @returns {DailyTask}
  */
 export function cloneDailyTask(task) {
-  return {
+  const copy = {
     ...task,
-    projectId: typeof task?.projectId === 'string' ? task.projectId : '',
+    tagIds: normalizeTagIds(task),
+    pomodoros: 0,
     subtasks: normalizeSubtasks(task?.subtasks).map((s) => ({ ...s }))
   };
+  delete copy.projectId;
+  delete copy.tagId;
+  return copy;
 }
 
 /** @param {DailyTask[]} tasks */

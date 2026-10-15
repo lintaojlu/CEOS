@@ -134,7 +134,7 @@ export function SettingsModal() {
           </div>
         </div>
 
-        <p className="card-note">只存在这台机器的 localStorage。洞察和 AI 日报都走这组 OpenAI 兼容配置。</p>
+        <p className="card-note">只存在这台机器的 localStorage。AI 日报走这组 OpenAI 兼容配置。</p>
         <p className="status-line">{status}</p>
         <div className="form-actions">
           <button type="button" className="btn" onClick={() => app.exportService.downloadJSON()}>导出 JSON</button>

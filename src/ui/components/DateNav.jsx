@@ -15,5 +15,3 @@ export function DateNav({ date, onPrev, onNext, onToday, subtitle }) {
     </div>
   );
 }
-
-export { WEEKDAYS };

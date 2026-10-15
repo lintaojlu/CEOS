@@ -16,6 +16,7 @@
         "url": "ceo-schedule.html",
         "width": 1280,
         "height": 860,
+        "titleBarStyle": "Overlay",
         "resizable": true,
         "fullscreen": false
       }
@@ -34,6 +35,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "macOS": {
+      "signingIdentity": "-"
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

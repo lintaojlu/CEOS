@@ -38,16 +38,16 @@ function milestoneWhen(dateKey, milestoneDate) {
  * @param {Array<{ name?: string, tasks?: Array<{ text?: string, completed?: boolean }> }>|null|undefined} projects
  * @returns {string}
  */
-function formatProjects(projects) {
-  const rows = projects || [];
-  if (!rows.length) return '（没有项目）';
+function formatTags(tags) {
+  const rows = tags || [];
+  if (!rows.length) return '（没有标签）';
   return rows
-    .map((project) => {
-      const tasks = project.tasks || [];
+    .map((tag) => {
+      const tasks = tag.tasks || [];
       const done = tasks.filter((task) => task && task.completed).length;
       const open = tasks.filter((task) => task && task.text && !task.completed).map((task) => task.text);
       const openText = open.length ? open.join('、') : '没有未完成任务';
-      return `- ${project.name || '未命名项目'}：${done}/${tasks.length} 已完成。未完成：${openText}`;
+      return `- ${tag.name || '未命名标签'}：${done}/${tasks.length} 已完成。未完成：${openText}`;
     })
     .join('\n');
 }
@@ -74,12 +74,12 @@ function formatMilestones(dateKey, milestones) {
  * @param {any[]} [input.required]
  * @param {any[]} [input.optional]
  * @param {any[]} [input.ideas]
- * @param {any[]} [input.projects]
+ * @param {any[]} [input.tags]
  * @param {any[]} [input.milestones]
  * @param {string} [input.reflection]
  * @returns {string}
  */
-export function buildDailyReportPrompt({ dateKey, required, optional, ideas, projects, milestones, reflection }) {
+export function buildDailyReportPrompt({ dateKey, required, optional, ideas, tags, milestones, reflection }) {
   const doneRequired = (required || []).filter((task) => task && task.completed);
   const openRequired = (required || []).filter((task) => task && !task.completed);
   const doneOptional = (optional || []).filter((task) => task && task.completed);
@@ -93,19 +93,19 @@ export function buildDailyReportPrompt({ dateKey, required, optional, ideas, pro
     '用 Markdown 写出这五节，标题用下面这几个字：',
     '',
     '## 今天',
-    '两三句话。把已完成的事、还没做完的事、项目进度和临近的里程碑放在一起说：今天实际推进了什么，哪里还开着。',
+    '两三句话。把已完成的事、还没做完的事、标签进度和临近的里程碑放在一起说：今天实际推进了什么，哪里还开着。',
     '',
     '## 已完成',
     '只列已完成的必做和选做。一条一行，用「- 」。都没完成就写：今天还没有勾掉任务。',
     '',
     '## 未完成',
-    '只列未完成的必做和选做。如果某一件会碰到下面某个项目缺口或临近里程碑，在同一行点明。都完成了就写：必做和选做都已完成。',
+    '只列未完成的必做和选做。如果某一件会碰到下面某个标签缺口或临近里程碑，在同一行点明。都完成了就写：必做和选做都已完成。',
     '',
-    '## 项目与里程碑',
-    '对照项目完成情况和里程碑日期，指出今天最该接着动的一个项目或一个里程碑。没有项目也没有里程碑就写：还没有项目或里程碑。',
+    '## 标签与里程碑',
+    '对照标签完成情况和里程碑日期，指出今天最该接着动的一个标签或一个里程碑。没有标签也没有里程碑就写：还没有标签或里程碑。',
     '',
     '## 建议',
-    '写 3 条明天可以动手的建议。每条必须落到某一件未完成任务、某个项目里还没完成的任务，或一条未完成的灵感。不要写空泛的鼓励。',
+    '写 3 条明天可以动手的建议。每条必须落到某一件未完成任务、某个标签里还没完成的任务，或一条未完成的灵感。不要写空泛的鼓励。',
     '',
     '【当天记录】',
     `日期：${dateKey}`,
@@ -122,8 +122,8 @@ export function buildDailyReportPrompt({ dateKey, required, optional, ideas, pro
     '未完成的选做：',
     formatBullets(openOptional, '（无）'),
     '',
-    '项目：',
-    formatProjects(projects),
+    '标签：',
+    formatTags(tags),
     '',
     '里程碑：',
     formatMilestones(dateKey, milestones),

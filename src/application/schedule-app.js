@@ -8,10 +8,10 @@ import { WorkspaceRepository } from '../infrastructure/storage/workspace-reposit
 import { IdeaRepository } from '../infrastructure/storage/idea-repository.js';
 import { MilestoneRepository } from '../infrastructure/storage/milestone-repository.js';
 import { LlmSettingsRepository } from '../infrastructure/storage/llm-settings-repository.js';
-import { InsightsRepository } from '../infrastructure/storage/insights-repository.js';
 import { UiPrefsRepository } from '../infrastructure/storage/ui-prefs-repository.js';
 import { PomodoroRepository } from '../infrastructure/storage/pomodoro-repository.js';
 import { MigrationRunner } from '../infrastructure/migration/migration-runner.js';
+import { applyProjectTagRepair } from '../infrastructure/migration/project-tag-repair.js';
 import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
@@ -24,6 +24,9 @@ import { DailyReportService } from './daily-report-service.js';
 import { TaskTransferService } from './task-transfer-service.js';
 import { UiPrefsService } from './ui-prefs-service.js';
 import { PomodoroService } from './pomodoro-service.js';
+import { AgentRuntime } from './agent-runtime.js';
+import { AgentSession } from './agent-session.js';
+import { appendAgentLog } from '../infrastructure/log/agent-log.js';
 
 export class ScheduleApp {
   constructor() {
@@ -63,14 +66,11 @@ export class ScheduleApp {
     });
 
     this.statsService = new StatsService({
-      scheduleService: this.scheduleService,
-      milestoneService: this.milestoneService
+      scheduleService: this.scheduleService
     });
 
     this.insightService = new InsightService({
       scheduleService: this.scheduleService,
-      llmService: this.llmService,
-      insightsRepo: new InsightsRepository(this.adapter),
       eventBus: this.eventBus
     });
 
@@ -96,6 +96,16 @@ export class ScheduleApp {
       scheduleService: this.scheduleService,
       eventBus: this.eventBus
     });
+
+    this.agentSession = new AgentSession({
+      runtime: new AgentRuntime({
+        scheduleService: this.scheduleService,
+        ideaInboxService: this.ideaInboxService,
+        milestoneService: this.milestoneService
+      }),
+      complete: (input) => this.llmService.completeWithTools(input),
+      log: (record) => appendAgentLog(record).catch(() => {})
+    });
   }
 
   bootstrap() {
@@ -104,6 +114,7 @@ export class ScheduleApp {
       ideaRepo: this.ideaRepo
     });
     runner.run();
+    applyProjectTagRepair(this.adapter);
 
     this.scheduleService.load();
     this.ideaInboxService.load();

@@ -1,0 +1,9 @@
+把 CEOS 拖进「应用程序」。
+
+这个包没有经过 Apple 公证。第一次请在「应用程序」里对 CEOS 点右键，选择「打开」。
+
+如果系统仍提示无法打开，在终端执行：
+
+xattr -dr com.apple.quarantine /Applications/CEOS.app
+
+打开后是空日程。以后换新包时，把新的 CEOS 拖进去覆盖即可，已经写下的日程会留在这台 Mac 上。

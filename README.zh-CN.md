@@ -80,7 +80,10 @@
 npm install
 npm run dev        # http://localhost:5173/ceo-schedule.html
 npm run desktop    # 桌面窗口，需要 Rust
+npm run package:mac # 从 origin/main 打 Apple Silicon 磁盘映像
 ```
+
+`package:mac` 会写出 `release/CEOS_<版本>_<提交号>_aarch64.dmg`。映像里没有这台机器上的日程。对方第一次打开时，对 CEOS 点右键并选择「打开」。这段说明也放在映像里。
 
 <details>
 <summary>可选：AI 日报</summary>

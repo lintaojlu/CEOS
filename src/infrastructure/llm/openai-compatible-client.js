@@ -97,6 +97,82 @@ export async function chatCompletion({ baseUrl, fullUrl = false, apiKey, model, 
 }
 
 /**
+ * 带函数调用的补全。没有正文、也没有 tool_calls 时抛出 empty。
+ * @param {object} input
+ * @param {string} input.baseUrl
+ * @param {boolean} [input.fullUrl]
+ * @param {string} input.apiKey
+ * @param {string} input.model
+ * @param {any[]} input.messages
+ * @param {any[]} input.tools
+ * @param {typeof fetch} [input.fetchImpl]
+ * @returns {Promise<{ content: string, toolCalls: { id: string, name: string, arguments: any }[] }>}
+ */
+export async function chatCompletionWithTools({ baseUrl, fullUrl = false, apiKey, model, messages, tools, fetchImpl }) {
+  const fetchFn = fetchImpl || globalThis.fetch;
+  const url = chatCompletionsUrl(baseUrl, fullUrl);
+  if (!url || !apiKey || !model) {
+    throw new LlmRequestError('请先在设置中填写 API 请求地址、默认模型和 API Key', 'not-configured');
+  }
+  if (typeof fetchFn !== 'function') {
+    throw new LlmRequestError('当前环境不能发起网络请求', 'network');
+  }
+  let response;
+  try {
+    response = await fetchFn(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ model, messages, tools })
+    });
+  } catch (error) {
+    const message = error && error.message ? error.message : '网络请求失败';
+    throw new LlmRequestError(message, 'network');
+  }
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    throw new LlmRequestError(`模型返回无法解析（HTTP ${response.status}）`, 'http');
+  }
+  if (!response.ok) {
+    const raw = data && (data.error?.message || data.error);
+    const message = typeof raw === 'string' ? raw : `模型返回 HTTP ${response.status}`;
+    throw new LlmRequestError(message, 'http');
+  }
+
+  const message = data && data.choices && data.choices[0] ? data.choices[0].message : null;
+  const content = message && typeof message.content === 'string' ? message.content.trim() : '';
+  const toolCalls = Array.isArray(message?.tool_calls)
+    ? message.tool_calls.map((call, index) => {
+      let args = {};
+      const rawArgs = call?.function?.arguments;
+      if (typeof rawArgs === 'string' && rawArgs.trim()) {
+        try {
+          args = JSON.parse(rawArgs);
+        } catch {
+          args = {};
+        }
+      } else if (rawArgs && typeof rawArgs === 'object') {
+        args = rawArgs;
+      }
+      return {
+        id: call?.id || `call-${index}`,
+        name: call?.function?.name || '',
+        arguments: args
+      };
+    }).filter((call) => call.name)
+    : [];
+  if (!content && !toolCalls.length) {
+    throw new LlmRequestError('模型没有返回文本', 'empty');
+  }
+  return { content, toolCalls };
+}
+
+/**
  * @param {object} input
  * @param {string} input.baseUrl
  * @param {boolean} [input.fullUrl]

@@ -3,9 +3,11 @@ import { SCHEDULE_KEY } from '../storage/schedule-repository.js';
 import { IDEAS_KEY } from '../storage/idea-repository.js';
 import { MILESTONES_KEY } from '../storage/milestone-repository.js';
 import { normalizeScheduleDay } from '../../data/schedule-record.js';
-import { normalizeWorkspace } from '../../data/workspace-record.js';
+import { normalizeIdeas, normalizeMilestones, normalizeWorkspace } from '../../data/workspace-record.js';
 import { WorkspaceRepository } from '../storage/workspace-repository.js';
 import { getDateKey } from '../../domain/shared/date-key.js';
+import { createDailyTask } from '../../domain/schedule/daily-task.js';
+import { TAG_PALETTE } from '../../domain/schedule/tag-palette.js';
 
 /**
  * v0 → v1 (legacy no-op keep): previously extracted ideas to ceoIdeas.
@@ -175,13 +177,11 @@ export function migrateV2ToV3(adapter) {
   });
 
   const merged = mergeProjectsByName([...projectsById.values()]);
-  new WorkspaceRepository(adapter).save(
-    normalizeWorkspace({
-      ideas,
-      milestones,
-      projects: merged.projects
-    })
-  );
+  adapter.setJson('ceoWorkspace', {
+    ideas: normalizeIdeas(ideas),
+    milestones: normalizeMilestones(milestones),
+    projects: merged.projects
+  });
 
   /** @type {Record<string, any>} */
   const days = {};
@@ -245,9 +245,18 @@ function rewriteProjectIds(day, idMap) {
   if (!day) return;
   ['required', 'optional'].forEach((list) => {
     (day[list] || []).forEach((task) => {
-      if (!task?.projectId) return;
-      const next = idMap.get(String(task.projectId));
-      if (next) task.projectId = next;
+      if (!task) return;
+      if (task.projectId) {
+        const next = idMap.get(String(task.projectId));
+        if (next) task.projectId = next;
+      }
+      if (task.tagId) {
+        const next = idMap.get(String(task.tagId));
+        if (next) task.tagId = next;
+      }
+      if (Array.isArray(task.tagIds)) {
+        task.tagIds = task.tagIds.map((id) => idMap.get(String(id)) || id);
+      }
     });
   });
 }
@@ -256,10 +265,13 @@ function rewriteProjectIds(day, idMap) {
  * v3 → v4: collapse projects that share a name. Daily tasks point at the kept id.
  */
 export function migrateV3ToV4(adapter) {
-  const workspace = normalizeWorkspace(adapter.getJson('ceoWorkspace', null));
-  const merged = mergeProjectsByName(workspace.projects);
-  workspace.projects = merged.projects;
-  new WorkspaceRepository(adapter).save(workspace);
+  const raw = adapter.getJson('ceoWorkspace', {}) || {};
+  const merged = mergeProjectsByName(Array.isArray(raw.projects) ? raw.projects : []);
+  adapter.setJson('ceoWorkspace', {
+    ideas: normalizeIdeas(raw.ideas),
+    milestones: normalizeMilestones(raw.milestones),
+    projects: merged.projects
+  });
 
   const schedule = adapter.getJson(SCHEDULE_KEY, {}) || {};
   Object.keys(schedule).forEach((dateKey) => {
@@ -267,6 +279,108 @@ export function migrateV3ToV4(adapter) {
   });
   adapter.setJson(SCHEDULE_KEY, schedule);
   adapter.setSchemaVersion(4);
+}
+
+/**
+ * 项目名单已经不在时，仍把当天任务上的项目 id 留成标签 id。
+ * @param {import('../storage/local-storage-adapter.js').LocalStorageAdapter} adapter
+ */
+function preserveDailyTagIds(adapter) {
+  const schedule = adapter.getJson(SCHEDULE_KEY, {}) || {};
+  Object.keys(schedule).forEach((dateKey) => {
+    const day = schedule[dateKey];
+    ['required', 'optional'].forEach((list) => {
+      (day?.[list] || []).forEach((task) => {
+        if (!task?.id) return;
+        const current = typeof task.tagId === 'string' && task.tagId
+          ? task.tagId
+          : typeof task.projectId === 'string'
+            ? task.projectId
+            : '';
+        if (current) task.tagId = current;
+        delete task.projectId;
+      });
+    });
+  });
+  adapter.setJson(SCHEDULE_KEY, schedule);
+}
+
+/**
+ * v4 → v5: projects become tags. Daily tasks keep one tag id.
+ * A project task that never landed on a day is placed on today's required list.
+ */
+export function migrateV4ToV5(adapter) {
+  const raw = adapter.getJson('ceoWorkspace', {}) || {};
+  const projects = Array.isArray(raw.projects) ? raw.projects : [];
+  if (projects.length === 0) {
+    preserveDailyTagIds(adapter);
+    if (Array.isArray(raw.projects)) {
+      const next = { ...raw, tags: Array.isArray(raw.tags) ? raw.tags : [] };
+      delete next.projects;
+      adapter.setJson('ceoWorkspace', next);
+    }
+    adapter.setSchemaVersion(5);
+    return;
+  }
+  /** @type {Array<{ id: string, name: string, color: string }>} */
+  const tags = [];
+  const tagIds = new Set();
+  projects.forEach((project) => {
+    const name = String(project?.name || '').trim();
+    if (!project?.id || !name || tagIds.has(String(project.id))) return;
+    const id = String(project.id);
+    tagIds.add(id);
+    tags.push({ id, name, color: TAG_PALETTE[tags.length % TAG_PALETTE.length] });
+  });
+
+  const schedule = adapter.getJson(SCHEDULE_KEY, {}) || {};
+  const seen = new Set();
+  Object.keys(schedule).forEach((dateKey) => {
+    const day = schedule[dateKey];
+    ['required', 'optional'].forEach((list) => {
+      (day?.[list] || []).forEach((task) => {
+        if (!task?.id) return;
+        seen.add(String(task.id));
+        const current = typeof task.tagId === 'string' && task.tagId
+          ? task.tagId
+          : typeof task.projectId === 'string'
+            ? task.projectId
+            : '';
+        task.tagId = tagIds.has(current) ? current : '';
+        delete task.projectId;
+      });
+    });
+  });
+
+  const today = getDateKey(new Date());
+  projects.forEach((project) => {
+    const tagId = String(project?.id || '');
+    if (!tagIds.has(tagId)) return;
+    (project.tasks || []).forEach((task) => {
+      if (!task?.id || seen.has(String(task.id))) return;
+      const day = normalizeScheduleDay(schedule[today]);
+      day.required.push(createDailyTask(task.text || '', new Date(), {
+        id: String(task.id),
+        completed: !!task.completed,
+        note: task.note || '',
+        pinned: !!task.pinned,
+        recurrence: task.recurrence || '',
+        time: typeof task.time === 'number' ? task.time : Date.now(),
+        tagId,
+        subtasks: task.subtasks || []
+      }));
+      schedule[today] = day;
+      seen.add(String(task.id));
+    });
+  });
+
+  new WorkspaceRepository(adapter).save(normalizeWorkspace({
+    ideas: raw.ideas,
+    milestones: raw.milestones,
+    tags
+  }));
+  adapter.setJson(SCHEDULE_KEY, schedule);
+  adapter.setSchemaVersion(5);
 }
 
 export const MIGRATIONS = [
@@ -278,5 +392,6 @@ export const MIGRATIONS = [
     }
   },
   { to: 3, run: (adapter) => migrateV2ToV3(adapter) },
-  { to: 4, run: (adapter) => migrateV3ToV4(adapter) }
+  { to: 4, run: (adapter) => migrateV3ToV4(adapter) },
+  { to: 5, run: (adapter) => migrateV4ToV5(adapter) }
 ];

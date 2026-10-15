@@ -1,6 +1,7 @@
 import { todayKey } from '../domain/shared/date-key.js';
 import {
   abandon,
+  completeWork,
   focusFromTaskRow,
   formatRemaining,
   remainingMs,
@@ -85,8 +86,31 @@ export class PomodoroService {
       // Idle: still emit once on bootstrap so the sidebar can hide leftover chrome.
     }
 
+    this._commit(settle(this.session, this.now()));
+  }
+
+  /**
+   * Finish the work round early. Counts +1 and starts the break, same as the timer hitting zero.
+   */
+  complete() {
+    if (!this.session || this.session.phase !== 'work') return;
+    const found = this.scheduleService.findTaskOnDate(
+      this.session.dateKey,
+      this.session.list,
+      this.session.taskId
+    );
+    if (!found) {
+      this.abandon();
+      return;
+    }
+    this._commit(completeWork(this.session, this.now()));
+  }
+
+  /**
+   * @param {import('../domain/pomodoro/session.js').SettleResult} result
+   */
+  _commit(result) {
     const before = this.session;
-    const result = settle(this.session, this.now());
     this.session = result.session;
     if (result.awardPomodoro && result.award) {
       const ok = this.scheduleService.incrementPomodoro(

@@ -5,6 +5,7 @@ import {
   startWork,
   settle,
   abandon,
+  completeWork,
   skipBreak,
   switchTask,
   focusFromTaskRow,
@@ -38,6 +39,23 @@ describe('pomodoro session', () => {
     expect(done.session?.phase).toBe('break');
     expect(done.session?.endsAt).toBe(now + WORK_MS + BREAK_MS);
     expect(done.session?.taskId).toBe('t1');
+  });
+
+  it('complete during work awards +1 and starts a full break from now', () => {
+    const now = 1_000_000;
+    const session = startWork({ ...base, now });
+    const done = completeWork(session, now + 90_000);
+    expect(done.awardPomodoro).toBe(true);
+    expect(done.award).toEqual({
+      taskId: 't1',
+      list: 'required',
+      dateKey: '2026-10-06'
+    });
+    expect(done.session?.phase).toBe('break');
+    expect(done.session?.endsAt).toBe(now + 90_000 + BREAK_MS);
+    expect(done.session?.taskId).toBe('t1');
+    expect(completeWork(done.session, now + 90_000).awardPomodoro).toBe(false);
+    expect(completeWork(null, now).awardPomodoro).toBe(false);
   });
 
   it('abandon during work awards nothing', () => {

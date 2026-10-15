@@ -1,7 +1,8 @@
 import { createEmptyWorkspace } from '../data/workspace-record.js';
 import { getDateKey, addDays, todayKey } from '../domain/shared/date-key.js';
-import { createDailyTask, createSubtask, sortTasks, parseTime, normalizeSubtasks } from '../domain/schedule/daily-task.js';
-import { parseProjectTitle, formatProjectTaskTitle } from '../domain/schedule/project-title.js';
+import { createDailyTask, createSubtask, sortTasks, parseTime, normalizeSubtasks, normalizeTagIds } from '../domain/schedule/daily-task.js';
+import { nextTagColor } from '../domain/schedule/tag-palette.js';
+import { ensureFixedTags, isFixedTag } from '../domain/schedule/fixed-tags.js';
 import { syncPrevDay } from '../domain/schedule/schedule-day.js';
 import { Events } from './event-bus.js';
 
@@ -26,6 +27,12 @@ export class ScheduleService {
   load() {
     this.data = this.scheduleRepo.load();
     this.workspace = this.workspaceRepo.load();
+    const tags = ensureFixedTags(this.workspace.tags);
+    const before = JSON.stringify(this.workspace.tags || []);
+    if (JSON.stringify(tags) !== before) {
+      this.workspace.tags = tags;
+      this.workspaceRepo.save(this.workspace);
+    }
   }
 
   persist() {
@@ -63,14 +70,17 @@ export class ScheduleService {
    * @param {'required'|'optional'} type
    * @param {string} text
    */
-  addTask(type, text) {
-    const parsed = parseProjectTitle(text);
-    const title = parsed ? parsed.text : text;
-    const project = parsed ? this.ensureProject(parsed.name) : null;
+  /**
+   * @param {'required'|'optional'} type
+   * @param {string} text
+   * @param {string|string[]} [tagIds]
+   */
+  addTask(type, text, tagIds = []) {
+    const title = String(text || '').trim();
+    if (!title) return null;
     const data = this.getCurrentData();
-    const task = createDailyTask(title, this.currentDate, { projectId: project ? project.id : '' });
+    const task = createDailyTask(title, this.currentDate, { tagIds: this._knownTagIds(tagIds) });
     data[type].push(task);
-    if (project) this._attachProjectTask(project, task, type);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
     return task;
@@ -81,107 +91,103 @@ export class ScheduleService {
    * @returns {string}
    */
   taskTitle(task) {
-    if (!task) return '';
-    const project = (this.workspace.projects || []).find((p) => p.id === task.projectId);
-    if (!project) return task.text || '';
-    return formatProjectTaskTitle(project.name, task.text || '');
+    return task?.text || '';
   }
 
   /**
-   * @param {string} name
-   * @returns {import('../data/workspace-record.js').ProjectRecord|null}
+   * @param {string} id
+   * @returns {import('../data/workspace-record.js').TagRecord|null}
    */
-  ensureProject(name) {
-    const trimmed = String(name || '').trim();
-    if (!trimmed) return null;
-    if (!Array.isArray(this.workspace.projects)) this.workspace.projects = [];
-    const existing = this.workspace.projects.find((p) => p.name === trimmed);
-    if (existing) {
-      if (!Array.isArray(existing.tasks)) existing.tasks = [];
-      return existing;
-    }
-    const project = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: trimmed,
-      tasks: []
-    };
-    this.workspace.projects.push(project);
-    return project;
+  _findTag(id) {
+    if (!id) return null;
+    return (this.workspace.tags || []).find((tag) => tag.id === id) || null;
+  }
+
+  /**
+   * Keep only ids that exist in the catalog, in the order given.
+   * @param {string|string[]} raw
+   * @returns {string[]}
+   */
+  _knownTagIds(raw) {
+    const seen = new Set();
+    return normalizeTagIds(Array.isArray(raw) ? { tagIds: raw } : { tagId: raw }).filter((id) => {
+      if (seen.has(id) || !this._findTag(id)) return false;
+      seen.add(id);
+      return true;
+    });
   }
 
   /** @param {string} name */
-  addProject(name) {
-    const project = this.ensureProject(name);
-    if (!project) return null;
+  addTag(name) {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return null;
+    if (!Array.isArray(this.workspace.tags)) this.workspace.tags = [];
+    if (this.workspace.tags.some((tag) => tag.name === trimmed)) return null;
+    const tag = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: trimmed,
+      color: nextTagColor(this.workspace.tags)
+    };
+    this.workspace.tags.push(tag);
     this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'project:add' });
-    return project;
+    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'tag:add' });
+    return tag;
   }
 
   /**
    * @param {string} id
    * @param {string} name
    */
-  renameProject(id, name) {
+  renameTag(id, name) {
     const trimmed = String(name || '').trim();
     if (!trimmed) return null;
-    const project = (this.workspace.projects || []).find((p) => p.id === id);
-    if (!project) return null;
-    const clash = (this.workspace.projects || []).find((p) => p.id !== id && p.name === trimmed);
-    if (clash) return null;
-    project.name = trimmed;
+    const tag = this._findTag(id);
+    if (!tag || isFixedTag(tag)) return null;
+    if ((this.workspace.tags || []).some((item) => item.id !== id && item.name === trimmed)) return null;
+    tag.name = trimmed;
     this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'project:rename' });
-    return project;
-  }
-
-  /** @param {string} id */
-  deleteProject(id) {
-    const project = (this.workspace.projects || []).find((p) => p.id === id);
-    const taskIds = new Set((project?.tasks || []).map((t) => t.id));
-    this.workspace.projects = (this.workspace.projects || []).filter((p) => p.id !== id);
-    const day = this.getCurrentData();
-    ['required', 'optional'].forEach((type) => {
-      day[type] = (day[type] || []).filter((t) => t.projectId !== id && !taskIds.has(t.id));
-    });
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'project:delete' });
+    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'tag:rename' });
+    return tag;
   }
 
   /**
-   * Add a required task on the viewed day and a same-id project task.
-   * @param {string} projectId
-   * @param {string} text
+   * Drop the tag everywhere. Tasks stay, only the mark is cleared.
+   * @param {string} id
    */
-  addProjectTask(projectId, text) {
-    const project = (this.workspace.projects || []).find((p) => p.id === projectId);
-    if (!project) return null;
-    const parsed = parseProjectTitle(text);
-    const title = (parsed ? parsed.text : String(text || '')).trim();
-    if (!title) return null;
-    const day = this.getCurrentData();
-    const task = createDailyTask(title, this.currentDate, { projectId });
-    day.required.push(task);
-    this._attachProjectTask(project, task, 'required');
+  deleteTag(id) {
+    const tag = this._findTag(id);
+    if (!tag || isFixedTag(tag)) return false;
+    this.workspace.tags = (this.workspace.tags || []).filter((tag) => tag.id !== id);
+    Object.keys(this.data || {}).forEach((dateKey) => {
+      const day = this.data[dateKey];
+      ['required', 'optional'].forEach((type) => {
+        (day?.[type] || []).forEach((task) => {
+          if (!task) return;
+          task.tagIds = normalizeTagIds(task).filter((item) => item !== id);
+          delete task.tagId;
+        });
+      });
+    });
     this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type: 'required' });
+    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'tag:delete' });
+    return true;
+  }
+
+  /**
+   * Replace the tags on the viewed day's copy only.
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   * @param {string|string[]} tagIds
+   */
+  setTaskTag(type, id, tagIds) {
+    const data = this.getCurrentData();
+    const task = (data[type] || []).find((item) => item.id === id);
+    if (!task) return null;
+    task.tagIds = this._knownTagIds(tagIds);
+    delete task.tagId;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     return task;
-  }
-
-  /**
-   * Remove the project-side task and the current day's copy. Other days stay.
-   * @param {string} projectId
-   * @param {string} taskId
-   */
-  deleteProjectTask(projectId, taskId) {
-    const project = (this.workspace.projects || []).find((p) => p.id === projectId);
-    if (project) project.tasks = (project.tasks || []).filter((t) => t.id !== taskId);
-    const day = this.getCurrentData();
-    ['required', 'optional'].forEach((type) => {
-      day[type] = (day[type] || []).filter((t) => t.id !== taskId);
-    });
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
   }
 
   /**
@@ -193,7 +199,6 @@ export class ScheduleService {
     const task = data[type].find((t) => t.id === id);
     if (!task) return null;
     task.completed = !task.completed;
-    this._mirrorTaskCompleted(id, task.completed);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     if (task.completed) {
@@ -207,8 +212,7 @@ export class ScheduleService {
   }
 
   /**
-   * Toggle a task on one stored day without changing the viewed day.
-   * The project copy, and the viewed day's copy when it shares the id, stay in sync.
+   * Toggle a task on one stored day. Other days stay as they are.
    * @param {string} dateKey
    * @param {'required'|'optional'} type
    * @param {string} id
@@ -219,40 +223,12 @@ export class ScheduleService {
     const task = (day[type] || []).find((item) => item.id === id);
     if (!task) return null;
     task.completed = !task.completed;
-    this._mirrorTaskCompleted(id, task.completed);
-    if (dateKey !== this.getDateKey()) {
-      const daily = this._findDailyTask(id);
-      if (daily && daily.type === type) daily.task.completed = task.completed;
-    }
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
     if (task.completed) {
       this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id });
     }
     return task;
-  }
-
-  /**
-   * Flip the project task, then the current day's copy when one exists.
-   * @param {string} projectId
-   * @param {string} taskId
-   */
-  toggleProjectTask(projectId, taskId) {
-    const found = this._findProjectTask(projectId, taskId);
-    if (!found) return null;
-    found.task.completed = !found.task.completed;
-    const daily = this._findDailyTask(taskId);
-    if (daily) daily.task.completed = found.task.completed;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
-    if (found.task.completed) {
-      this.eventBus.emit(Events.TASK_COMPLETED, {
-        dateKey: this.getDateKey(),
-        type: daily ? daily.type : found.task.list,
-        id: taskId
-      });
-    }
-    return found.task;
   }
 
   pinTask(type, id) {
@@ -280,43 +256,19 @@ export class ScheduleService {
       patch = { ...patch, subtasks: normalizeSubtasks(patch.subtasks) };
     }
     if (patch.text != null) {
-      const parsed = parseProjectTitle(patch.text);
-      if (parsed) {
-        const project = this.ensureProject(parsed.name);
-        patch = { ...patch, text: parsed.text, projectId: project ? project.id : task.projectId };
-        if (project) this._attachProjectTask(project, { ...task, text: parsed.text, projectId: project.id }, type);
-      } else {
-        patch = { ...patch, text: String(patch.text).trim(), projectId: '' };
-      }
+      patch = { ...patch, text: String(patch.text).trim() };
+    }
+    if (patch.tagIds != null || patch.tagId != null) {
+      const ids = this._knownTagIds(patch.tagIds != null ? patch.tagIds : patch.tagId);
+      patch = { ...patch, tagIds: ids };
+      delete patch.tagId;
     }
     Object.assign(task, patch);
+    delete task.tagId;
     if (!Array.isArray(task.subtasks)) task.subtasks = [];
-    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     return task;
-  }
-
-  /**
-   * Edit the project copy. The viewed day's same-id row follows. Other days stay.
-   * @param {string} projectId
-   * @param {string} taskId
-   * @param {{ text?: string, note?: string }} patch
-   */
-  updateProjectTask(projectId, taskId, patch) {
-    const found = this._findProjectTask(projectId, taskId);
-    if (!found) return null;
-    if (patch.text != null) {
-      const parsed = parseProjectTitle(patch.text);
-      const title = (parsed ? parsed.text : String(patch.text)).trim();
-      if (!title) return null;
-      found.task.text = title;
-    }
-    if (patch.note != null) found.task.note = String(patch.note);
-    this._mirrorContentToDaily(found.task);
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
-    return found.task;
   }
 
   /**
@@ -344,7 +296,6 @@ export class ScheduleService {
     if (!task) return null;
     const sub = createSubtask(trimmed);
     task.subtasks.push(sub);
-    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
     return sub;
@@ -361,7 +312,6 @@ export class ScheduleService {
     const sub = task.subtasks.find((s) => s.id === subId);
     if (!sub) return null;
     sub.completed = !sub.completed;
-    this._mirrorSubtaskCompleted(taskId, subId, sub.completed);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
     return sub;
@@ -381,7 +331,6 @@ export class ScheduleService {
     const trimmed = String(text || '').trim();
     if (!trimmed) return sub;
     sub.text = trimmed;
-    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
     return sub;
@@ -396,7 +345,6 @@ export class ScheduleService {
     const task = this._findTask(type, taskId);
     if (!task) return;
     task.subtasks = task.subtasks.filter((s) => s.id !== subId);
-    this._mirrorContentToProject(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
   }
@@ -432,10 +380,6 @@ export class ScheduleService {
       if (beforeIdx !== -1) insertAt = beforeIdx;
     }
     toList.splice(insertAt, 0, task);
-    if (fromType !== toType) {
-      const projectTask = this._findProjectTaskById(id);
-      if (projectTask) projectTask.list = toType;
-    }
     this.persist();
     if (fromType !== toType) this.eventBus.emit(Events.TASK_MOVED, { fromType, toType, id });
     this.eventBus.emit(Events.TASKS_UPDATED, {});
@@ -464,7 +408,10 @@ export class ScheduleService {
   insertTask(type, task) {
     const data = this.getCurrentData();
     if (data[type].some((t) => t.id === task.id)) return;
-    data[type].push(task);
+    const next = { ...task, tagIds: this._knownTagIds(normalizeTagIds(task)) };
+    delete next.tagId;
+    delete next.projectId;
+    data[type].push(next);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
   }
@@ -497,7 +444,7 @@ export class ScheduleService {
 
   /**
    * Copy unfinished required/optional from a chosen day onto the viewed day.
-   * Same task id. Completed tasks, ideas, projects, and milestones stay put.
+   * Same task id. The tag on the task is copied with it. Completed tasks stay on the source day.
    * @param {string} sourceKey
    * @returns {boolean}
    */
@@ -516,174 +463,6 @@ export class ScheduleService {
   /** Manual only: unfinished required/optional from the day before the viewed day. */
   syncPrevDayTasks() {
     return this.syncTasksFrom(getDateKey(addDays(this.currentDate, -1)));
-  }
-
-  /**
-   * @param {import('../data/workspace-record.js').ProjectRecord} project
-   * @param {import('../domain/schedule/daily-task.js').DailyTask} daily
-   * @param {'required'|'optional'} list
-   */
-  _attachProjectTask(project, daily, list) {
-    if (!Array.isArray(project.tasks)) project.tasks = [];
-    const existing = this._findProjectTaskById(daily.id);
-    if (existing) {
-      if (existing !== project.tasks.find((t) => t.id === daily.id)) {
-        this.workspace.projects.forEach((p) => {
-          if (!p || p.id === project.id) return;
-          p.tasks = (p.tasks || []).filter((t) => t.id !== daily.id);
-        });
-        if (!project.tasks.some((t) => t.id === daily.id)) project.tasks.push(existing);
-      }
-      existing.list = list;
-      return existing;
-    }
-    const copy = {
-      id: daily.id,
-      text: daily.text || '',
-      completed: !!daily.completed,
-      note: daily.note || '',
-      time: typeof daily.time === 'number' ? daily.time : Date.now(),
-      pinned: !!daily.pinned,
-      recurrence: daily.recurrence || '',
-      subtasks: normalizeSubtasks(daily.subtasks).map((s) => ({ ...s })),
-      list
-    };
-    project.tasks.push(copy);
-    return copy;
-  }
-
-  /**
-   * @param {string} taskId
-   * @returns {import('../data/workspace-record.js').ProjectTaskRecord|null}
-   */
-  _findProjectTaskById(taskId) {
-    for (const project of this.workspace.projects || []) {
-      const task = (project.tasks || []).find((t) => t.id === taskId);
-      if (task) return task;
-    }
-    return null;
-  }
-
-  /**
-   * @param {string} projectId
-   * @param {string} taskId
-   */
-  _findProjectTask(projectId, taskId) {
-    const project = (this.workspace.projects || []).find((p) => p.id === projectId);
-    if (!project) return null;
-    const task = (project.tasks || []).find((t) => t.id === taskId);
-    if (!task) return null;
-    return { project, task };
-  }
-
-  /**
-   * @param {string} taskId
-   * @returns {{ type: 'required'|'optional', task: import('../domain/schedule/daily-task.js').DailyTask }|null}
-   */
-  _findDailyTask(taskId) {
-    const day = this.getCurrentData();
-    for (const type of /** @type {const} */ (['required', 'optional'])) {
-      const task = (day[type] || []).find((t) => t.id === taskId);
-      if (task) return { type, task };
-    }
-    return null;
-  }
-
-  /**
-   * @param {string} taskId
-   * @param {boolean} completed
-   */
-  _mirrorTaskCompleted(taskId, completed) {
-    const task = this._findProjectTaskById(taskId);
-    if (task) task.completed = completed;
-  }
-
-  /**
-   * @param {string} taskId
-   * @param {string} subId
-   * @param {boolean} completed
-   */
-  _mirrorSubtaskCompleted(taskId, subId, completed) {
-    const task = this._findProjectTaskById(taskId);
-    const sub = task && (task.subtasks || []).find((s) => s.id === subId);
-    if (sub) sub.completed = completed;
-  }
-
-  /**
-   * Copy title, note, and subtasks onto the project row with the same id.
-   * @param {import('../domain/schedule/daily-task.js').DailyTask|null|undefined} daily
-   */
-  _mirrorContentToProject(daily) {
-    if (!daily?.projectId) return;
-    const projectTask = this._findProjectTaskById(daily.id);
-    if (!projectTask) return;
-    projectTask.text = daily.text || '';
-    projectTask.note = daily.note || '';
-    projectTask.subtasks = normalizeSubtasks(daily.subtasks).map((sub) => ({ ...sub }));
-  }
-
-  /**
-   * Copy title, note, and subtasks onto the viewed day's row. Other days stay.
-   * @param {{ id: string, text?: string, note?: string, subtasks?: any[] }} projectTask
-   */
-  _mirrorContentToDaily(projectTask) {
-    const daily = this._findDailyTask(projectTask.id);
-    if (!daily) return;
-    daily.task.text = projectTask.text || '';
-    daily.task.note = projectTask.note || '';
-    daily.task.subtasks = normalizeSubtasks(projectTask.subtasks).map((sub) => ({ ...sub }));
-  }
-
-  /**
-   * @param {string} projectId
-   * @param {string} taskId
-   * @param {string} text
-   */
-  addProjectSubtask(projectId, taskId, text) {
-    const trimmed = String(text || '').trim();
-    if (!trimmed) return null;
-    const found = this._findProjectTask(projectId, taskId);
-    if (!found) return null;
-    if (!Array.isArray(found.task.subtasks)) found.task.subtasks = [];
-    const sub = createSubtask(trimmed);
-    found.task.subtasks.push(sub);
-    this._mirrorContentToDaily(found.task);
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
-    return sub;
-  }
-
-  /**
-   * @param {string} projectId
-   * @param {string} taskId
-   * @param {string} subId
-   */
-  toggleProjectSubtask(projectId, taskId, subId) {
-    const found = this._findProjectTask(projectId, taskId);
-    if (!found) return null;
-    const sub = (found.task.subtasks || []).find((s) => s.id === subId);
-    if (!sub) return null;
-    sub.completed = !sub.completed;
-    const daily = this._findDailyTask(taskId);
-    const dailySub = daily && (daily.task.subtasks || []).find((s) => s.id === subId);
-    if (dailySub) dailySub.completed = sub.completed;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
-    return sub;
-  }
-
-  /**
-   * @param {string} projectId
-   * @param {string} taskId
-   * @param {string} subId
-   */
-  deleteProjectSubtask(projectId, taskId, subId) {
-    const found = this._findProjectTask(projectId, taskId);
-    if (!found) return;
-    found.task.subtasks = (found.task.subtasks || []).filter((s) => s.id !== subId);
-    this._mirrorContentToDaily(found.task);
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { id: taskId });
   }
 
   clearTodayTasks() {
@@ -765,7 +544,7 @@ export class ScheduleService {
   }
 
   /**
-   * Award one pomodoro on a specific day's task copy. Does not touch project tasks.
+   * Award one pomodoro on a specific day's task copy.
    * @param {string} dateKey
    * @param {'required'|'optional'} list
    * @param {string} taskId
@@ -783,8 +562,7 @@ export class ScheduleService {
   }
 
   /**
-   * Toggle a subtask on a specific date's copy and mirror to the project task.
-   * Other date copies are left alone.
+   * Toggle a subtask on a specific date's copy. Other dates stay as they are.
    * @param {string} dateKey
    * @param {'required'|'optional'} list
    * @param {string} taskId
@@ -798,7 +576,6 @@ export class ScheduleService {
     const sub = task.subtasks.find((s) => s.id === subId);
     if (!sub) return null;
     sub.completed = !sub.completed;
-    this._mirrorSubtaskCompleted(taskId, subId, sub.completed);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type: list, id: taskId });
     return sub;

@@ -6,8 +6,6 @@ import { useApp, useShell } from './context.jsx';
 export function Sidebar({ page }) {
   const app = useApp();
   const shell = useShell();
-  const snap = app.pomodoroService.getSnapshot();
-  const running = snap.phase !== 'idle';
 
   return (
     <aside className="sidebar">
@@ -19,24 +17,22 @@ export function Sidebar({ page }) {
         </div>
       </div>
       <nav className="nav" aria-label="页面">
-        {PAGES.map((item) => {
-          const isPomo = item.id === 'pomodoro';
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={item.id === page ? 'nav-item is-active' : 'nav-item'}
-              onClick={() => navigate(item.id)}
-            >
-              <span className="nav-icon-wrap">
-                <Icon name={item.id} />
-                {isPomo && running ? <span className="nav-pomo-dot" aria-hidden /> : null}
-              </span>
-              <span className="nav-label">{item.label}</span>
-              {isPomo && running ? <span className="nav-pomo-time">{snap.remainingLabel}</span> : null}
-            </button>
-          );
-        })}
+        {PAGES.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={item.id === page ? 'nav-item is-active' : 'nav-item'}
+            onClick={() => {
+              if (item.id === 'home') app.insightService.refresh();
+              navigate(item.id);
+            }}
+          >
+            <span className="nav-icon-wrap">
+              <Icon name={item.id} />
+            </span>
+            <span className="nav-label">{item.label}</span>
+          </button>
+        ))}
       </nav>
       <div className="sidebar-foot">
         <button type="button" className="nav-item" onClick={shell.openSettings}>

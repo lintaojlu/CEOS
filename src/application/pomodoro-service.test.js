@@ -55,17 +55,15 @@ describe('PomodoroService', () => {
     vi.useRealTimers();
   });
 
-  it('awards +1 on the start-day task only and does not add pomodoros to project tasks', () => {
+  it('awards +1 on the start-day task only', () => {
     const { scheduleService, pomodoro, advance } = createStack();
-    const project = scheduleService.addProject('CEOS');
-    const task = scheduleService.addProjectTask(project.id, '写计划');
+    const task = scheduleService.addTask('required', '写计划');
     expect(task.pomodoros).toBe(0);
 
     pomodoro.focusTask('required', task.id);
     advance(WORK_MS);
 
     expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
-    expect(project.tasks[0].pomodoros).toBeUndefined();
     expect(pomodoro.session?.phase).toBe('break');
   });
 
@@ -82,6 +80,18 @@ describe('PomodoroService', () => {
     const cloned = scheduleService.getCurrentData().required.find((t) => t.id === task.id);
     expect(cloned.pomodoros).toBe(0);
     expect(scheduleService.data[day0].required[0].pomodoros).toBe(1);
+  });
+
+  it('complete during work awards +1 and enters break without waiting out the timer', () => {
+    const { scheduleService, pomodoro, advance } = createStack();
+    const task = scheduleService.addTask('required', '提前收工');
+    pomodoro.focusTask('required', task.id);
+    advance(90_000);
+    pomodoro.complete();
+    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
+    expect(pomodoro.session?.phase).toBe('break');
+    pomodoro.complete();
+    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
   });
 
   it('does not award when the bound task was deleted', () => {

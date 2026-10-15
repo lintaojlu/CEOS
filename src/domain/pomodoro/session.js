@@ -145,6 +145,20 @@ export function settle(session, now) {
   };
 }
 
+/**
+ * End the work phase now. Same outcome as the timer reaching zero:
+ * award once, then a full break starting from `now`.
+ * @param {PomodoroSession|null} session
+ * @param {number} now
+ * @returns {SettleResult}
+ */
+export function completeWork(session, now) {
+  if (!session || session.phase !== 'work') {
+    return { session: session || null, awardPomodoro: false, award: null };
+  }
+  return settle({ ...session, endsAt: now }, now);
+}
+
 /** @param {PomodoroSession|null} _session */
 export function abandon(_session) {
   return null;

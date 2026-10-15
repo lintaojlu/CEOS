@@ -74,7 +74,7 @@ describe('syncPrevDayTasks', () => {
     expect(sub.completed).toBe(false);
   });
 
-  it('keeps the original task id and projectId', () => {
+  it('keeps the original task id and tagId', () => {
     const prev = {
       ...createEmptyScheduleDay(),
       required: [
@@ -82,18 +82,58 @@ describe('syncPrevDayTasks', () => {
           id: 'r1',
           text: '写计划',
           completed: false,
-          projectId: 'p-old',
+          tagId: 'p-old',
           subtasks: []
         },
-        { id: 'r2', text: 'done', completed: true, projectId: 'p-old' }
+        { id: 'r2', text: 'done', completed: true, tagId: 'p-old' }
       ]
     };
     const current = createEmptyScheduleDay();
     syncPrevDayTasks(prev, current);
     expect(current.required.map((t) => t.id)).toEqual(['r1']);
-    expect(current.required[0].projectId).toBe('p-old');
+    expect(current.required[0].tagIds).toEqual(['p-old']);
     expect(current.required[0]).not.toBe(prev.required[0]);
     expect(current.projects).toBeUndefined();
+  });
+
+  it('does not copy the same unfinished task twice', () => {
+    const prev = {
+      ...createEmptyScheduleDay(),
+      optional: [
+        { id: 'r1', text: '文章', completed: false, tagIds: [] },
+        { id: 'r1', text: '文章', completed: false, tagIds: [] }
+      ]
+    };
+    const current = createEmptyScheduleDay();
+    syncPrevDayTasks(prev, current);
+    expect(current.optional.map((task) => task.id)).toEqual(['r1']);
+  });
+
+  it('fills tags onto an existing copy that lost them', () => {
+    const prev = {
+      ...createEmptyScheduleDay(),
+      required: [{ id: 'r1', text: '开箱即用', completed: false, tagIds: ['ceos'] }]
+    };
+    const current = {
+      ...createEmptyScheduleDay(),
+      required: [{ id: 'r1', text: '开箱即用', completed: false, tagIds: [] }]
+    };
+    syncPrevDayTasks(prev, current);
+    expect(current.required).toHaveLength(1);
+    expect(current.required[0].tagIds).toEqual(['ceos']);
+  });
+
+  it('does not replace tags the current day already has', () => {
+    const prev = {
+      ...createEmptyScheduleDay(),
+      required: [{ id: 'r1', text: '开箱即用', completed: false, tagIds: ['ceos'] }]
+    };
+    const current = {
+      ...createEmptyScheduleDay(),
+      required: [{ id: 'r1', text: '开箱即用', completed: false, tagIds: ['life'] }]
+    };
+    syncPrevDayTasks(prev, current);
+    expect(current.required[0].tagIds).toEqual(['life']);
   });
 
   it('resets pomodoros to 0 on sync clone', () => {
@@ -121,14 +161,14 @@ describe('syncPrevDay', () => {
     const prev = {
       ...createEmptyScheduleDay(),
       required: [
-        { id: 'r1', text: '写计划', completed: false, projectId: 'p-old' },
-        { id: 'r2', text: 'done', completed: true, projectId: 'p-old' }
+        { id: 'r1', text: '写计划', completed: false, tagId: 'p-old' },
+        { id: 'r2', text: 'done', completed: true, tagId: 'p-old' }
       ]
     };
     const current = createEmptyScheduleDay();
     syncPrevDay(prev, current);
     expect(current.required.map((t) => t.id)).toEqual(['r1']);
-    expect(current.required[0].projectId).toBe('p-old');
+    expect(current.required[0].tagIds).toEqual(['p-old']);
     expect(current.ideas).toBeUndefined();
     expect(current.projects).toBeUndefined();
   });
@@ -146,5 +186,13 @@ describe('normalizeScheduleDay', () => {
     expect(day.ideas).toBeUndefined();
     expect(day.milestones).toBeUndefined();
     expect(day.projects).toBeUndefined();
+  });
+
+  it('reads a legacy tagId as one entry in tagIds', () => {
+    const day = normalizeScheduleDay({
+      required: [{ id: 't1', text: 'a', tagId: 'p-old' }]
+    });
+    expect(day.required[0].tagIds).toEqual(['p-old']);
+    expect(day.required[0].tagId).toBeUndefined();
   });
 });

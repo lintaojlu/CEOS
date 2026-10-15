@@ -1,10 +1,9 @@
 /**
- * Global workspace: one ideas inbox, one milestone list, one project list.
- * Daily tasks stay on ScheduleDayRecord and are linked to project tasks by id.
+ * Global workspace: one ideas inbox, one milestone list, one tag list.
+ * A daily task stores at most one tag id. Tags do not own a task list.
  */
 
 /**
- * @typedef {import('./schedule-record.js').SubtaskRecord} SubtaskRecord
  * @typedef {import('./schedule-record.js').TaskRefRecord} TaskRefRecord
  */
 
@@ -31,36 +30,22 @@
  */
 
 /**
- * Project-side copy of a task. Shares `id` with the daily copy.
- * @typedef {Object} ProjectTaskRecord
- * @property {string} id
- * @property {string} text
- * @property {boolean} completed
- * @property {string} note
- * @property {number} time
- * @property {boolean} pinned
- * @property {string} recurrence
- * @property {SubtaskRecord[]} subtasks
- * @property {'required'|'optional'} list
- */
-
-/**
- * @typedef {Object} ProjectRecord
+ * @typedef {Object} TagRecord
  * @property {string} id
  * @property {string} name
- * @property {ProjectTaskRecord[]} tasks
+ * @property {string} color
  */
 
 /**
  * @typedef {Object} WorkspaceRecord
  * @property {IdeaRecord[]} ideas
  * @property {MilestoneRecord[]} milestones
- * @property {ProjectRecord[]} projects
+ * @property {TagRecord[]} tags
  */
 
 /** @returns {WorkspaceRecord} */
 export function createEmptyWorkspace() {
-  return { ideas: [], milestones: [], projects: [] };
+  return { ideas: [], milestones: [], tags: [] };
 }
 
 /**
@@ -78,21 +63,6 @@ function normalizePosition(raw) {
     return { x: raw.x, y: raw.y };
   }
   return null;
-}
-
-/**
- * @param {any} raw
- * @returns {import('./schedule-record.js').SubtaskRecord[]}
- */
-function normalizeSubtasks(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((s) => s && (s.id || s.text))
-    .map((s) => ({
-      id: s.id ? String(s.id) : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      text: String(s.text || '').trim(),
-      completed: !!s.completed
-    }));
 }
 
 /**
@@ -135,40 +105,21 @@ export function normalizeMilestones(raw) {
 
 /**
  * @param {any} raw
- * @param {'required'|'optional'} [fallbackList]
- * @returns {ProjectTaskRecord|null}
+ * @returns {TagRecord[]}
  */
-export function normalizeProjectTask(raw, fallbackList = 'required') {
-  if (!raw || !raw.id) return null;
-  const list = raw.list === 'optional' ? 'optional' : raw.list === 'required' ? 'required' : fallbackList;
-  return {
-    id: String(raw.id),
-    text: raw.text || '',
-    completed: !!raw.completed,
-    note: raw.note || '',
-    time: typeof raw.time === 'number' ? raw.time : Date.now(),
-    pinned: !!raw.pinned,
-    recurrence: raw.recurrence || '',
-    subtasks: normalizeSubtasks(raw.subtasks),
-    list
-  };
-}
-
-/**
- * @param {any} raw
- * @returns {ProjectRecord[]}
- */
-export function normalizeProjects(raw) {
+export function normalizeTags(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((p) => p && p.id && String(p.name || '').trim())
-    .map((p) => ({
-      id: String(p.id),
-      name: String(p.name).trim(),
-      tasks: (Array.isArray(p.tasks) ? p.tasks : [])
-        .map((t) => normalizeProjectTask(t))
-        .filter(Boolean)
-    }));
+  const names = new Set();
+  /** @type {TagRecord[]} */
+  const tags = [];
+  raw.forEach((tag) => {
+    const name = String(tag?.name || '').trim();
+    if (!tag?.id || !name || names.has(name)) return;
+    names.add(name);
+    const color = typeof tag.color === 'string' && tag.color ? tag.color : '';
+    tags.push({ id: String(tag.id), name, color });
+  });
+  return tags;
 }
 
 /**
@@ -180,6 +131,6 @@ export function normalizeWorkspace(raw) {
   return {
     ideas: normalizeIdeas(raw.ideas),
     milestones: normalizeMilestones(raw.milestones),
-    projects: normalizeProjects(raw.projects)
+    tags: normalizeTags(raw.tags)
   };
 }

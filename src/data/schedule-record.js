@@ -3,13 +3,12 @@
  * records. Sync, readiness, and time parsing live in the domain layer.
  */
 
-import { normalizeTagIds } from '../domain/schedule/daily-task.js';
+import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 
 /**
- * @typedef {Object} SubtaskRecord
+ * @typedef {Object} TaskNoteRecord
  * @property {string} id
  * @property {string} text
- * @property {boolean} completed
  */
 
 /**
@@ -19,11 +18,9 @@ import { normalizeTagIds } from '../domain/schedule/daily-task.js';
  * @property {boolean} completed
  * @property {number} time
  * @property {boolean} pinned
- * @property {string} note
  * @property {string} recurrence
  * @property {string[]} tagIds
- * @property {number} pomodoros
- * @property {SubtaskRecord[]} subtasks
+ * @property {TaskNoteRecord[]} notes
  */
 
 /**
@@ -58,35 +55,6 @@ export function createEmptyScheduleDay() {
 
 /**
  * @param {any} raw
- * @returns {SubtaskRecord[]}
- */
-function normalizeSubtasks(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((s) => s && (s.id || s.text))
-    .map((s) => ({
-      id: s.id ? String(s.id) : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      text: String(s.text || '').trim(),
-      completed: !!s.completed
-    }));
-}
-
-/**
- * @param {any} raw
- * @returns {DailyTaskRecord[]}
- */
-/**
- * @param {any} raw
- * @returns {number}
- */
-export function normalizePomodoros(raw) {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.floor(n);
-}
-
-/**
- * @param {any} raw
  * @returns {DailyTaskRecord[]}
  */
 function normalizeTasks(raw) {
@@ -100,11 +68,9 @@ function normalizeTasks(raw) {
       completed: !!t.completed,
       time: typeof t.time === 'number' ? t.time : Date.now(),
       pinned: !!t.pinned,
-      note: t.note || '',
       recurrence: t.recurrence || '',
       tagIds: normalizeTagIds(t),
-      pomodoros: normalizePomodoros(t.pomodoros),
-      subtasks: normalizeSubtasks(t.subtasks)
+      notes: normalizeNotes(t.notes, { note: t.note, subtasks: t.subtasks })
     }))
     .filter((task) => {
       if (seen.has(task.id)) return false;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
+import { Card } from '../../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 import { TaskEditModal } from '../../modals/TaskEditModal.jsx';
 import { IdeaDagApp } from './dag/IdeaDagApp.jsx';

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { LlmRequestError } from '../../../application/llm-service.js';
 import { useApp, useShell } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
-import { Markdown } from '../../components/Markdown.jsx';
+import { Card, Markdown } from '../../library/index.js';
 
 export function DailyReportCard() {
   const app = useApp();

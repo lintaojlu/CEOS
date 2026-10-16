@@ -1,4 +1,4 @@
-import { normalizeTagIds } from '../schedule/daily-task.js';
+import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
 import { WRITE_NAMES } from './catalog.js';
 
 /**
@@ -34,6 +34,11 @@ export function identityKey(call) {
 function cleanSubtasks(args) {
   if (!Array.isArray(args?.subtasks)) return [];
   return args.subtasks.map((item) => String(item || '').trim()).filter(Boolean);
+}
+
+/** @param {any} task */
+function storedNotes(task) {
+  return normalizeNotes(task?.notes, { note: task?.note, subtasks: task?.subtasks }).map((item) => item.text);
 }
 
 /**
@@ -166,10 +171,10 @@ export function completeWriteArgs(name, raw, world) {
     const found = findTask(world.schedule, args.date, args.taskId);
     if (found) {
       if (!raw || raw.text == null) args.text = found.task.text || '';
-      if (!raw || raw.note == null) args.note = found.task.note || '';
+      if (!raw || raw.note == null) args.note = '';
       if (!raw || raw.list == null) args.list = found.list;
       if (!raw || raw.tagId == null) args.tagId = normalizeTagIds(found.task)[0] || '';
-      if (!raw || raw.subtasks == null) args.subtasks = (found.task.subtasks || []).map((item) => item.text).filter(Boolean);
+      if (!raw || raw.subtasks == null) args.subtasks = storedNotes(found.task);
     }
   }
   if (name === 'pickup_idea') {
@@ -183,20 +188,18 @@ export function completeWriteArgs(name, raw, world) {
     const source = findTask(world.schedule, args.sourceDate, args.taskId);
     if (source) {
       if (!raw || raw.text == null || !args.text) args.text = source.task.text || '';
-      if (!raw || raw.note == null) args.note = source.task.note || '';
-      if (!raw || raw.subtasks == null) {
-        args.subtasks = (source.task.subtasks || []).map((item) => item.text).filter(Boolean);
-      }
+      if (!raw || raw.note == null) args.note = '';
+      if (!raw || raw.subtasks == null) args.subtasks = storedNotes(source.task);
     }
   }
   if (name === 'remove_task') {
     const found = findTask(world.schedule, args.date, args.taskId);
     if (found) {
       args.text = found.task.text || '';
-      args.note = found.task.note || '';
+      args.note = '';
       args.list = found.list;
       args.tagId = normalizeTagIds(found.task)[0] || '';
-      args.subtasks = (found.task.subtasks || []).map((item) => item.text).filter(Boolean);
+      args.subtasks = storedNotes(found.task);
     }
   }
   return args;

@@ -2,7 +2,7 @@
  * 把当天任务整理成日报提示词，调用 LLM，写回当天的 aiEval。
  */
 
-import { normalizeTagIds } from '../domain/schedule/daily-task.js';
+import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 import { buildDailyReportPrompt, DAILY_REPORT_SYSTEM } from '../domain/report/daily-report-prompt.js';
 import { Events } from './event-bus.js';
 
@@ -54,7 +54,7 @@ export class DailyReportService {
     return {
       label: this.scheduleService.taskTitle(task),
       completed: !!task.completed,
-      note: task.note || ''
+      note: normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks }).map((item) => item.text).join('；')
     };
   }
 }

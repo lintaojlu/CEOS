@@ -41,7 +41,33 @@ describe('chatCompletionWithTools', () => {
       }
     });
     expect(result.content).toBe('');
+    expect(result.reasoning).toBe('');
     expect(result.toolCalls).toEqual([{ id: 'call-1', name: 'list_tags', arguments: {} }]);
+  });
+
+  it('reads reasoning_content when the model sends it', async () => {
+    const result = await chatCompletionWithTools({
+      baseUrl: 'https://example.com/v1',
+      apiKey: 'sk-test',
+      model: 'demo',
+      messages: [],
+      tools: [],
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{
+            message: {
+              content: '好。',
+              reasoning_content: '先看今天',
+              tool_calls: []
+            }
+          }]
+        })
+      })
+    });
+    expect(result.reasoning).toBe('先看今天');
+    expect(result.content).toBe('好。');
   });
 });
 

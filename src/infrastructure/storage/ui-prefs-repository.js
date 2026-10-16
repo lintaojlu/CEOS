@@ -14,14 +14,25 @@ export const IDEA_VIEW_MODES = ['canvas', 'list'];
  * @property {'home'|'tasks'|'ideas'} page
  * @property {'canvas'|'list'} ideasViewMode
  * @property {boolean} sidebarHidden
+ * @property {number} taskListHeight
  */
+
+export const TASK_LIST_HEIGHT = { min: 160, max: 840, default: 420 };
+
+/** @param {any} value */
+export function normalizeTaskListHeight(value) {
+  const height = Number(value);
+  if (!Number.isFinite(height)) return TASK_LIST_HEIGHT.default;
+  return Math.min(TASK_LIST_HEIGHT.max, Math.max(TASK_LIST_HEIGHT.min, Math.round(height)));
+}
 
 /** @param {any} raw @returns {UiPrefs} */
 export function normalizeUiPrefs(raw) {
   return {
     page: UI_PAGES.includes(raw?.page) ? raw.page : 'home',
     ideasViewMode: IDEA_VIEW_MODES.includes(raw?.ideasViewMode) ? raw.ideasViewMode : 'canvas',
-    sidebarHidden: raw?.sidebarHidden === true
+    sidebarHidden: raw?.sidebarHidden === true,
+    taskListHeight: normalizeTaskListHeight(raw?.taskListHeight)
   };
 }
 

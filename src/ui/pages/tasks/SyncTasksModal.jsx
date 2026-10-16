@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { addDays, getDateKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
-import { Modal } from '../../components/Modal.jsx';
+import { Modal } from '../../library/index.js';
 
 function labelOf(dateKey) {
   const [year, month, day] = dateKey.split('-').map(Number);

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { getDateKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
-import { Icon } from '../../components/Icon.jsx';
-import { Modal } from '../../components/Modal.jsx';
+import { Card, DeleteButton, Icon, Modal } from '../../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 
 function statusOf(milestone, today) {
@@ -76,7 +74,7 @@ export function MilestonesCard() {
             </label>
             <div className="form-actions">
               {editing.id ? (
-                <button type="button" className="btn btn-danger" onClick={() => { app.milestoneService.delete(editing.id); setEditing(null); }}>删除</button>
+                <DeleteButton onClick={() => { app.milestoneService.delete(editing.id); setEditing(null); }} />
               ) : null}
               <button type="button" className="btn" onClick={() => setEditing(null)}>取消</button>
               <button type="submit" className="btn btn-primary">保存</button>

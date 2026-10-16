@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from '../components/Icon.jsx';
+import { Icon } from '../library/index.js';
 import { PAGES, navigate } from './router.js';
 import { useApp, useShell } from './context.jsx';
 

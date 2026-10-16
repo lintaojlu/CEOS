@@ -1,8 +1,7 @@
 import React from 'react';
 import { INSIGHT_DEFS } from '../../../domain/insights/insight-definitions.js';
 import { useApp } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
-import { StatTile } from '../../components/StatTile.jsx';
+import { Card, StatTile } from '../../library/index.js';
 
 export function InsightsCard() {
   const app = useApp();

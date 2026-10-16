@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { commitNoteDraft, createNote, normalizeNotes } from '../../domain/schedule/daily-task.js';
 import { tagPillStyle } from '../../domain/schedule/fixed-tags.js';
 import { taskRefKey } from '../../domain/ideas/idea-node.js';
 import { useApp } from '../app/context.jsx';
-import { Modal } from '../components/Modal.jsx';
+import { Modal } from '../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../keyboard/ime-enter.js';
 
 function readTask(app, type, id) {
@@ -22,16 +23,20 @@ export function TaskEditModal({ type, id, onClose }) {
   const [dueDate, setDueDate] = useState('');
   const [deps, setDeps] = useState([]);
   const [tagIds, setTagIds] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [noteDraft, setNoteDraft] = useState('');
 
   useEffect(() => {
     if (!task || !type) return;
     setTitle(task.text || '');
-    setNote(task.note || '');
+    setNote(type === 'ideas' ? (task.note || '') : '');
     if (type === 'ideas') {
       setDueDate(task.dueDate || '');
       setDeps(task.dependsOn || []);
     } else {
       setTagIds(task.tagIds || []);
+      setNotes(normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks }));
+      setNoteDraft('');
       const date = new Date(task.time);
       const hh = String(date.getHours()).padStart(2, '0');
       const mm = String(date.getMinutes()).padStart(2, '0');
@@ -70,7 +75,7 @@ export function TaskEditModal({ type, id, onClose }) {
       onClose();
       return;
     }
-    const patch = { text, note, recurrence, tagIds };
+    const patch = { text, recurrence, tagIds, notes: commitNoteDraft(notes, noteDraft) };
     if (time) {
       const [hh, mm] = time.split(':').map((part) => parseInt(part, 10));
       const base = new Date(app.scheduleService.currentDate);
@@ -88,11 +93,26 @@ export function TaskEditModal({ type, id, onClose }) {
   }
 
   function onFormKeyDown(event) {
+    if (event.target.classList.contains('note-input')) return;
     if (event.key !== 'Enter' || event.shiftKey || holdImeEnter(event, ime)) return;
     const target = event.target;
     if (target.tagName === 'SELECT' || target.tagName === 'BUTTON' || target.type === 'checkbox') return;
     event.preventDefault();
     save();
+  }
+
+  function removeNote(noteId) {
+    setNotes((current) => current.filter((item) => item.id !== noteId));
+  }
+
+  function addNote(event) {
+    if (holdImeEnter(event, ime)) return;
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    const text = noteDraft.trim();
+    if (!text) return;
+    setNotes((current) => [...current, createNote(text)]);
+    setNoteDraft('');
   }
 
   return (
@@ -134,6 +154,27 @@ export function TaskEditModal({ type, id, onClose }) {
                 ))}
               </div>
             </div>
+            <div>
+              <span className="field-label">说明</span>
+              {notes.length ? (
+                <div className="note-edit-list">
+                  {notes.map((item) => (
+                    <div key={item.id} className="note-edit-item">
+                      <p className="note-edit-text">{item.text}</p>
+                      <button type="button" className="btn btn-quiet btn-danger" onClick={() => removeNote(item.id)}>删除</button>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="empty">还没有说明。</p>}
+              <textarea
+                className="field note-input"
+                rows={1}
+                placeholder="新建说明，回车确认，Shift+回车换行"
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                onKeyDown={addNote}
+              />
+            </div>
           </>
         ) : (
           <>
@@ -153,9 +194,11 @@ export function TaskEditModal({ type, id, onClose }) {
             </div>
           </>
         )}
-        <label className="field-label">说明
-          <textarea className="textarea" value={note} onChange={(event) => setNote(event.target.value)} />
-        </label>
+        {type === 'ideas' ? (
+          <label className="field-label">说明
+            <textarea className="textarea" value={note} onChange={(event) => setNote(event.target.value)} />
+          </label>
+        ) : null}
         <div className="form-actions">
           {type !== 'ideas' ? (
             <button type="button" className="btn" onClick={() => {

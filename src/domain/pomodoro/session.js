@@ -1,25 +1,38 @@
 /**
- * Pure pomodoro session transitions.
- * One work round binds a real unfinished today-task; work completion awards +1
- * on the start-day copy, then a 5-minute break. Absolute endsAt keeps time
- * across page leaves / sleep — settle once, never chain awards.
+ * 专注一轮：先在圆盘上选时长，点开始才倒计时。
+ * 完成勾上当天那条任务，放弃不勾。时间走完不会自己结束，完成和放弃才结束。
  */
 
-export const WORK_MS = 25 * 60 * 1000;
-export const BREAK_MS = 5 * 60 * 1000;
+export const MIN_FOCUS_MINUTES = 1;
+export const MAX_FOCUS_MINUTES = 60;
+export const DEFAULT_FOCUS_MINUTES = 25;
 
 /**
- * @typedef {'work'|'break'} PomodoroPhase
+ * @typedef {'setup'|'work'} PomodoroPhase
  *
  * @typedef {Object} PomodoroSession
  * @property {string} taskId
  * @property {'required'|'optional'} list
  * @property {string} dateKey
  * @property {PomodoroPhase} phase
+ * @property {number} durationMs
  * @property {number} endsAt
- * @property {string} [pendingTaskId]
- * @property {'required'|'optional'} [pendingList]
  */
+
+/**
+ * @param {number} minutes
+ * @returns {number}
+ */
+export function clampFocusMinutes(minutes) {
+  const n = Math.round(Number(minutes));
+  if (!Number.isFinite(n)) return DEFAULT_FOCUS_MINUTES;
+  return Math.min(MAX_FOCUS_MINUTES, Math.max(MIN_FOCUS_MINUTES, n));
+}
+
+/** @param {number} minutes */
+export function focusMs(minutes) {
+  return clampFocusMinutes(minutes) * 60 * 1000;
+}
 
 /**
  * @param {any} raw
@@ -30,17 +43,62 @@ export function normalizeSession(raw) {
   const taskId = typeof raw.taskId === 'string' ? raw.taskId : '';
   const list = raw.list === 'optional' ? 'optional' : raw.list === 'required' ? 'required' : '';
   const dateKey = typeof raw.dateKey === 'string' ? raw.dateKey : '';
-  const phase = raw.phase === 'break' ? 'break' : raw.phase === 'work' ? 'work' : '';
-  const endsAt = typeof raw.endsAt === 'number' && Number.isFinite(raw.endsAt) ? raw.endsAt : NaN;
-  if (!taskId || !list || !dateKey || !phase || Number.isNaN(endsAt)) return null;
+  const phase = raw.phase === 'setup' ? 'setup' : raw.phase === 'work' ? 'work' : '';
+  if (!taskId || !list || !dateKey || !phase) return null;
+  const durationMs = focusMs(
+    typeof raw.durationMs === 'number' && raw.durationMs > 0
+      ? raw.durationMs / 60000
+      : DEFAULT_FOCUS_MINUTES
+  );
+  const endsAt = typeof raw.endsAt === 'number' && Number.isFinite(raw.endsAt) ? raw.endsAt : 0;
+  if (phase === 'work' && endsAt <= 0) return null;
+  return {
+    taskId,
+    list,
+    dateKey,
+    phase,
+    durationMs,
+    endsAt: phase === 'setup' ? 0 : endsAt
+  };
+}
 
-  /** @type {PomodoroSession} */
-  const session = { taskId, list, dateKey, phase, endsAt };
-  if (typeof raw.pendingTaskId === 'string' && raw.pendingTaskId) {
-    session.pendingTaskId = raw.pendingTaskId;
-    session.pendingList = raw.pendingList === 'optional' ? 'optional' : 'required';
-  }
-  return session;
+/**
+ * @param {object} args
+ * @param {string} args.taskId
+ * @param {'required'|'optional'} args.list
+ * @param {string} args.dateKey
+ * @param {number} [args.minutes]
+ * @returns {PomodoroSession}
+ */
+export function openSetup({ taskId, list, dateKey, minutes = DEFAULT_FOCUS_MINUTES }) {
+  return {
+    taskId,
+    list,
+    dateKey,
+    phase: 'setup',
+    durationMs: focusMs(minutes),
+    endsAt: 0
+  };
+}
+
+/**
+ * @param {PomodoroSession|null} session
+ * @param {number} minutes
+ * @returns {PomodoroSession|null}
+ */
+export function withDuration(session, minutes) {
+  if (!session || session.phase !== 'setup') return session;
+  return { ...session, durationMs: focusMs(minutes) };
+}
+
+/**
+ * @param {PomodoroSession|null} session
+ * @param {number} now
+ * @returns {PomodoroSession|null}
+ */
+export function beginWork(session, now) {
+  if (!session || session.phase !== 'setup') return session;
+  return { ...session, phase: 'work', endsAt: now + session.durationMs };
 }
 
 /**
@@ -50,6 +108,7 @@ export function normalizeSession(raw) {
  */
 export function remainingMs(session, now) {
   if (!session) return 0;
+  if (session.phase !== 'work') return session.durationMs;
   return Math.max(0, session.endsAt - now);
 }
 
@@ -65,144 +124,23 @@ export function formatRemaining(ms) {
 }
 
 /**
- * @param {object} args
- * @param {string} args.taskId
- * @param {'required'|'optional'} args.list
- * @param {string} args.dateKey
- * @param {number} args.now
- * @returns {PomodoroSession}
- */
-export function startWork({ taskId, list, dateKey, now }) {
-  return {
-    taskId,
-    list,
-    dateKey,
-    phase: 'work',
-    endsAt: now + WORK_MS
-  };
-}
-
-/**
- * @typedef {Object} SettleResult
- * @property {PomodoroSession|null} session
- * @property {boolean} awardPomodoro
- * @property {{ taskId: string, list: 'required'|'optional', dateKey: string }|null} award
- * @property {string} [idleTaskId]
- * @property {'required'|'optional'} [idleList]
- */
-
-/**
- * Advance the session to `now`. Sleep / background only settles once:
- * work → break (award once) → idle. Never awards twice.
- *
  * @param {PomodoroSession|null} session
- * @param {number} now
- * @returns {SettleResult}
+ * @returns {{ session: null, markComplete: boolean, taskId?: string, list?: 'required'|'optional', dateKey?: string }}
  */
-export function settle(session, now) {
-  if (!session) {
-    return { session: null, awardPomodoro: false, award: null };
+export function finishWork(session) {
+  if (!session || session.phase !== 'work') {
+    return { session: session || null, markComplete: false };
   }
-  if (now < session.endsAt) {
-    return { session, awardPomodoro: false, award: null };
-  }
-
-  if (session.phase === 'work') {
-    const award = {
-      taskId: session.taskId,
-      list: session.list,
-      dateKey: session.dateKey
-    };
-    const breakEndsAt = session.endsAt + BREAK_MS;
-    if (now < breakEndsAt) {
-      return {
-        session: {
-          taskId: session.taskId,
-          list: session.list,
-          dateKey: session.dateKey,
-          phase: 'break',
-          endsAt: breakEndsAt
-        },
-        awardPomodoro: true,
-        award
-      };
-    }
-    return {
-      session: null,
-      awardPomodoro: true,
-      award,
-      idleTaskId: session.pendingTaskId || session.taskId,
-      idleList: session.pendingList || session.list
-    };
-  }
-
   return {
     session: null,
-    awardPomodoro: false,
-    award: null,
-    idleTaskId: session.pendingTaskId || session.taskId,
-    idleList: session.pendingList || session.list
+    markComplete: true,
+    taskId: session.taskId,
+    list: session.list,
+    dateKey: session.dateKey
   };
-}
-
-/**
- * End the work phase now. Same outcome as the timer reaching zero:
- * award once, then a full break starting from `now`.
- * @param {PomodoroSession|null} session
- * @param {number} now
- * @returns {SettleResult}
- */
-export function completeWork(session, now) {
-  if (!session || session.phase !== 'work') {
-    return { session: session || null, awardPomodoro: false, award: null };
-  }
-  return settle({ ...session, endsAt: now }, now);
 }
 
 /** @param {PomodoroSession|null} _session */
 export function abandon(_session) {
   return null;
-}
-
-/** @param {PomodoroSession|null} session */
-export function skipBreak(session) {
-  if (!session || session.phase !== 'break') return session;
-  return null;
-}
-
-/**
- * @param {PomodoroSession|null} session
- * @param {object} next
- * @param {string} next.taskId
- * @param {'required'|'optional'} next.list
- * @param {string} next.dateKey
- * @param {number} next.now
- * @returns {{ session: PomodoroSession|null, started: boolean }}
- */
-export function switchTask(session, { taskId, list, dateKey, now }) {
-  if (!session || session.phase === 'work') {
-    return { session: startWork({ taskId, list, dateKey, now }), started: true };
-  }
-  return {
-    session: {
-      ...session,
-      pendingTaskId: taskId,
-      pendingList: list
-    },
-    started: false
-  };
-}
-
-/**
- * Task-row「专注」: void other work / end remaining break and start immediately.
- * @param {PomodoroSession|null} _session
- * @param {object} next
- * @param {string} next.taskId
- * @param {'required'|'optional'} next.list
- * @param {string} next.dateKey
- * @param {number} next.now
- * @returns {PomodoroSession}
- */
-export function focusFromTaskRow(_session, { taskId, list, dateKey, now }) {
-  return startWork({ taskId, list, dateKey, now });
 }

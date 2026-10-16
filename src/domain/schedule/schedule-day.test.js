@@ -52,8 +52,8 @@ describe('syncPrevDayTasks', () => {
     expect(current.required[0].text).toBe('already here');
   });
 
-  it('deep-copies subtasks so days do not share references', () => {
-    const sub = { id: 's1', text: 'step', completed: false };
+  it('deep-copies notes so days do not share references', () => {
+    const note = { id: 's1', text: 'step' };
     const prev = {
       ...createEmptyScheduleDay(),
       required: [
@@ -61,17 +61,17 @@ describe('syncPrevDayTasks', () => {
           id: 'r1',
           text: 'parent',
           completed: false,
-          subtasks: [sub]
+          notes: [note]
         }
       ]
     };
     const current = createEmptyScheduleDay();
     syncPrevDayTasks(prev, current);
-    expect(current.required[0].subtasks).toEqual([{ id: 's1', text: 'step', completed: false }]);
-    expect(current.required[0].subtasks).not.toBe(prev.required[0].subtasks);
-    expect(current.required[0].subtasks[0]).not.toBe(sub);
-    current.required[0].subtasks[0].completed = true;
-    expect(sub.completed).toBe(false);
+    expect(current.required[0].notes).toEqual([{ id: 's1', text: 'step' }]);
+    expect(current.required[0].notes).not.toBe(prev.required[0].notes);
+    expect(current.required[0].notes[0]).not.toBe(note);
+    current.required[0].notes[0].text = 'changed';
+    expect(note.text).toBe('step');
   });
 
   it('keeps the original task id and tagId', () => {
@@ -136,24 +136,6 @@ describe('syncPrevDayTasks', () => {
     expect(current.required[0].tagIds).toEqual(['life']);
   });
 
-  it('resets pomodoros to 0 on sync clone', () => {
-    const prev = {
-      ...createEmptyScheduleDay(),
-      required: [
-        {
-          id: 'r1',
-          text: '专注',
-          completed: false,
-          pomodoros: 4,
-          subtasks: []
-        }
-      ]
-    };
-    const current = createEmptyScheduleDay();
-    syncPrevDayTasks(prev, current);
-    expect(current.required[0].pomodoros).toBe(0);
-    expect(prev.required[0].pomodoros).toBe(4);
-  });
 });
 
 describe('syncPrevDay', () => {

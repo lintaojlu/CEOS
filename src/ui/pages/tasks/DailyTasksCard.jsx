@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { normalizeTagIds } from '../../../domain/schedule/daily-task.js';
 import { useApp } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
+import { Card } from '../../library/index.js';
+import { TASK_LIST_HEIGHT, normalizeTaskListHeight } from '../../../infrastructure/storage/ui-prefs-repository.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 import { TaskRow } from './TaskRow.jsx';
 
@@ -22,11 +23,61 @@ function TaskProgress() {
   );
 }
 
+function visibleTaskListMax() {
+  const cap = Math.round(window.innerHeight * 0.72);
+  return Math.max(TASK_LIST_HEIGHT.min, Math.min(TASK_LIST_HEIGHT.max, cap));
+}
+
+function clampTaskListHeight(value) {
+  return Math.min(visibleTaskListMax(), Math.max(TASK_LIST_HEIGHT.min, normalizeTaskListHeight(value)));
+}
+
 export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
   const app = useApp();
   const ime = useImeEnterGuard();
   const data = app.scheduleService.getCurrentData();
   const [over, setOver] = useState('');
+  const [draggingId, setDraggingId] = useState('');
+  const preferredHeight = useRef(normalizeTaskListHeight(app.uiPrefs.get().taskListHeight));
+  const [listHeight, setListHeight] = useState(() => clampTaskListHeight(preferredHeight.current));
+
+  useEffect(() => {
+    function onResize() {
+      setListHeight(clampTaskListHeight(preferredHeight.current));
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  function beginResize(event) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = preferredHeight.current;
+    document.body.classList.add('is-task-list-resizing');
+
+    function move(moveEvent) {
+      moveEvent.preventDefault();
+      const next = clampTaskListHeight(startHeight + (moveEvent.clientY - startY));
+      preferredHeight.current = next;
+      setListHeight(next);
+    }
+
+    function up(upEvent) {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.body.classList.remove('is-task-list-resizing');
+      const next = clampTaskListHeight(startHeight + (upEvent.clientY - startY));
+      preferredHeight.current = next;
+      setListHeight(next);
+      app.uiPrefs.update({ taskListHeight: next });
+    }
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  }
 
   function beginReorder(event, fromType, fromId) {
     const startX = event.clientX;
@@ -34,16 +85,28 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
     let active = false;
 
     function markerAt(clientX, clientY) {
-      const hit = document.elementFromPoint(clientX, clientY);
-      const row = hit?.closest?.('[data-task-id]');
-      if (row) {
-        const rect = row.getBoundingClientRect();
-        const edge = clientY > rect.top + rect.height / 2 ? 'after' : 'before';
-        return { kind: 'row', edge, type: row.getAttribute('data-task-type'), id: row.getAttribute('data-task-id') };
+      const zone = [...document.querySelectorAll('[data-drop-type]')].find((node) => {
+        const rect = node.getBoundingClientRect();
+        return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+      });
+      if (!zone) return null;
+      const type = zone.getAttribute('data-drop-type');
+      const blocks = [...zone.querySelectorAll(':scope > .task-block')];
+      if (!blocks.length) return { kind: 'zone', type };
+      let index = blocks.length;
+      for (let i = 0; i < blocks.length; i += 1) {
+        const rect = blocks[i].getBoundingClientRect();
+        if (clientY < rect.top + rect.height / 2) {
+          index = i;
+          break;
+        }
       }
-      const zone = hit?.closest?.('[data-drop-type]');
-      if (zone) return { kind: 'zone', type: zone.getAttribute('data-drop-type') };
-      return null;
+      if (index >= blocks.length) {
+        const last = blocks[blocks.length - 1].querySelector('[data-task-id]');
+        return { kind: 'row', edge: 'after', type, id: last.getAttribute('data-task-id') };
+      }
+      const row = blocks[index].querySelector('[data-task-id]');
+      return { kind: 'row', edge: 'before', type, id: row.getAttribute('data-task-id') };
     }
 
     function show(marker) {
@@ -60,7 +123,12 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
 
     function move(moveEvent) {
       if (!active && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < 6) return;
-      active = true;
+      if (!active) {
+        active = true;
+        document.body.classList.add('is-task-dragging');
+        window.getSelection()?.removeAllRanges();
+        setDraggingId(fromId);
+      }
       moveEvent.preventDefault();
       show(markerAt(moveEvent.clientX, moveEvent.clientY));
     }
@@ -68,6 +136,9 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
     function up(upEvent) {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.body.classList.remove('is-task-dragging');
+      setDraggingId('');
       setOver('');
       if (!active) return;
       const marker = markerAt(upEvent.clientX, upEvent.clientY);
@@ -84,6 +155,7 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
 
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   }
 
   function add(event, type) {
@@ -109,6 +181,7 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
 
   return (
     <Card
+      className="task-board"
       title="任务清单"
       titleAside={<TaskProgress />}
       actions={(
@@ -132,6 +205,7 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
             <div
               className={over === type ? 'drop-zone is-over task-list' : 'drop-zone task-list'}
               data-drop-type={type}
+              style={{ height: listHeight }}
             >
               {(visibleTasks(type)).map((task) => (
                 <TaskRow
@@ -139,6 +213,7 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
                   task={task}
                   type={type}
                   onEdit={onEdit}
+                  dragging={draggingId === task.id}
                   dropEdge={over === `before:${type}:${task.id}` ? 'before' : over === `after:${type}:${task.id}` ? 'after' : ''}
                   onReorderStart={beginReorder}
                 />
@@ -148,6 +223,16 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
           </div>
         ))}
       </div>
+      <div
+        className="task-list-resize"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="调整任务清单高度"
+        aria-valuemin={TASK_LIST_HEIGHT.min}
+        aria-valuemax={visibleTaskListMax()}
+        aria-valuenow={listHeight}
+        onPointerDown={beginResize}
+      />
     </Card>
   );
 }

@@ -96,6 +96,16 @@ export async function chatCompletion({ baseUrl, fullUrl = false, apiKey, model, 
   return text.trim();
 }
 
+/** 模型若带回思考，取 reasoning_content 或 reasoning。没有就是空字符串。 */
+export function readReasoning(message) {
+  const raw = message?.reasoning_content ?? message?.reasoning ?? '';
+  if (typeof raw === 'string') return raw.trim();
+  if (Array.isArray(raw)) {
+    return raw.map((part) => (typeof part === 'string' ? part : part?.text || '')).join('').trim();
+  }
+  return '';
+}
+
 /**
  * 带函数调用的补全。没有正文、也没有 tool_calls 时抛出 empty。
  * @param {object} input
@@ -106,7 +116,7 @@ export async function chatCompletion({ baseUrl, fullUrl = false, apiKey, model, 
  * @param {any[]} input.messages
  * @param {any[]} input.tools
  * @param {typeof fetch} [input.fetchImpl]
- * @returns {Promise<{ content: string, toolCalls: { id: string, name: string, arguments: any }[] }>}
+ * @returns {Promise<{ content: string, reasoning: string, toolCalls: { id: string, name: string, arguments: any }[] }>}
  */
 export async function chatCompletionWithTools({ baseUrl, fullUrl = false, apiKey, model, messages, tools, fetchImpl }) {
   const fetchFn = fetchImpl || globalThis.fetch;
@@ -166,10 +176,11 @@ export async function chatCompletionWithTools({ baseUrl, fullUrl = false, apiKey
       };
     }).filter((call) => call.name)
     : [];
+  const reasoning = readReasoning(message);
   if (!content && !toolCalls.length) {
     throw new LlmRequestError('模型没有返回文本', 'empty');
   }
-  return { content, toolCalls };
+  return { content, reasoning, toolCalls };
 }
 
 /**

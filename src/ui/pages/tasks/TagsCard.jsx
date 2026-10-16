@@ -1,8 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useApp } from '../../app/context.jsx';
 import { isFixedTag, tagPillStyle } from '../../../domain/schedule/fixed-tags.js';
-import { Icon } from '../../components/Icon.jsx';
-import { Modal } from '../../components/Modal.jsx';
+import { DeleteButton, Icon, Modal } from '../../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 
 export function TagsCard({ tags = [], selectedIds, onToggle }) {
@@ -120,9 +119,9 @@ function TagEditModal({ tag, onClose }) {
         ) : null}
         <div className="form-actions">
           {confirming ? (
-            <button type="button" className="btn btn-danger" onClick={remove}>确认删除</button>
+            <DeleteButton label="确认删除" onClick={remove} />
           ) : (
-            <button type="button" className="btn btn-danger" onClick={() => setConfirming(true)}>删除</button>
+            <DeleteButton onClick={() => setConfirming(true)} />
           )}
           <button type="button" className="btn" onClick={onClose}>取消</button>
           {confirming ? null : <button type="button" className="btn btn-primary" onClick={save}>保存</button>}

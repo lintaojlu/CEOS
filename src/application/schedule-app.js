@@ -21,11 +21,13 @@ import { LlmService } from './llm-service.js';
 import { StatsService } from './stats-service.js';
 import { InsightService } from './insight-service.js';
 import { DailyReportService } from './daily-report-service.js';
+import { TaskBreakdownService } from './task-breakdown-service.js';
 import { TaskTransferService } from './task-transfer-service.js';
 import { UiPrefsService } from './ui-prefs-service.js';
 import { PomodoroService } from './pomodoro-service.js';
 import { AgentRuntime } from './agent-runtime.js';
-import { AgentSession } from './agent-session.js';
+import { AgentThreads } from './agent-threads.js';
+import { createAgentStore } from '../infrastructure/agent/transcript-store.js';
 import { appendAgentLog } from '../infrastructure/log/agent-log.js';
 
 export class ScheduleApp {
@@ -81,6 +83,11 @@ export class ScheduleApp {
       eventBus: this.eventBus
     });
 
+    this.taskBreakdownService = new TaskBreakdownService({
+      scheduleService: this.scheduleService,
+      llmService: this.llmService
+    });
+
     this.taskTransfer = new TaskTransferService({
       scheduleService: this.scheduleService,
       ideaInboxService: this.ideaInboxService
@@ -97,14 +104,17 @@ export class ScheduleApp {
       eventBus: this.eventBus
     });
 
-    this.agentSession = new AgentSession({
+    this.agentThreads = new AgentThreads({
       runtime: new AgentRuntime({
         scheduleService: this.scheduleService,
         ideaInboxService: this.ideaInboxService,
         milestoneService: this.milestoneService
       }),
       complete: (input) => this.llmService.completeWithTools(input),
-      log: (record) => appendAgentLog(record).catch(() => {})
+      log: (record) => appendAgentLog(record).catch(() => {}),
+      store: createAgentStore(),
+      eventBus: this.eventBus,
+      defaultModel: () => this.llmService.load().model
     });
   }
 
@@ -121,6 +131,7 @@ export class ScheduleApp {
     this.milestoneService.load();
     this.pomodoroService.load();
     this.ideaInboxService.subscribeToTaskCompletion();
+    this.agentThreads.load().catch(() => {});
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') this.persist();

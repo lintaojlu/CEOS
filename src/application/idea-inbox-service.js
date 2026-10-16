@@ -1,7 +1,7 @@
 import { createIdeaNode } from '../domain/ideas/idea-node.js';
 import { validateDependsOn } from '../domain/ideas/dag-validator.js';
 import { partitionIdeas, getBlockers, isIdeaReady } from '../domain/ideas/readiness.js';
-import { createDailyTask } from '../domain/schedule/daily-task.js';
+import { createDailyTask, normalizeNotes } from '../domain/schedule/daily-task.js';
 import { todayKey } from '../domain/shared/date-key.js';
 import { Events } from './event-bus.js';
 
@@ -78,7 +78,7 @@ export class IdeaInboxService {
     const node = createIdeaNode({
       id: task.id,
       text: task.text,
-      note: task.note || '',
+      note: normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks }).map((item) => item.text).join('\n'),
       completed: false,
       pinned: !!task.pinned,
       createdAt: Date.now(),

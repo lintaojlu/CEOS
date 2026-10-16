@@ -233,7 +233,7 @@ describe('migrations', () => {
     const orphan = schedule['2026-10-09'].required.find((task) => task.id === 't-orphan');
     expect(orphan.text).toBe('实现ai');
     expect(orphan.tagIds).toEqual(['p1']);
-    expect(orphan.note).toBe('只在项目里');
+    expect(orphan.notes.map((item) => item.text)).toEqual(['只在项目里']);
     expect(adapter.getSchemaVersion()).toBe(5);
     vi.useRealTimers();
   });

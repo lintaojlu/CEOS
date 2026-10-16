@@ -6,8 +6,7 @@ import { PomodoroRepository } from '../infrastructure/storage/pomodoro-repositor
 import { EventBus } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { PomodoroService } from './pomodoro-service.js';
-import { WORK_MS, BREAK_MS } from '../domain/pomodoro/session.js';
-import { getDateKey } from '../domain/shared/date-key.js';
+import { focusMs } from '../domain/pomodoro/session.js';
 
 function createStack(startMs = 1_000_000) {
   const store = {};
@@ -49,69 +48,70 @@ function createStack(startMs = 1_000_000) {
 describe('PomodoroService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-10-06T10:00:00'));
+    vi.setSystemTime(new Date('2026-10-15T10:00:00'));
   });
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('awards +1 on the start-day task only', () => {
-    const { scheduleService, pomodoro, advance } = createStack();
+  it('focus opens the dial and begin starts the chosen countdown', () => {
+    const { scheduleService, pomodoro } = createStack();
     const task = scheduleService.addTask('required', '写计划');
-    expect(task.pomodoros).toBe(0);
-
     pomodoro.focusTask('required', task.id);
-    advance(WORK_MS);
+    expect(pomodoro.session?.phase).toBe('setup');
+    expect(task.completed).toBe(false);
 
-    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
-    expect(pomodoro.session?.phase).toBe('break');
+    pomodoro.setDuration(10);
+    expect(pomodoro.session?.durationMs).toBe(focusMs(10));
+    pomodoro.begin();
+    expect(pomodoro.session?.phase).toBe('work');
+    expect(pomodoro.session?.endsAt).toBe(1_000_000 + focusMs(10));
+    expect(scheduleService.getCurrentData().required[0].completed).toBe(false);
   });
 
-  it('sync clone resets pomodoros to 0', () => {
+  it('time running out keeps the round open and does not check the task', () => {
     const { scheduleService, pomodoro, advance } = createStack();
-    const task = scheduleService.addTask('required', '专注事项');
+    const task = scheduleService.addTask('required', '等结束');
     pomodoro.focusTask('required', task.id);
-    advance(WORK_MS);
-    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
-
-    const day0 = getDateKey(scheduleService.currentDate);
-    scheduleService.setCurrentDate(new Date('2026-10-07T10:00:00'));
-    scheduleService.syncPrevDayTasks();
-    const cloned = scheduleService.getCurrentData().required.find((t) => t.id === task.id);
-    expect(cloned.pomodoros).toBe(0);
-    expect(scheduleService.data[day0].required[0].pomodoros).toBe(1);
+    pomodoro.setDuration(5);
+    pomodoro.begin();
+    advance(focusMs(5) + 1000);
+    expect(pomodoro.session?.phase).toBe('work');
+    expect(scheduleService.getCurrentData().required[0].completed).toBe(false);
   });
 
-  it('complete during work awards +1 and enters break without waiting out the timer', () => {
-    const { scheduleService, pomodoro, advance } = createStack();
-    const task = scheduleService.addTask('required', '提前收工');
-    pomodoro.focusTask('required', task.id);
-    advance(90_000);
+  it('complete checks the task and ends; abandon ends without checking', () => {
+    const { scheduleService, pomodoro } = createStack();
+    const done = scheduleService.addTask('required', '做完');
+    pomodoro.focusTask('required', done.id);
+    pomodoro.begin();
     pomodoro.complete();
-    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
-    expect(pomodoro.session?.phase).toBe('break');
-    pomodoro.complete();
-    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
+    expect(pomodoro.session).toBeNull();
+    expect(scheduleService.getCurrentData().required[0].completed).toBe(true);
+
+    const left = scheduleService.addTask('optional', '放下');
+    pomodoro.focusTask('optional', left.id);
+    pomodoro.begin();
+    pomodoro.abandon();
+    expect(pomodoro.session).toBeNull();
+    expect(scheduleService.getCurrentData().optional[0].completed).toBe(false);
   });
 
-  it('does not award when the bound task was deleted', () => {
-    const { scheduleService, pomodoro, advance } = createStack();
+  it('abandon before start does not check the task', () => {
+    const { scheduleService, pomodoro } = createStack();
+    const task = scheduleService.addTask('required', '还没开始');
+    pomodoro.focusTask('required', task.id);
+    pomodoro.abandon();
+    expect(pomodoro.session).toBeNull();
+    expect(scheduleService.getCurrentData().required[0].completed).toBe(false);
+  });
+
+  it('drops the round when the bound task is deleted', () => {
+    const { scheduleService, pomodoro } = createStack();
     const task = scheduleService.addTask('optional', '临时');
     pomodoro.focusTask('optional', task.id);
+    pomodoro.begin();
     scheduleService.deleteTask('optional', task.id);
-    advance(WORK_MS + 1);
     expect(pomodoro.session).toBeNull();
-    expect(scheduleService.getCurrentData().optional).toEqual([]);
-  });
-
-  it('sleep past work+break awards only once', () => {
-    const { scheduleService, pomodoro, advance } = createStack();
-    const task = scheduleService.addTask('required', '长睡');
-    pomodoro.focusTask('required', task.id);
-    advance(WORK_MS + BREAK_MS + 60_000);
-    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
-    expect(pomodoro.session).toBeNull();
-    advance(WORK_MS);
-    expect(scheduleService.getCurrentData().required[0].pomodoros).toBe(1);
   });
 });

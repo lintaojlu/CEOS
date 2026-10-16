@@ -1,8 +1,7 @@
 /**
- * @typedef {Object} Subtask
+ * @typedef {Object} TaskNote
  * @property {string} id
  * @property {string} text
- * @property {boolean} completed
  */
 
 /**
@@ -12,11 +11,9 @@
  * @property {boolean} completed
  * @property {number} time
  * @property {boolean} pinned
- * @property {string} note
  * @property {string} recurrence
  * @property {string[]} tagIds
- * @property {number} pomodoros
- * @property {Subtask[]} subtasks
+ * @property {TaskNote[]} notes
  */
 
 /** 任务正文里出现的时间。先匹配更长的写法，避免「3点半」被收成「3点」。 */
@@ -73,31 +70,53 @@ export function parseTime(text) {
 
 /**
  * @param {string} text
- * @param {Partial<Subtask>} [overrides]
- * @returns {Subtask}
+ * @param {{ id?: string }} [overrides]
+ * @returns {TaskNote}
  */
-export function createSubtask(text, overrides = {}) {
+export function createNote(text, overrides = {}) {
   return {
     id: overrides.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    text: String(text || '').trim(),
-    completed: !!overrides.completed
+    text: String(text || '').trim()
   };
 }
 
 /**
- * @param {any} raw
- * @returns {Subtask[]}
+ * 编辑框里还没按回车确认的草稿，保存时也收成一条说明。
+ * @param {TaskNote[]|null|undefined} notes
+ * @param {string} draft
+ * @returns {TaskNote[]}
  */
-export function normalizeSubtasks(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((s) => s && (s.id || s.text))
-    .map((s) =>
-      createSubtask(s.text || '', {
-        id: s.id,
-        completed: !!s.completed
-      })
-    );
+export function commitNoteDraft(notes, draft) {
+  const list = Array.isArray(notes) ? notes : [];
+  const text = String(draft || '').trim();
+  if (!text) return list;
+  return [...list, createNote(text)];
+}
+
+/**
+ * 已有的单条说明，加上原来的子任务正文，收成多条说明。
+ * 已经是 notes 数组时直接用它，不再把旧字段再并一次。
+ * @param {any} raw
+ * @param {{ note?: string, subtasks?: any[] }} [legacy]
+ * @returns {TaskNote[]}
+ */
+export function normalizeNotes(raw, legacy = {}) {
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((item) => item && (item.id || item.text))
+      .map((item) => createNote(item.text || '', { id: item.id }))
+      .filter((item) => item.text);
+  }
+  const notes = [];
+  const note = String(legacy.note || '').trim();
+  if (note) notes.push(createNote(note));
+  const subtasks = Array.isArray(legacy.subtasks) ? legacy.subtasks : [];
+  subtasks.forEach((item) => {
+    const text = String(item?.text || (typeof item === 'string' ? item : '')).trim();
+    if (!text) return;
+    notes.push(createNote(text, { id: typeof item?.id === 'string' ? item.id : undefined }));
+  });
+  return notes;
 }
 
 /**
@@ -141,29 +160,30 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     time = Date.now();
   }
 
-  const { subtasks: rawSubtasks, pomodoros: rawPomodoros, projectId: _projectId, tagId: rawTagId, ...rest } = overrides;
-  const pomodoros =
-    typeof rawPomodoros === 'number' && Number.isFinite(rawPomodoros) && rawPomodoros > 0
-      ? Math.floor(rawPomodoros)
-      : 0;
+  const {
+    subtasks: rawSubtasks,
+    notes: rawNotes,
+    note: rawNote,
+    pomodoros: _pomodoros,
+    projectId: _projectId,
+    tagId: _tagId,
+    ...rest
+  } = overrides;
   return {
     id: rest.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text,
     completed: false,
     time,
     pinned: false,
-    note: '',
     recurrence: '',
     ...rest,
     tagIds: normalizeTagIds(overrides),
-    pomodoros,
-    subtasks: normalizeSubtasks(rawSubtasks)
+    notes: normalizeNotes(rawNotes, { note: rawNote, subtasks: rawSubtasks })
   };
 }
 
 /**
- * Shallow-clone a task including a deep copy of subtasks (for sync).
- * Synced copies always start with pomodoros = 0.
+ * Shallow-clone a task including a deep copy of notes (for sync).
  * @param {DailyTask|any} task
  * @returns {DailyTask}
  */
@@ -171,11 +191,13 @@ export function cloneDailyTask(task) {
   const copy = {
     ...task,
     tagIds: normalizeTagIds(task),
-    pomodoros: 0,
-    subtasks: normalizeSubtasks(task?.subtasks).map((s) => ({ ...s }))
+    notes: normalizeNotes(task?.notes, { note: task?.note, subtasks: task?.subtasks }).map((item) => ({ ...item }))
   };
   delete copy.projectId;
   delete copy.tagId;
+  delete copy.pomodoros;
+  delete copy.note;
+  delete copy.subtasks;
   return copy;
 }
 

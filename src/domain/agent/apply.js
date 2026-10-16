@@ -1,5 +1,5 @@
 import { createEmptyScheduleDay } from '../../data/schedule-record.js';
-import { createDailyTask, createSubtask, normalizeSubtasks } from '../schedule/daily-task.js';
+import { createDailyTask, createNote, normalizeNotes } from '../schedule/daily-task.js';
 import { parseDateKey } from '../shared/date-key.js';
 import { findTask } from './writes.js';
 
@@ -15,13 +15,21 @@ function ensureDay(schedule, date) {
 }
 
 /**
+ * 单条说明和多条步骤都收成任务说明。正文相同的沿用原来的 id。
  * @param {any[]} existing
- * @param {string[]} texts
+ * @param {any} args
  */
-function replaceSubtasks(existing, texts) {
-  return (texts || []).map((text) => {
+function notesFromWrite(existing, args) {
+  const texts = [];
+  const note = String(args?.note || '').trim();
+  if (note) texts.push(note);
+  (args?.subtasks || []).forEach((item) => {
+    const text = String(item || '').trim();
+    if (text) texts.push(text);
+  });
+  return texts.map((text) => {
     const found = (existing || []).find((item) => item && item.text === text);
-    return found ? createSubtask(found.text, { id: found.id, completed: !!found.completed }) : createSubtask(text);
+    return found ? createNote(found.text, { id: found.id }) : createNote(text);
   });
 }
 
@@ -30,11 +38,13 @@ function replaceSubtasks(existing, texts) {
  * @param {any} args
  */
 function applyFields(task, args) {
+  const existing = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
   task.text = args.text;
-  task.note = args.note || '';
   task.tagIds = args.tagId ? [args.tagId] : [];
   delete task.tagId;
-  task.subtasks = replaceSubtasks(task.subtasks, args.subtasks);
+  task.notes = notesFromWrite(existing, args);
+  delete task.note;
+  delete task.subtasks;
 }
 
 /**
@@ -104,9 +114,8 @@ export function applyProposal(draft, calls) {
         const day = ensureDay(schedule, args.date);
         const base = parseDateKey(args.date) || new Date();
         const task = createDailyTask(args.text, base, {
-          note: args.note || '',
           tagIds: args.tagId ? [args.tagId] : [],
-          subtasks: (args.subtasks || []).map((text) => createSubtask(text))
+          notes: notesFromWrite([], args)
         });
         day[args.list].push(task);
         call.appliedId = task.id;
@@ -135,10 +144,12 @@ export function applyProposal(draft, calls) {
         const base = parseDateKey(args.date) || new Date();
         const task = createDailyTask(args.text || idea.text, base, {
           id: `${idea.id}-pickup-${Date.now()}-${index}`,
-          note: args.note || idea.note || '',
           pinned: !!idea.pinned,
           tagIds: args.tagId ? [args.tagId] : [],
-          subtasks: (args.subtasks || []).map((text) => createSubtask(text))
+          notes: notesFromWrite([], {
+            note: args.note || idea.note || '',
+            subtasks: args.subtasks
+          })
         });
         day[args.list].push(task);
         call.appliedId = task.id;
@@ -151,17 +162,19 @@ export function applyProposal(draft, calls) {
         if (!source || source.task.completed) return { ok: false, index, error: '来源日没有这条未完成任务' };
         if (findTask(schedule, args.date, args.taskId)) return { ok: false, index, error: '目标日已经有这条任务' };
         const day = ensureDay(schedule, args.date);
+        const existing = normalizeNotes(source.task.notes, { note: source.task.note, subtasks: source.task.subtasks });
         const copy = {
           ...source.task,
           text: args.text || source.task.text,
-          note: args.note ?? source.task.note ?? '',
           completed: false,
-          pomodoros: 0,
           tagIds: args.tagId ? [args.tagId] : [],
-          subtasks: normalizeSubtasks(replaceSubtasks(source.task.subtasks, args.subtasks || []))
+          notes: notesFromWrite(existing, args)
         };
         delete copy.tagId;
         delete copy.projectId;
+        delete copy.pomodoros;
+        delete copy.note;
+        delete copy.subtasks;
         day[args.list].push(copy);
       } else {
         return { ok: false, index, error: '没有这个函数' };

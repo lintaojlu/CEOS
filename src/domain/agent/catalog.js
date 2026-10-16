@@ -1,7 +1,7 @@
 const DATE = { type: 'string', description: 'YYYY-MM-DD' };
 const LIST = { type: 'string', enum: ['required', 'optional'], description: 'required 是必做，optional 是选做' };
 const TAG = { type: 'string', description: '已有标签的 id，或空字符串。空字符串表示不挂标签。' };
-const SUBTASKS = { type: 'array', items: { type: 'string' }, description: '步骤正文。没有步骤时给空数组。' };
+const SUBTASKS = { type: 'array', items: { type: 'string' }, description: '任务说明，一条一项。没有说明时给空数组。' };
 
 /**
  * @param {string} name
@@ -25,7 +25,7 @@ export const READ_TOOLS = [
   tool('list_ready_ideas', '列出当前可以捡起的灵感。', {}, []),
   tool('list_day', '列出某一天的全部必做和选做，含已完成。', { date: DATE }, ['date']),
   tool('list_open_days', '列出正在看的那一天以外、还有未完成任务的日期。只含日期、条数和标题。', {}, []),
-  tool('list_open_tasks', '列出某一天未完成任务的正文、备注和子任务。一轮最多 7 个不同日期。', { date: DATE }, ['date']),
+  tool('list_open_tasks', '列出某一天未完成任务的正文和说明。一轮最多 7 个不同日期。', { date: DATE }, ['date']),
   tool('list_near_milestones', '列出已到期或 14 天内的未完成里程碑。只读。', { date: DATE }, ['date'])
 ];
 
@@ -98,8 +98,10 @@ const REMOVE = tool(
 
 /**
  * @param {{ allowCreate: boolean, allowRemove: boolean }} turn
+ * @param {'default'|'read'|'auto'} [permission]
  */
-export function toolsForTurn(turn) {
+export function toolsForTurn(turn, permission = 'default') {
+  if (permission === 'read') return READ_TOOLS.slice();
   const writes = [UPDATE, PICKUP, COPY];
   if (turn.allowCreate) writes.push(CREATE);
   if (turn.allowRemove) writes.push(REMOVE);

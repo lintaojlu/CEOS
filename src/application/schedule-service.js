@@ -1,6 +1,6 @@
 import { createEmptyWorkspace } from '../data/workspace-record.js';
 import { getDateKey, addDays, todayKey } from '../domain/shared/date-key.js';
-import { createDailyTask, createSubtask, sortTasks, parseTime, normalizeSubtasks, normalizeTagIds } from '../domain/schedule/daily-task.js';
+import { createDailyTask, createNote, sortTasks, parseTime, normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 import { nextTagColor } from '../domain/schedule/tag-palette.js';
 import { ensureFixedTags, isFixedTag } from '../domain/schedule/fixed-tags.js';
 import { syncPrevDay } from '../domain/schedule/schedule-day.js';
@@ -231,6 +231,24 @@ export class ScheduleService {
     return task;
   }
 
+  /**
+   * 把某一天的任务标成完成。已经完成的保持原样。
+   * @param {string} dateKey
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   */
+  completeTaskOnDate(dateKey, type, id) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    const task = (day[type] || []).find((item) => item.id === id);
+    if (!task || task.completed) return task || null;
+    task.completed = true;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
+    this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id });
+    return task;
+  }
+
   pinTask(type, id) {
     const data = this.getCurrentData();
     const task = data[type].find((t) => t.id === id);
@@ -252,8 +270,10 @@ export class ScheduleService {
     const data = this.getCurrentData();
     const task = data[type].find((t) => t.id === id);
     if (!task) return null;
-    if (patch.subtasks !== undefined) {
-      patch = { ...patch, subtasks: normalizeSubtasks(patch.subtasks) };
+    if (patch.notes !== undefined || patch.note !== undefined || patch.subtasks !== undefined) {
+      patch = { ...patch, notes: normalizeNotes(patch.notes, { note: patch.note, subtasks: patch.subtasks }) };
+      delete patch.note;
+      delete patch.subtasks;
     }
     if (patch.text != null) {
       patch = { ...patch, text: String(patch.text).trim() };
@@ -265,7 +285,9 @@ export class ScheduleService {
     }
     Object.assign(task, patch);
     delete task.tagId;
-    if (!Array.isArray(task.subtasks)) task.subtasks = [];
+    delete task.note;
+    delete task.subtasks;
+    if (!Array.isArray(task.notes)) task.notes = [];
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     return task;
@@ -280,7 +302,11 @@ export class ScheduleService {
     const data = this.getCurrentData();
     const task = (data[type] || []).find((t) => t.id === taskId);
     if (!task) return null;
-    if (!Array.isArray(task.subtasks)) task.subtasks = [];
+    if (!Array.isArray(task.notes)) {
+      task.notes = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
+      delete task.note;
+      delete task.subtasks;
+    }
     return task;
   }
 
@@ -289,64 +315,50 @@ export class ScheduleService {
    * @param {string} taskId
    * @param {string} text
    */
-  addSubtask(type, taskId, text) {
+  addNote(type, taskId, text) {
     const trimmed = String(text || '').trim();
     if (!trimmed) return null;
     const task = this._findTask(type, taskId);
     if (!task) return null;
-    const sub = createSubtask(trimmed);
-    task.subtasks.push(sub);
+    const note = createNote(trimmed);
+    task.notes.push(note);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
-    return sub;
+    return note;
   }
 
   /**
    * @param {'required'|'optional'} type
    * @param {string} taskId
-   * @param {string} subId
+   * @param {string} noteId
    */
-  toggleSubtask(type, taskId, subId) {
-    const task = this._findTask(type, taskId);
-    if (!task) return null;
-    const sub = task.subtasks.find((s) => s.id === subId);
-    if (!sub) return null;
-    sub.completed = !sub.completed;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
-    return sub;
-  }
-
-  /**
-   * @param {'required'|'optional'} type
-   * @param {string} taskId
-   * @param {string} subId
-   * @param {string} text
-   */
-  updateSubtask(type, taskId, subId, text) {
-    const task = this._findTask(type, taskId);
-    if (!task) return null;
-    const sub = task.subtasks.find((s) => s.id === subId);
-    if (!sub) return null;
-    const trimmed = String(text || '').trim();
-    if (!trimmed) return sub;
-    sub.text = trimmed;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
-    return sub;
-  }
-
-  /**
-   * @param {'required'|'optional'} type
-   * @param {string} taskId
-   * @param {string} subId
-   */
-  deleteSubtask(type, taskId, subId) {
+  deleteNote(type, taskId, noteId) {
     const task = this._findTask(type, taskId);
     if (!task) return;
-    task.subtasks = task.subtasks.filter((s) => s.id !== subId);
+    task.notes = task.notes.filter((item) => item.id !== noteId);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
+  }
+
+  /**
+   * 替换某一天某条任务的全部说明。查看日如果已经翻走，仍然写回这一天。
+   * @param {string} dateKey
+   * @param {'required'|'optional'} type
+   * @param {string} taskId
+   * @param {Array<{ id?: string, text?: string }>} notes
+   */
+  setTaskNotes(dateKey, type, taskId, notes) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
+    if (type !== 'required' && type !== 'optional') return null;
+    const day = this.data[dateKey];
+    const task = (day?.[type] || []).find((item) => item && item.id === taskId);
+    if (!task) return null;
+    task.notes = normalizeNotes(notes);
+    delete task.note;
+    delete task.subtasks;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId, dateKey });
+    return task;
   }
 
   /**
@@ -408,9 +420,15 @@ export class ScheduleService {
   insertTask(type, task) {
     const data = this.getCurrentData();
     if (data[type].some((t) => t.id === task.id)) return;
-    const next = { ...task, tagIds: this._knownTagIds(normalizeTagIds(task)) };
+    const next = {
+      ...task,
+      tagIds: this._knownTagIds(normalizeTagIds(task)),
+      notes: normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks })
+    };
     delete next.tagId;
     delete next.projectId;
+    delete next.note;
+    delete next.subtasks;
     data[type].push(next);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
@@ -541,44 +559,6 @@ export class ScheduleService {
   findTaskOnDate(dateKey, list, taskId) {
     const day = this.scheduleRepo.ensureDay(this.data, dateKey);
     return (day[list] || []).find((t) => t.id === taskId) || null;
-  }
-
-  /**
-   * Award one pomodoro on a specific day's task copy.
-   * @param {string} dateKey
-   * @param {'required'|'optional'} list
-   * @param {string} taskId
-   * @returns {boolean}
-   */
-  incrementPomodoro(dateKey, list, taskId) {
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const task = (day[list] || []).find((t) => t.id === taskId);
-    if (!task) return false;
-    const n = typeof task.pomodoros === 'number' && task.pomodoros > 0 ? Math.floor(task.pomodoros) : 0;
-    task.pomodoros = n + 1;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type: list, id: taskId, reason: 'pomodoro' });
-    return true;
-  }
-
-  /**
-   * Toggle a subtask on a specific date's copy. Other dates stay as they are.
-   * @param {string} dateKey
-   * @param {'required'|'optional'} list
-   * @param {string} taskId
-   * @param {string} subId
-   */
-  toggleSubtaskOnDate(dateKey, list, taskId, subId) {
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const task = (day[list] || []).find((t) => t.id === taskId);
-    if (!task) return null;
-    if (!Array.isArray(task.subtasks)) task.subtasks = [];
-    const sub = task.subtasks.find((s) => s.id === subId);
-    if (!sub) return null;
-    sub.completed = !sub.completed;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type: list, id: taskId });
-    return sub;
   }
 
   parseTime = parseTime;

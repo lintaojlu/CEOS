@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../app/context.jsx';
-import { Checkbox } from '../../components/Checkbox.jsx';
+import { Checkbox } from '../../library/index.js';
 
 export function IdeaListView({ onEdit, filter }) {
   const app = useApp();

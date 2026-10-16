@@ -1,20 +1,17 @@
 import { todayKey } from '../domain/shared/date-key.js';
 import {
   abandon,
-  completeWork,
-  focusFromTaskRow,
+  beginWork,
+  finishWork,
   formatRemaining,
+  openSetup,
   remainingMs,
-  settle,
-  skipBreak,
-  startWork,
-  switchTask
+  withDuration
 } from '../domain/pomodoro/session.js';
 import { Events } from './event-bus.js';
 
 /**
- * One pomodoro round bound to a real today-task.
- * Persists absolute endsAt in ceoPomodoro (not ceoSchedule).
+ * 当天一条未完成任务上的一轮专注。时长先选好，开始后才记结束时间。
  */
 export class PomodoroService {
   /**
@@ -31,17 +28,12 @@ export class PomodoroService {
     this.now = now;
     /** @type {import('../domain/pomodoro/session.js').PomodoroSession|null} */
     this.session = null;
-    /** @type {{ taskId: string, list: 'required'|'optional' }|null} */
-    this.selected = null;
     /** @type {ReturnType<typeof setTimeout>|ReturnType<typeof setInterval>|null} */
     this._timer = null;
   }
 
   load() {
     this.session = this.pomodoroRepo.load();
-    if (this.session) {
-      this.selected = { taskId: this.session.taskId, list: this.session.list };
-    }
     this.eventBus.on(Events.TASKS_UPDATED, () => this.onTasksUpdated());
     this.tick();
     this.startTicker();
@@ -70,68 +62,19 @@ export class PomodoroService {
   }
 
   tick() {
-    if (this.session) {
-      const stillThere = this.scheduleService.findTaskOnDate(
-        this.session.dateKey,
-        this.session.list,
-        this.session.taskId
-      );
-      if (!stillThere) {
-        this.session = abandon(this.session);
-        this.persist();
-        this._emit();
-        return;
-      }
-    } else if (!this.session) {
-      // Idle: still emit once on bootstrap so the sidebar can hide leftover chrome.
-    }
-
-    this._commit(settle(this.session, this.now()));
-  }
-
-  /**
-   * Finish the work round early. Counts +1 and starts the break, same as the timer hitting zero.
-   */
-  complete() {
-    if (!this.session || this.session.phase !== 'work') return;
+    if (!this.session) return;
     const found = this.scheduleService.findTaskOnDate(
       this.session.dateKey,
       this.session.list,
       this.session.taskId
     );
     if (!found) {
-      this.abandon();
+      this.session = abandon(this.session);
+      this.persist();
+      this._emit();
       return;
     }
-    this._commit(completeWork(this.session, this.now()));
-  }
-
-  /**
-   * @param {import('../domain/pomodoro/session.js').SettleResult} result
-   */
-  _commit(result) {
-    const before = this.session;
-    this.session = result.session;
-    if (result.awardPomodoro && result.award) {
-      const ok = this.scheduleService.incrementPomodoro(
-        result.award.dateKey,
-        result.award.list,
-        result.award.taskId
-      );
-      if (!ok) {
-        this.session = null;
-        this.persist();
-        this._emit();
-        return;
-      }
-    }
-    if (result.idleTaskId) {
-      this.selected = { taskId: result.idleTaskId, list: result.idleList || 'required' };
-    }
-    if (before !== this.session || result.awardPomodoro || this.session) {
-      if (before !== this.session) this.persist();
-      this._emit();
-    }
+    if (this.session.phase === 'work') this._emit();
   }
 
   onTasksUpdated() {
@@ -148,163 +91,81 @@ export class PomodoroService {
     }
   }
 
-  /** @returns {Array<{ list: 'required'|'optional', task: any }>} */
-  listTodayIncomplete() {
-    return this.scheduleService.listIncompleteOnDate(todayKey());
-  }
-
-  getSnapshot() {
-    const now = this.now();
-    const rem = remainingMs(this.session, now);
-    const phase = this.session ? this.session.phase : 'idle';
-    let activeTask = null;
-    let activeDateKey = todayKey();
-    let activeList = this.selected?.list || 'required';
-    let activeId = this.selected?.taskId || '';
-    if (this.session) {
-      activeDateKey = this.session.dateKey;
-      activeList = this.session.list;
-      activeId = this.session.taskId;
-      activeTask = this.scheduleService.findTaskOnDate(activeDateKey, activeList, activeId);
-    } else if (this.selected) {
-      activeTask = this.scheduleService.findTaskOnDate(todayKey(), this.selected.list, this.selected.taskId);
-    }
-    return {
-      session: this.session,
-      remainingMs: rem,
-      remainingLabel: formatRemaining(phase === 'idle' ? 25 * 60 * 1000 : rem),
-      selected: this.selected,
-      activeTask,
-      activeDateKey,
-      activeList,
-      activeId,
-      pendingTaskId: this.session?.pendingTaskId || '',
-      phase
-    };
-  }
-
   /**
-   * Right-list click.
-   * @param {'required'|'optional'} list
-   * @param {string} taskId
-   */
-  selectTask(list, taskId) {
-    this.tick();
-    const dateKey = todayKey();
-    const task = this.scheduleService.findTaskOnDate(dateKey, list, taskId);
-    if (!task || task.completed) return;
-
-    if (this.session?.phase === 'work') {
-      this._switchDuringWork(list, taskId);
-      return;
-    }
-    if (this.session?.phase === 'break') {
-      const { session } = switchTask(this.session, { taskId, list, dateKey, now: this.now() });
-      this.session = session;
-      this.selected = { taskId, list };
-      this.persist();
-      this._emit();
-      return;
-    }
-    this.selected = { taskId, list };
-    this._emit();
-  }
-
-  /**
-   * @param {'required'|'optional'} [list]
-   * @param {string} [taskId]
-   */
-  start(list, taskId) {
-    this.tick();
-    const targetList = list || this.selected?.list;
-    const targetId = taskId || this.selected?.taskId;
-    if (!targetList || !targetId) return;
-    const dateKey = todayKey();
-    const task = this.scheduleService.findTaskOnDate(dateKey, targetList, targetId);
-    if (!task || task.completed) return;
-
-    if (this.session?.phase === 'work') {
-      this._switchDuringWork(targetList, targetId);
-      return;
-    }
-    this.session = startWork({
-      taskId: targetId,
-      list: targetList,
-      dateKey,
-      now: this.now()
-    });
-    this.selected = { taskId: targetId, list: targetList };
-    this.persist();
-    this._emit();
-  }
-
-  /**
-   * Task-row「专注」.
+   * 任务行上的「专注」。只打开选时长，不开始倒计时。
    * @param {'required'|'optional'} list
    * @param {string} taskId
    */
   focusTask(list, taskId) {
-    this.tick();
     const dateKey = todayKey();
     const task = this.scheduleService.findTaskOnDate(dateKey, list, taskId);
     if (!task || task.completed) return;
-    this.session = focusFromTaskRow(this.session, {
-      taskId,
-      list,
-      dateKey,
-      now: this.now()
-    });
-    this.selected = { taskId, list };
+    this.session = openSetup({ taskId, list, dateKey });
     this.persist();
     this._emit();
   }
 
-  abandon() {
-    this.tick();
-    if (!this.session) return;
-    if (this.session.phase === 'work') {
-      this.selected = { taskId: this.session.taskId, list: this.session.list };
-    } else {
-      this.selected = {
-        taskId: this.session.pendingTaskId || this.session.taskId,
-        list: this.session.pendingList || this.session.list
-      };
+  /** @param {number} minutes */
+  setDuration(minutes) {
+    if (!this.session || this.session.phase !== 'setup') return;
+    this.session = withDuration(this.session, minutes);
+    this.persist();
+    this._emit();
+  }
+
+  begin() {
+    if (!this.session || this.session.phase !== 'setup') return;
+    const found = this.scheduleService.findTaskOnDate(
+      this.session.dateKey,
+      this.session.list,
+      this.session.taskId
+    );
+    if (!found || found.completed) {
+      this.abandon();
+      return;
     }
+    this.session = beginWork(this.session, this.now());
+    this.persist();
+    this._emit();
+  }
+
+  complete() {
+    const result = finishWork(this.session);
+    if (!result.markComplete || !result.dateKey || !result.list || !result.taskId) return;
+    const found = this.scheduleService.findTaskOnDate(result.dateKey, result.list, result.taskId);
+    this.session = null;
+    this.persist();
+    if (found && !found.completed) {
+      this.scheduleService.completeTaskOnDate(result.dateKey, result.list, result.taskId);
+    }
+    this._emit();
+  }
+
+  abandon() {
+    if (!this.session) return;
     this.session = abandon(this.session);
     this.persist();
     this._emit();
   }
 
-  skipBreak() {
-    this.tick();
-    if (!this.session || this.session.phase !== 'break') return;
-    this.selected = {
-      taskId: this.session.pendingTaskId || this.session.taskId,
-      list: this.session.pendingList || this.session.list
+  getSnapshot() {
+    const now = this.now();
+    const session = this.session;
+    const phase = session ? session.phase : 'idle';
+    const durationMs = session?.durationMs || 0;
+    const rem = remainingMs(session, now);
+    let activeTask = null;
+    if (session) {
+      activeTask = this.scheduleService.findTaskOnDate(session.dateKey, session.list, session.taskId);
+    }
+    return {
+      session,
+      phase,
+      durationMs,
+      remainingMs: rem,
+      remainingLabel: formatRemaining(rem),
+      activeTask
     };
-    this.session = skipBreak(this.session);
-    this.persist();
-    this._emit();
-  }
-
-  /**
-   * @param {'required'|'optional'} list
-   * @param {string} taskId
-   */
-  _switchDuringWork(list, taskId) {
-    const dateKey = todayKey();
-    const task = this.scheduleService.findTaskOnDate(dateKey, list, taskId);
-    if (!task || task.completed) return;
-    const { session } = switchTask(this.session, {
-      taskId,
-      list,
-      dateKey,
-      now: this.now()
-    });
-    this.session = session;
-    this.selected = { taskId, list };
-    this.persist();
-    this._emit();
   }
 
   _emit() {

@@ -56,18 +56,19 @@ export class LlmService {
   }
 
   /**
-   * @param {{ messages: any[], tools: any[] }} input
+   * @param {{ messages: any[], tools: any[], model?: string }} input
    */
-  completeWithTools({ messages, tools }) {
+  completeWithTools({ messages, tools, model }) {
     const settings = this.load();
-    if (!settings.apiKey || !settings.model) {
+    const chosen = String(model || settings.model || '').trim();
+    if (!settings.apiKey || !chosen) {
       throw new LlmRequestError('请先在设置中填写默认模型和 API Key', 'not-configured');
     }
     return chatCompletionWithTools({
       baseUrl: settings.baseUrl,
       fullUrl: settings.fullUrl,
       apiKey: settings.apiKey,
-      model: settings.model,
+      model: chosen,
       messages,
       tools
     });

@@ -1,22 +1,23 @@
 import { diffDays } from '../shared/date-key.js';
 import { partitionIdeas } from '../ideas/readiness.js';
-import { normalizeTagIds } from '../schedule/daily-task.js';
+import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
 
 /**
  * @param {any} task
  */
 export function taskView(task) {
   const tagIds = normalizeTagIds(task);
+  const notes = normalizeNotes(task?.notes, { note: task?.note, subtasks: task?.subtasks });
   return {
     id: task.id,
     text: task.text || '',
-    note: task.note || '',
+    note: '',
     completed: !!task.completed,
     tagId: tagIds[0] || '',
-    subtasks: (task.subtasks || []).map((item) => ({
+    subtasks: notes.map((item) => ({
       id: item.id,
-      text: item.text || '',
-      completed: !!item.completed
+      text: item.text,
+      completed: false
     }))
   };
 }

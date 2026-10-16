@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { heatColumnGap, visibleWeekCount } from '../../domain/stats/activity-stats.js';
+import { Symbol } from '../library/index.js';
 
 const DOW = ['日', '一', '二', '三', '四', '五', '六'];
 const RATE_LABEL = ['没有数据', '0完成率', '低完成率', '中完成率', '高完成率'];
@@ -21,15 +22,6 @@ function monthText(week, index) {
   if (week.monthLabel) return week.monthLabel;
   if (index !== 0 || !week.days[0]) return '';
   return `${Number(week.days[0].dateKey.slice(5, 7))}月`;
-}
-
-function Chevron({ direction }) {
-  const d = direction === 'prev' ? 'M14 6 L8 12 L14 18' : 'M10 6 L16 12 L10 18';
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 export function Heatmap({ weeks }) {
@@ -143,10 +135,10 @@ export function Heatmap({ weeks }) {
       </div>
       <div className="heatmap-pager">
         <button type="button" className="heatmap-nav" aria-label="更早" onClick={() => page(-1)} disabled={windowStart === 0}>
-          <Chevron direction="prev" />
+          <Symbol name="chevron-left" />
         </button>
         <button type="button" className="heatmap-nav" aria-label="更近" onClick={() => page(1)} disabled={windowStart >= maxStart}>
-          <Chevron direction="next" />
+          <Symbol name="chevron-right" />
         </button>
       </div>
       </div>

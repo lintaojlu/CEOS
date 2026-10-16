@@ -2,18 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppProvider, useApp, useShell } from './context.jsx';
 import { pageFromHash } from './router.js';
 import { Sidebar } from './Sidebar.jsx';
-import { Icon } from '../components/Icon.jsx';
-import { DateNav } from '../components/DateNav.jsx';
-import { SegmentedControl } from '../components/SegmentedControl.jsx';
+import { DateNav, Icon, SegmentedControl } from '../library/index.js';
 import { SettingsModal } from '../modals/SettingsModal.jsx';
 import { PomodoroOverlay } from '../components/PomodoroOverlay.jsx';
 import { AgentDock } from '../agent/AgentDock.jsx';
+import { AgentPage } from '../agent/AgentPage.jsx';
 import { HomePage } from '../pages/home/HomePage.jsx';
 import { TasksPage } from '../pages/tasks/TasksPage.jsx';
 import { IdeasPage } from '../pages/ideas/IdeasPage.jsx';
 import { DEFAULT_IDEA_FILTER, IdeaStatusFilter } from '../pages/ideas/IdeaStatusFilter.jsx';
 
-const PAGE_TITLE = { tasks: '任务', ideas: '收集箱' };
+const PAGE_TITLE = { tasks: '任务', ideas: '收集箱', agent: 'Agent' };
 
 function TopBar({ page, sidebarHidden, onToggle, toggleRef, ideaFilter, onIdeaFilter }) {
   const app = useApp();
@@ -102,7 +101,7 @@ function Shell() {
   }
 
   return (
-    <div className={sidebarHidden ? 'app-shell is-sidebar-hidden' : 'app-shell'}>
+    <div className={['app-shell', sidebarHidden ? 'is-sidebar-hidden' : ''].filter(Boolean).join(' ')}>
       <div className="app-frame" inert={focusing ? true : undefined}>
         <div className="window-drag" data-tauri-drag-region />
         <TopBar
@@ -118,9 +117,10 @@ function Shell() {
           {page === 'home' ? <HomePage /> : null}
           {page === 'tasks' ? <TasksPage /> : null}
           {page === 'ideas' ? <IdeasPage filter={ideaFilter} /> : null}
+          {page === 'agent' ? <AgentPage /> : null}
         </main>
         <SettingsModal />
-        <AgentDock />
+        <AgentDock page={page} />
       </div>
       <PomodoroOverlay />
     </div>

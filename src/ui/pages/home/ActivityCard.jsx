@@ -1,7 +1,7 @@
 import React from 'react';
 import { todayKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
+import { Card } from '../../library/index.js';
 import { Heatmap } from '../../components/Heatmap.jsx';
 
 export function ActivityCard() {

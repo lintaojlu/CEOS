@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LlmRequestError } from '../../application/llm-service.js';
 import { useApp, useShell } from '../app/context.jsx';
-import { Modal } from '../components/Modal.jsx';
+import { Modal, Symbol } from '../library/index.js';
 
 export function SettingsModal() {
   const app = useApp();
@@ -92,7 +92,7 @@ export function SettingsModal() {
               aria-label={showKey ? '隐藏 API Key' : '显示 API Key'}
               onClick={() => setShowKey((value) => !value)}
             >
-              <EyeIcon open={showKey} />
+              <Symbol name={showKey ? 'eye-off' : 'eye'} size={16} />
             </button>
           </span>
         </label>
@@ -142,16 +142,6 @@ export function SettingsModal() {
         </div>
       </div>
     </Modal>
-  );
-}
-
-function EyeIcon({ open }) {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-      {open
-        ? <path d="M3 3l18 18M10.5 10.7A2 2 0 0 0 13.3 13.5M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 9.3 3.1 11 7-1 2.2-2.6 4-4.6 5.3M6.1 6.7C4.2 8 2.7 9.8 2 12c1.7 3.9 6 7 10 7 1.1 0 2.2-.2 3.2-.5" strokeLinecap="round" />
-        : <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>}
-    </svg>
   );
 }
 

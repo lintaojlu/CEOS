@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconButton } from './IconButton.jsx';
 
 export function Modal({ title, children, onClose, wide = false }) {
   return (
@@ -12,7 +13,7 @@ export function Modal({ title, children, onClose, wide = false }) {
       >
         <div className="card-head">
           <h2 className="card-title">{title}</h2>
-          <button type="button" className="btn btn-quiet btn-icon" onClick={onClose} aria-label="关闭">×</button>
+          <IconButton name="close" label="关闭" onClick={onClose} />
         </div>
         {children}
       </div>

@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { useApp } from '../../app/context.jsx';
-import { isFixedTag, tagPillStyle } from '../../../domain/schedule/fixed-tags.js';
-import { DeleteButton, Icon, Modal } from '../../library/index.js';
+import { tagPillStyle } from '../../../domain/schedule/fixed-tags.js';
+import { DeleteButton, Icon, Modal, Symbol } from '../../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 
 export function TagsCard({ tags = [], selectedIds, onToggle }) {
+  const app = useApp();
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const clickTimer = useRef(0);
@@ -31,14 +32,33 @@ export function TagsCard({ tags = [], selectedIds, onToggle }) {
       </div>
       <div className="tag-board">
         {tags.map((tag) => (
-          <button
-            key={tag.id}
-            type="button"
-            className={selected.has(tag.id) ? 'tag-pill is-on' : 'tag-pill'}
-            style={tagPillStyle(tag)}
-            onClick={() => clickTag(tag.id)}
-            onDoubleClick={isFixedTag(tag) ? undefined : () => editTag(tag.id)}
-          >{tag.name}</button>
+          <span key={tag.id} className={tag.pinned ? 'tag-pill-wrap is-pinned' : 'tag-pill-wrap'}>
+            <button
+              type="button"
+              className={selected.has(tag.id) ? 'tag-pill is-on' : 'tag-pill'}
+              style={tagPillStyle(tag)}
+              onClick={() => clickTag(tag.id)}
+              onDoubleClick={() => editTag(tag.id)}
+            >{tag.name}</button>
+            <button
+              type="button"
+              className={tag.pinned ? 'tag-pin is-on' : 'tag-pin'}
+              aria-label={tag.pinned ? '取消钉住' : '钉住标签'}
+              aria-pressed={tag.pinned === true}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                app.scheduleService.toggleTagPin(tag.id);
+              }}
+              onDoubleClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+            >
+              <Symbol name="pin" size={12} />
+            </button>
+          </span>
         ))}
       </div>
       {adding ? <TagCreateModal onClose={() => setAdding(false)} /> : null}

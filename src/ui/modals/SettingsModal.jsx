@@ -9,6 +9,7 @@ export function SettingsModal() {
   const saved = app.llmService.load();
   const [baseUrl, setBaseUrl] = useState(saved.baseUrl);
   const [model, setModel] = useState(saved.model);
+  const [smallModel, setSmallModel] = useState(saved.smallModel || '');
   const [apiKey, setApiKey] = useState(saved.apiKey);
   const [showKey, setShowKey] = useState(false);
   const [models, setModels] = useState([]);
@@ -20,6 +21,7 @@ export function SettingsModal() {
     const next = app.llmService.load();
     setBaseUrl(next.baseUrl);
     setModel(next.model);
+    setSmallModel(next.smallModel || '');
     setApiKey(next.apiKey);
     setShowKey(false);
     setStatus('');
@@ -28,7 +30,7 @@ export function SettingsModal() {
   if (!shell.settingsOpen) return null;
 
   function draft() {
-    return { baseUrl, model, apiKey };
+    return { baseUrl, model, smallModel, apiKey };
   }
 
   function persist() {
@@ -134,7 +136,19 @@ export function SettingsModal() {
           </div>
         </div>
 
-        <p className="card-note">只存在这台机器的 localStorage。AI 日报走这组 OpenAI 兼容配置。</p>
+        <div>
+          <div className="settings-label">小模型</div>
+          <input
+            className="field"
+            list="llm-model-options"
+            value={smallModel}
+            onChange={(event) => setSmallModel(event.target.value)}
+            placeholder="创建标签使用的模型 ID"
+            spellCheck="false"
+          />
+        </div>
+
+        <p className="card-note">只存在这台机器的 localStorage。日报和日程代理用默认模型。创建标签用小模型，没填时不会改用默认模型。</p>
         <p className="status-line">{status}</p>
         <div className="form-actions">
           <button type="button" className="btn" onClick={() => app.exportService.downloadJSON()}>导出 JSON</button>

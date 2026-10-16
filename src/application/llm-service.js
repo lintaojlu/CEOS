@@ -56,6 +56,31 @@ export class LlmService {
   }
 
   /**
+   * 只用设置里的小模型。没填时直接失败，不会改用默认模型。
+   * @param {{ system?: string, user: string }} input
+   * @returns {Promise<string>}
+   */
+  completeSmall({ system, user }) {
+    const settings = this.load();
+    const model = String(settings.smallModel || '').trim();
+    if (!model) {
+      throw new LlmRequestError('请先在设置中填写小模型', 'not-configured');
+    }
+    if (!settings.apiKey) {
+      throw new LlmRequestError('请先在设置中填写 API Key', 'not-configured');
+    }
+    return this.chat({
+      baseUrl: settings.baseUrl,
+      fullUrl: settings.fullUrl,
+      apiKey: settings.apiKey,
+      model,
+      system,
+      user,
+      maxTokens: 64
+    });
+  }
+
+  /**
    * @param {{ messages: any[], tools: any[], model?: string }} input
    */
   completeWithTools({ messages, tools, model }) {

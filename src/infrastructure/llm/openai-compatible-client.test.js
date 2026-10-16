@@ -78,7 +78,8 @@ describe('normalizeLlmSettings', () => {
       baseUrl: 'https://example.com/v1/chat/completions',
       fullUrl: true,
       apiKey: '',
-      model: ''
+      model: '',
+      smallModel: ''
     });
   });
 });

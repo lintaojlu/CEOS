@@ -32,8 +32,7 @@ describe('tags on daily tasks', () => {
     const task = service.addTask('optional', '【CEOS】写计划');
     expect(task.text).toBe('【CEOS】写计划');
     expect(task.tagIds).toEqual([]);
-    expect(service.workspace.tags.map((tag) => tag.name)).toEqual(['生活', '工作']);
-    expect(service.workspace.tags.map((tag) => tag.color)).toEqual(['#F5C400', '#111111']);
+    expect(service.workspace.tags).toEqual([]);
     expect(service.taskTitle(task)).toBe('【CEOS】写计划');
   });
 
@@ -92,10 +91,7 @@ describe('tags on daily tasks', () => {
     service.setCurrentDate(addDays(service.currentDate, 1));
     service.insertTask('optional', { ...task, tagId: tag.id, subtasks: [] });
     service.deleteTag(tag.id);
-    expect(service.workspace.tags.map((tag) => tag.name)).toEqual(['生活', '工作']);
-    service.deleteTag(service.workspace.tags[0].id);
-    expect(service.renameTag(service.workspace.tags[0].id, '日常')).toBeNull();
-    expect(service.workspace.tags.map((tag) => tag.name)).toEqual(['生活', '工作']);
+    expect(service.workspace.tags).toEqual([]);
     expect(service.data[todayKey].required[0].text).toBe('写计划');
     expect(service.data[todayKey].required[0].tagIds).toEqual([]);
     expect(service.getCurrentData().optional[0].tagIds).toEqual([]);
@@ -144,5 +140,66 @@ describe('tags on daily tasks', () => {
     service.placeTask('required', first.id, 'optional', fourth.id);
     expect(service.getCurrentData().required.map((task) => task.id)).toEqual([third.id, second.id]);
     expect(service.getCurrentData().optional.map((task) => task.text)).toEqual(['甲', '丁']);
+  });
+
+  it('keeps stored 生活 and 工作 ids and lets them be renamed or deleted', () => {
+    const store = {
+      ceoWorkspace: JSON.stringify({
+        ideas: [],
+        milestones: [],
+        tags: [
+          { id: 'tag-life', name: '生活', color: '#F5C400' },
+          { id: 'tag-work', name: '工作', color: '#111111' }
+        ]
+      })
+    };
+    const adapter = new LocalStorageAdapter({
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: (k) => { delete store[k]; }
+    });
+    const service = new ScheduleService({
+      scheduleRepo: new ScheduleRepository(adapter),
+      workspaceRepo: new WorkspaceRepository(adapter),
+      eventBus: new EventBus()
+    });
+    service.load();
+    expect(service.workspace.tags.map((tag) => [tag.id, tag.name, tag.color])).toEqual([
+      ['tag-life', '生活', '#F5C400'],
+      ['tag-work', '工作', '#111111']
+    ]);
+    expect(service.renameTag('tag-life', '日常').id).toBe('tag-life');
+    const task = service.addTask('required', '买菜', 'tag-work');
+    expect(task.tagIds).toEqual(['tag-work']);
+    expect(service.deleteTag('tag-work')).toBe(true);
+    expect(service.getCurrentData().required[0].text).toBe('买菜');
+    expect(service.getCurrentData().required[0].tagIds).toEqual([]);
+    expect(service.workspace.tags.map((tag) => tag.id)).toEqual(['tag-life']);
+  });
+
+  it('stores pin on the tag and keeps it after reload', () => {
+    const service = createService();
+    const tag = service.addTag('CEOS');
+    expect(service.toggleTagPin(tag.id).pinned).toBe(true);
+    service.load();
+    expect(service.workspace.tags.find((item) => item.id === tag.id).pinned).toBe(true);
+    expect(service.toggleTagPin(tag.id).pinned).toBe(false);
+  });
+
+  it('reuses a same-named tag and only marks the viewed day', () => {
+    const service = createService();
+    const existing = service.addTag('日程');
+    const task = service.addTask('required', '写菜单');
+    const origin = service.currentDate;
+    const originKey = getDateKey(origin);
+    service.setCurrentDate(addDays(origin, 1));
+    service.insertTask('required', { ...task, tagIds: [] });
+    service.setCurrentDate(origin);
+    const saved = service.attachTagNamed('required', task.id, '日程');
+    expect(saved.tagIds).toEqual([existing.id]);
+    expect(service.workspace.tags.filter((item) => item.name === '日程')).toHaveLength(1);
+    expect(service.data[originKey].required[0].tagIds).toEqual([existing.id]);
+    service.setCurrentDate(addDays(origin, 1));
+    expect(service.getCurrentData().required[0].tagIds).toEqual([]);
   });
 });

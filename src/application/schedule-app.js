@@ -22,6 +22,7 @@ import { StatsService } from './stats-service.js';
 import { InsightService } from './insight-service.js';
 import { DailyReportService } from './daily-report-service.js';
 import { TaskBreakdownService } from './task-breakdown-service.js';
+import { TaskTagService } from './task-tag-service.js';
 import { TaskTransferService } from './task-transfer-service.js';
 import { UiPrefsService } from './ui-prefs-service.js';
 import { PomodoroService } from './pomodoro-service.js';
@@ -84,6 +85,11 @@ export class ScheduleApp {
     });
 
     this.taskBreakdownService = new TaskBreakdownService({
+      scheduleService: this.scheduleService,
+      llmService: this.llmService
+    });
+
+    this.taskTagService = new TaskTagService({
       scheduleService: this.scheduleService,
       llmService: this.llmService
     });

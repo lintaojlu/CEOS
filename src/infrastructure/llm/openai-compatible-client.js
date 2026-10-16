@@ -1,8 +1,11 @@
 /**
- * 前端直连 OpenAI 兼容接口。
+ * OpenAI 兼容接口。
  * 端点模式：地址 + /chat/completions、/models。
  * 完整 URL 模式：地址本身就是 chat/completions，模型列表去掉该后缀后请求 /models。
+ * 桌面端由应用进程发请求，避免页面跨域被 WebKit 报成 Load failed。
  */
+
+import { llmTransport } from './tauri-llm-fetch.js';
 
 /** @param {string} address @param {boolean} fullUrl */
 export function chatCompletionsUrl(address, fullUrl) {
@@ -41,11 +44,12 @@ export class LlmRequestError extends Error {
  * @param {string} input.model
  * @param {string} [input.system]
  * @param {string} input.user
+ * @param {number} [input.maxTokens]
  * @param {typeof fetch} [input.fetchImpl]
  * @returns {Promise<string>}
  */
-export async function chatCompletion({ baseUrl, fullUrl = false, apiKey, model, system, user, fetchImpl }) {
-  const fetchFn = fetchImpl || globalThis.fetch;
+export async function chatCompletion({ baseUrl, fullUrl = false, apiKey, model, system, user, maxTokens, fetchImpl }) {
+  const fetchFn = fetchImpl || llmTransport;
   const url = chatCompletionsUrl(baseUrl, fullUrl);
   if (!url || !apiKey || !model) {
     throw new LlmRequestError('请先在设置中填写 API 请求地址、默认模型和 API Key', 'not-configured');
@@ -66,7 +70,8 @@ export async function chatCompletion({ baseUrl, fullUrl = false, apiKey, model, 
         messages: [
           { role: 'system', content: system || '你是一位简洁的中文助理。' },
           { role: 'user', content: user }
-        ]
+        ],
+        ...(maxTokens ? { max_tokens: maxTokens } : {})
       })
     });
   } catch (error) {
@@ -119,7 +124,7 @@ export function readReasoning(message) {
  * @returns {Promise<{ content: string, reasoning: string, toolCalls: { id: string, name: string, arguments: any }[] }>}
  */
 export async function chatCompletionWithTools({ baseUrl, fullUrl = false, apiKey, model, messages, tools, fetchImpl }) {
-  const fetchFn = fetchImpl || globalThis.fetch;
+  const fetchFn = fetchImpl || llmTransport;
   const url = chatCompletionsUrl(baseUrl, fullUrl);
   if (!url || !apiKey || !model) {
     throw new LlmRequestError('请先在设置中填写 API 请求地址、默认模型和 API Key', 'not-configured');
@@ -192,7 +197,7 @@ export async function chatCompletionWithTools({ baseUrl, fullUrl = false, apiKey
  * @returns {Promise<string[]>}
  */
 export async function listModels({ baseUrl, fullUrl = false, apiKey, fetchImpl }) {
-  const fetchFn = fetchImpl || globalThis.fetch;
+  const fetchFn = fetchImpl || llmTransport;
   const url = modelsUrl(baseUrl, fullUrl);
   if (!url || !apiKey) {
     throw new LlmRequestError('请先填写 API 请求地址和 API Key', 'not-configured');

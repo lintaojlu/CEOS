@@ -2,7 +2,6 @@ import { createEmptyWorkspace } from '../data/workspace-record.js';
 import { getDateKey, addDays, todayKey } from '../domain/shared/date-key.js';
 import { createDailyTask, createNote, sortTasks, parseTime, normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 import { nextTagColor } from '../domain/schedule/tag-palette.js';
-import { ensureFixedTags, isFixedTag } from '../domain/schedule/fixed-tags.js';
 import { syncPrevDay } from '../domain/schedule/schedule-day.js';
 import { Events } from './event-bus.js';
 
@@ -27,12 +26,6 @@ export class ScheduleService {
   load() {
     this.data = this.scheduleRepo.load();
     this.workspace = this.workspaceRepo.load();
-    const tags = ensureFixedTags(this.workspace.tags);
-    const before = JSON.stringify(this.workspace.tags || []);
-    if (JSON.stringify(tags) !== before) {
-      this.workspace.tags = tags;
-      this.workspaceRepo.save(this.workspace);
-    }
   }
 
   persist() {
@@ -126,7 +119,8 @@ export class ScheduleService {
     const tag = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: trimmed,
-      color: nextTagColor(this.workspace.tags)
+      color: nextTagColor(this.workspace.tags),
+      pinned: false
     };
     this.workspace.tags.push(tag);
     this.persist();
@@ -142,7 +136,7 @@ export class ScheduleService {
     const trimmed = String(name || '').trim();
     if (!trimmed) return null;
     const tag = this._findTag(id);
-    if (!tag || isFixedTag(tag)) return null;
+    if (!tag) return null;
     if ((this.workspace.tags || []).some((item) => item.id !== id && item.name === trimmed)) return null;
     tag.name = trimmed;
     this.persist();
@@ -156,7 +150,7 @@ export class ScheduleService {
    */
   deleteTag(id) {
     const tag = this._findTag(id);
-    if (!tag || isFixedTag(tag)) return false;
+    if (!tag) return false;
     this.workspace.tags = (this.workspace.tags || []).filter((tag) => tag.id !== id);
     Object.keys(this.data || {}).forEach((dateKey) => {
       const day = this.data[dateKey];
@@ -171,6 +165,46 @@ export class ScheduleService {
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'tag:delete' });
     return true;
+  }
+
+  /**
+   * Pin is stored on the tag itself. It stays across days.
+   * @param {string} id
+   */
+  toggleTagPin(id) {
+    const tag = this._findTag(id);
+    if (!tag) return null;
+    tag.pinned = !tag.pinned;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'tag:pin' });
+    return tag;
+  }
+
+  /**
+   * Attach a tag by name on one day's copy. Reuse a same-named tag.
+   * @param {'required'|'optional'} type
+   * @param {string} taskId
+   * @param {string} name
+   * @param {string} [dateKey]
+   */
+  attachTagNamed(type, taskId, name, dateKey = this.getDateKey()) {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return null;
+    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
+    const task = (day[type] || []).find((item) => item.id === taskId);
+    if (!task) return null;
+    let tag = (this.workspace.tags || []).find((item) => item.name === trimmed) || null;
+    if (!tag) {
+      tag = this.addTag(trimmed);
+      if (!tag) return null;
+    }
+    const ids = normalizeTagIds(task);
+    if (!ids.includes(tag.id)) ids.push(tag.id);
+    task.tagIds = this._knownTagIds(ids);
+    delete task.tagId;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
+    return task;
   }
 
   /**

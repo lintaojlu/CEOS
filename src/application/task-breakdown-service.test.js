@@ -32,8 +32,8 @@ function createSchedule() {
 describe('TaskBreakdownService', () => {
   it('writes two notes on the day that was open when the request started', async () => {
     const schedule = createSchedule();
+    const work = schedule.addTag('工作');
     const ceos = schedule.addTag('CEOS');
-    const work = schedule.workspace.tags.find((tag) => tag.name === '工作');
     const task = schedule.addTask('required', '做拆解', [work.id, ceos.id]);
     schedule.addNote('required', task.id, '先看现有说明');
     const origin = schedule.currentDate;

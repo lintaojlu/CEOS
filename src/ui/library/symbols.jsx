@@ -50,7 +50,7 @@ export function Symbol({ name, size = 18 }) {
   }
   if (name === 'pin') {
     return (
-      <svg {...common} width="15" height="15">
+      <svg {...common}>
         <circle className="pin-head" cx="12" cy="6" r="3" />
         <path d="M12 9v11" />
       </svg>

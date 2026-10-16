@@ -12,6 +12,7 @@ export const DEFAULT_LLM_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
  * @property {boolean} fullUrl 为 true 时 baseUrl 已包含路径，不再自动拼接
  * @property {string} apiKey
  * @property {string} model
+ * @property {string} smallModel 创建标签用的小模型，和默认模型分开
  */
 
 /** @param {any} raw @returns {LlmSettings} */
@@ -21,7 +22,8 @@ export function normalizeLlmSettings(raw) {
     baseUrl: baseUrl || DEFAULT_LLM_BASE_URL,
     fullUrl: raw?.fullUrl === true,
     apiKey: typeof raw?.apiKey === 'string' ? raw.apiKey : '',
-    model: typeof raw?.model === 'string' ? raw.model.trim() : ''
+    model: typeof raw?.model === 'string' ? raw.model.trim() : '',
+    smallModel: typeof raw?.smallModel === 'string' ? raw.smallModel.trim() : ''
   };
 }
 

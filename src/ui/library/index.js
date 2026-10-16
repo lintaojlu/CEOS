@@ -1,4 +1,5 @@
 export { Symbol, Icon } from './symbols.jsx';
+export { ContextMenu } from './ContextMenu.jsx';
 export { IconButton, DeleteButton } from './IconButton.jsx';
 export { Card } from './Card.jsx';
 export { Modal } from './Modal.jsx';

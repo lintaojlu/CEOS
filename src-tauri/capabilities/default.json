@@ -8,6 +8,7 @@
   "permissions": [
     "core:default",
     "allow-append-agent-log",
-    "allow-agent-store"
+    "allow-agent-store",
+    "allow-llm-http"
   ]
 }

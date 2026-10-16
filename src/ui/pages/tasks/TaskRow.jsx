@@ -4,7 +4,7 @@ import { displayTagColor } from '../../../domain/schedule/fixed-tags.js';
 import { AI_TASK_TITLE, noteBody, noteTitle } from '../../../domain/schedule/task-breakdown.js';
 import { todayKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
-import { Checkbox, IconButton, Symbol } from '../../library/index.js';
+import { Checkbox, ContextMenu, IconButton, Symbol } from '../../library/index.js';
 import { TaskText } from './TaskText.jsx';
 
 function NoteCard({ note }) {
@@ -70,6 +70,8 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
   const drag = useRef(false);
   const [breaking, setBreaking] = useState(false);
   const [breakError, setBreakError] = useState('');
+  const [tagState, setTagState] = useState('');
+  const [menu, setMenu] = useState(null);
   const notes = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
   const recurrence = task.recurrence === 'daily' ? '每日' : task.recurrence === 'weekdays' ? '工作日' : '';
   const edge = dropEdge === 'before' ? ' is-drop-before' : dropEdge === 'after' ? ' is-drop-after' : '';
@@ -93,6 +95,19 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
       setBreaking(false);
     }
   }
+
+  async function createTag() {
+    if (tagState === 'pending') return;
+    setTagState('pending');
+    try {
+      await app.taskTagService.createForTask(type, task.id);
+      setTagState('');
+    } catch (error) {
+      setTagState(error?.message || '创建标签失败');
+    }
+  }
+
+  const canFocus = viewingToday && !task.completed;
 
   return (
     <div className={`task-block${edge}${dragging ? ' is-dragging' : ''}`}>
@@ -122,6 +137,10 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
           if (event.target.closest('button, input, textarea, a, label, select')) return;
           onEdit(type, task.id);
         }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setMenu({ x: event.clientX, y: event.clientY });
+        }}
       >
         <Checkbox checked={task.completed} onChange={() => app.scheduleService.toggleTask(type, task.id)} />
         <div className="task-main" title="双击编辑">
@@ -149,8 +168,23 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
           </>
         ) : null}
       </div>
-      {notes.length || breakError ? (
+      {menu ? (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            { id: 'edit', label: '编辑', onSelect: () => onEdit(type, task.id) },
+            { id: 'focus', label: '专注', disabled: !canFocus, onSelect: focus },
+            { id: 'breakdown', label: '拆解', disabled: !canFocus || breaking, onSelect: breakdown },
+            { id: 'tag', label: '创建标签', disabled: tagState === 'pending', onSelect: createTag }
+          ]}
+        />
+      ) : null}
+      {notes.length || breakError || tagState ? (
         <div className="note-stack">
+          {tagState === 'pending' ? <p className="task-tag-status" role="status">正在生成标签…</p> : null}
+          {tagState && tagState !== 'pending' ? <p className="task-break-error">{tagState}</p> : null}
           {breakError ? <p className="task-break-error">{breakError}</p> : null}
           {notes.length ? (
             <div className="note-cards">

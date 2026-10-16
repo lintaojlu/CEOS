@@ -1,8 +1,73 @@
+use std::collections::HashMap;
 use std::fs::{self, create_dir_all, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use tauri::Manager;
+
+const LLM_BODY_LIMIT: usize = 8 * 1024 * 1024;
+
+fn llm_client() -> &'static reqwest::Client {
+  static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+  CLIENT.get_or_init(|| {
+    reqwest::Client::builder()
+      .timeout(std::time::Duration::from_secs(180))
+      .build()
+      .expect("llm http client")
+  })
+}
+
+fn llm_network_message(err: reqwest::Error) -> String {
+  if err.is_timeout() {
+    return "模型服务响应超时".into();
+  }
+  if err.is_connect() {
+    return "连不上模型服务，请检查请求地址和网络".into();
+  }
+  format!("网络请求失败：{err}")
+}
+
+#[derive(serde::Serialize)]
+struct LlmHttpResponse {
+  status: u16,
+  body: String,
+}
+
+#[tauri::command]
+async fn llm_http(
+  method: String,
+  url: String,
+  headers: HashMap<String, String>,
+  body: Option<String>,
+) -> Result<LlmHttpResponse, String> {
+  let http_method = match method.to_ascii_uppercase().as_str() {
+    "GET" => reqwest::Method::GET,
+    "POST" => reqwest::Method::POST,
+    _ => return Err("只支持读取模型列表和对话请求".into()),
+  };
+  let parsed = reqwest::Url::parse(&url).map_err(|_| "请求地址无效".to_string())?;
+  if parsed.scheme() != "https" && parsed.scheme() != "http" {
+    return Err("请求地址只支持 http 和 https".into());
+  }
+  let mut request = llm_client().request(http_method, parsed);
+  for (key, value) in headers {
+    request = request.header(key, value);
+  }
+  if let Some(body) = body {
+    request = request.body(body);
+  }
+  let response = request.send().await.map_err(llm_network_message)?;
+  let status = response.status().as_u16();
+  let bytes = response.bytes().await.map_err(llm_network_message)?;
+  if bytes.len() > LLM_BODY_LIMIT {
+    return Err("模型服务返回的内容过大".into());
+  }
+  Ok(LlmHttpResponse {
+    status,
+    body: String::from_utf8_lossy(&bytes).into_owned(),
+  })
+}
 
 #[tauri::command]
 fn append_agent_log(app: tauri::AppHandle, line: String) -> Result<(), String> {
@@ -90,6 +155,7 @@ pub fn run() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       append_agent_log,
+      llm_http,
       read_agent_index,
       write_agent_index,
       read_agent_session,

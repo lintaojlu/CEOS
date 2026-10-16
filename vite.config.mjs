@@ -30,6 +30,12 @@ function serveCeosData() {
           res.setHeader('Content-Type', 'application/json');
           res.end(req.method === 'HEAD' ? undefined : body);
         } catch (error) {
+          if (error && error.code === 'ENOENT') {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(req.method === 'HEAD' ? undefined : JSON.stringify({ error: 'missing-backup' }));
+            return;
+          }
           next(error);
         }
       });

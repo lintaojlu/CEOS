@@ -7,3 +7,8 @@ commands.allow = ["append_agent_log"]
 identifier = "allow-agent-store"
 description = "Read and append agent conversation transcripts"
 commands.allow = ["read_agent_index", "write_agent_index", "read_agent_session", "append_agent_session", "delete_agent_session"]
+
+[[permission]]
+identifier = "allow-llm-http"
+description = "Send the configured model API request outside the webview"
+commands.allow = ["llm_http"]

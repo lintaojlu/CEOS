@@ -195,6 +195,32 @@ input[type="date"], input[type="time"] { color-scheme: light; }
   color: #fff;
 }
 .tag-pill.is-on { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111; }
+.tag-pill-wrap { position: relative; display: inline-flex; }
+.tag-pin {
+  position: absolute; top: -6px; right: -4px; z-index: 1;
+  width: 16px; height: 16px; padding: 0; display: none; place-items: center;
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  background: #fff; color: var(--muted);
+}
+.tag-pill-wrap:hover .tag-pin,
+.tag-pill-wrap:focus-within .tag-pin,
+.tag-pin.is-on { display: grid; }
+.tag-pin.is-on { color: var(--text); border-color: var(--text); }
+.tag-pin.is-on .pin-head { fill: currentColor; }
+.tag-pin:hover { color: var(--text); }
+.context-menu {
+  position: fixed; z-index: 50; min-width: 148px; padding: 6px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+.context-menu-item {
+  display: block; width: 100%; text-align: left;
+  border: 0; background: transparent; color: var(--text);
+  border-radius: 8px; padding: 7px 10px; font-size: 13px;
+}
+.context-menu-item:hover:not(:disabled) { background: var(--well); }
+.context-menu-item:disabled { color: var(--dim); }
+.task-tag-status { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .tag-dot { width: 8px; height: 8px; border-radius: 999px; flex: none; transform: translateY(1px); }
 .tag-delete-note { margin: 0; color: var(--text); font-size: 14px; line-height: 1.5; }
 

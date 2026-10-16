@@ -63,9 +63,11 @@ if [[ -z "$src_dmg" ]]; then
 fi
 
 stage="$(mktemp -d)"
-mount="$stage/mount"
+# 挂在 /Volumes 下，Finder 才会把它当成磁盘。挂在临时目录里时，图标位置写不进去。
+volname="CEOSSetup$$"
+mount="/Volumes/$volname"
 cleanup() {
-  if [[ -d "$mount" ]] && mount | grep -F -q " on $mount "; then
+  if mount | grep -F -q " on $mount "; then
     hdiutil detach "$mount" >/dev/null || true
   fi
   rm -rf "$stage"
@@ -78,34 +80,63 @@ if [[ ! -f "$rw" ]]; then
   rw="$(find "$stage" -name 'rw*.dmg' | head -n 1)"
 fi
 
-mkdir -p "$mount"
-hdiutil attach "$rw" -mountpoint "$mount" -nobrowse -noverify -noautoopen >/dev/null
+hdiutil attach "$rw" -mountpoint "$mount" -noverify -noautoopen >/dev/null
 cp "$NOTE" "$mount/首次打开.txt"
 # Finder 会把 .VolumeIcon.icns 画在窗口里，隐藏标记也挡不住。去掉它，窗口里就只剩应用。
 rm -f "$mount/.VolumeIcon.icns"
 SetFile -a c "$mount"
 # 窗口宽 760、高 260。三个图标的中心等距，并在窗口里水平居中；纵坐标抬高，避免上方空出一大块。
-osascript <<EOF
-tell application "Finder"
-  set theFolder to POSIX file "$mount" as alias
-  open theFolder
-  set w to container window of theFolder
-  set current view of w to icon view
-  set toolbar visible of w to false
-  set statusbar visible of w to false
-  set bounds of w to {120, 80, 880, 340}
-  set opts to icon view options of w
-  set arrangement of opts to not arranged
-  set icon size of opts to 128
-  set position of item "CEOS.app" of theFolder to {158, 110}
-  set position of item "首次打开.txt" of theFolder to {380, 110}
-  set position of item "Applications" of theFolder to {602, 110}
-  set selection to {}
-  update theFolder without registering applications
-  delay 1
-  close w
-end tell
+# 用挂载点的名字定位磁盘，避免和已经打开的 CEOS 窗口写到一起。
+osascript - "$volname" <<'EOF'
+on run argv
+  set volname to item 1 of argv
+  tell application "Finder"
+    tell disk volname
+      open
+      delay 1
+      set w to container window
+      set current view of w to icon view
+      set toolbar visible of w to false
+      set statusbar visible of w to false
+      set bounds of w to {120, 80, 880, 340}
+      set opts to icon view options of w
+      set arrangement of opts to not arranged
+      set icon size of opts to 128
+      delay 1
+      set position of item "CEOS.app" to {158, 110}
+      set position of item "首次打开.txt" to {380, 110}
+      set position of item "Applications" to {602, 110}
+      update without registering applications
+      delay 1
+      close w
+    end tell
+  end tell
+end run
 EOF
+layout_ok=0
+for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  sync
+  if python3 -c '
+import sys
+data = open(sys.argv[1], "rb").read()
+need = [
+    b"{760, 260}",
+    (158).to_bytes(4, "big") + (110).to_bytes(4, "big"),
+    (380).to_bytes(4, "big") + (110).to_bytes(4, "big"),
+    (602).to_bytes(4, "big") + (110).to_bytes(4, "big"),
+    "首次打开.txt".encode("utf-16be"),
+]
+sys.exit(0 if all(item in data for item in need) else 1)
+' "$mount/.DS_Store"; then
+    layout_ok=1
+    break
+  fi
+  sleep 0.5
+done
+if [[ "$layout_ok" -ne 1 ]]; then
+  echo "图标布局没有写进磁盘映像，已停止打包。" >&2
+  exit 1
+fi
 sync
 hdiutil detach "$mount" >/dev/null
 

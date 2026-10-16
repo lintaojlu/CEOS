@@ -106,4 +106,41 @@ describe('idea file migration', () => {
     expect(await store.read('task-1')).toBe('');
     expect(service.getNodes()).toEqual([]);
   });
+
+  it('keeps an untitled idea in memory and does not write a file', async () => {
+    const { service, store } = setup([]);
+    await service.load();
+    const node = service.addIdea('');
+    expect(node.title).toBe('');
+    expect(service.find(node.id)).toBeTruthy();
+    expect(await store.listIds()).toEqual([]);
+    service.update(node.id, { body: '有标题了\n\n正文' });
+    expect(JSON.parse(await store.read(node.id)).body).toBe('有标题了\n\n正文');
+    service.update(node.id, { body: '' });
+    expect(await store.read(node.id)).toBe('');
+    expect(service.find(node.id)?.title).toBe('');
+  });
+
+  it('drops an untitled file when loading', async () => {
+    const { service, store } = setup([]);
+    await store.write({
+      id: 'blank',
+      body: '',
+      images: {},
+      completed: false,
+      pinned: false,
+      createdAt: 1
+    });
+    await store.write({
+      id: 'named',
+      body: '留下',
+      images: {},
+      completed: false,
+      pinned: false,
+      createdAt: 2
+    });
+    await service.load();
+    expect(service.getNodes().map((node) => node.id)).toEqual(['named']);
+    expect(await store.listIds()).toEqual(['named']);
+  });
 });

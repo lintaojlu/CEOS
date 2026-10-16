@@ -3,7 +3,7 @@ import { Icon } from '../library/index.js';
 import { PAGES, navigate } from './router.js';
 import { useApp, useShell } from './context.jsx';
 
-export function Sidebar({ page }) {
+export function Sidebar({ page, onOpenIdeas }) {
   const app = useApp();
   const shell = useShell();
 
@@ -24,7 +24,8 @@ export function Sidebar({ page }) {
             className={item.id === page ? 'nav-item is-active' : 'nav-item'}
             onClick={() => {
               if (item.id === 'home') app.insightService.refresh();
-              navigate(item.id);
+              if (item.id === 'ideas') onOpenIdeas();
+              else navigate(item.id);
             }}
           >
             <span className="nav-icon-wrap">

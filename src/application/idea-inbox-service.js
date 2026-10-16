@@ -6,8 +6,7 @@ import {
   ideaTitle,
   isSafeIdeaId,
   migrateWorkspaceIdeas,
-  pruneImages,
-  toIdeaFile
+  pruneImages
 } from '../domain/ideas/idea-document.js';
 import { getBlockers, partitionIdeas } from '../domain/ideas/readiness.js';
 import { normalizeNotes } from '../domain/schedule/daily-task.js';
@@ -39,14 +38,19 @@ export class IdeaInboxService {
     const byId = new Map();
     for (const raw of listed) {
       const doc = hydrateIdea(raw);
-      if (doc) byId.set(doc.id, doc);
+      if (!doc) continue;
+      if (!ideaTitle(doc)) {
+        await this.store.remove(doc.id);
+        continue;
+      }
+      byId.set(doc.id, doc);
     }
     const legacy = Array.isArray(this.scheduleService.workspace?.ideas)
       ? this.scheduleService.workspace.ideas
       : [];
     if (legacy.length) {
       for (const doc of migrateWorkspaceIdeas(legacy)) {
-        if (!doc || byId.has(doc.id)) continue;
+        if (!doc || byId.has(doc.id) || !ideaTitle(doc)) continue;
         await this.store.write(doc);
         byId.set(doc.id, doc);
       }
@@ -57,8 +61,18 @@ export class IdeaInboxService {
     this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'load' });
   }
 
+  /** 没有标题的灵感只留在内存里，不写文件。已经写过的文件删掉。 */
+  commit(node) {
+    if (!node) return;
+    if (!ideaTitle(node)) {
+      void this.store.remove(node.id);
+      return;
+    }
+    void this.store.write(node);
+  }
+
   persist() {
-    for (const node of this._nodes) void this.store.write(node);
+    for (const node of this._nodes) this.commit(node);
   }
 
   getNodes() {
@@ -73,7 +87,7 @@ export class IdeaInboxService {
       if (!nextIds.has(prev.id)) void this.store.remove(prev.id);
     }
     this._nodes = next;
-    for (const node of next) void this.store.write(node);
+    for (const node of next) this.commit(node);
     this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'replace' });
   }
 
@@ -105,7 +119,7 @@ export class IdeaInboxService {
       createdAt: extra.createdAt
     }));
     this._nodes.push(node);
-    void this.store.write(node);
+    this.commit(node);
     this.eventBus.emit(Events.IDEAS_UPDATED, {});
     return node;
   }
@@ -168,7 +182,7 @@ export class IdeaInboxService {
     idea.images = pruneImages(idea.body, patch.images != null ? patch.images : idea.images);
     idea.text = idea.title;
     idea.note = idea.body;
-    void this.store.write(idea);
+    this.commit(idea);
     this.eventBus.emit(Events.IDEAS_UPDATED, {});
     return { idea };
   }

@@ -52,11 +52,17 @@
 }
 .app-shell.is-sidebar-hidden .sidebar-toggle { left: 78px; }
 .sidebar-toggle:hover { background: var(--well); color: var(--text); }
-.topbar-title {
+.topbar-heading {
   position: absolute;
   top: 0;
   left: calc(var(--sidebar-width) + var(--page-pad-x));
   height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.topbar-title {
   margin: 0;
   display: flex;
   align-items: center;
@@ -69,7 +75,14 @@
   line-height: 1;
   pointer-events: none;
 }
-.app-shell.is-sidebar-hidden .topbar-title { left: 118px; }
+.app-shell.is-sidebar-hidden .topbar-heading { left: 118px; }
+.topbar-heading .idea-compose {
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+}
+.topbar-heading .idea-compose:hover { background: var(--well); }
 .topbar-actions {
   margin-left: auto;
   display: flex;
@@ -471,14 +484,40 @@ button.heat { padding: 0; border: 0; cursor: pointer; }
 
 .ideas-split { flex: 1; min-height: 0; display: flex; background: var(--bg); }
 .ideas-list {
+  position: relative;
+  z-index: 1;
   width: var(--ideas-list-width);
   flex: none;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #f4f4f5;
+  background: var(--bg);
   border-right: 1px solid var(--line);
 }
+.ideas-list-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  margin-right: -5px;
+  z-index: 4;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.ideas-list-resize::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: transparent;
+}
+.ideas-list-resize:hover::before,
+body.is-ideas-list-resizing .ideas-list-resize::before { background: var(--line-strong); }
+body.is-ideas-list-resizing,
+body.is-ideas-list-resizing * { cursor: ew-resize !important; user-select: none !important; -webkit-user-select: none !important; }
 .ideas-list-head {
   position: relative;
   z-index: 2;
@@ -531,7 +570,7 @@ button.heat { padding: 0; border: 0; cursor: pointer; }
 }
 .idea-row:hover { background: rgba(0, 0, 0, 0.04); }
 .idea-row.is-selected,
-.idea-row.is-selected:hover { background: #e2e2e8; }
+.idea-row.is-selected:hover { background: var(--well); }
 .idea-row-titleline { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .idea-row-title {
   flex: 1;

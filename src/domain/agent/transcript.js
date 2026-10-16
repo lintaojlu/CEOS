@@ -61,7 +61,6 @@ export function formatMentions(mentions) {
     if (item.kind === 'task') return `- 任务 ${item.date || ''} id=${item.id || ''} ${item.title || ''}`.trim();
     if (item.kind === 'tag') return `- 标签 id=${item.id || ''} ${item.title || ''}`.trim();
     if (item.kind === 'idea') return `- 灵感 id=${item.id || ''} ${item.title || ''}`.trim();
-    if (item.kind === 'milestone') return `- 里程碑 ${item.date || ''} id=${item.id || ''} ${item.title || ''}`.trim();
     return '';
   }).filter(Boolean);
   return lines.length ? `已挂上的材料：\n${lines.join('\n')}` : '';
@@ -71,14 +70,12 @@ export function formatMentions(mentions) {
  * @param {object} world
  * @param {Array<{ id: string, name: string }>} [world.tags]
  * @param {any[]} [world.ideas]
- * @param {any[]} [world.milestones]
  * @param {Record<string, any>} [world.schedule]
  * @param {string} [world.today]
  */
 export function mentionCatalog(world) {
   const tags = world?.tags || [];
   const ideas = world?.ideas || [];
-  const milestones = world?.milestones || [];
   const schedule = world?.schedule || {};
   const today = world?.today || '';
   /** @type {any[]} */
@@ -114,17 +111,6 @@ export function mentionCatalog(world) {
   for (const idea of ideas) {
     if (!idea?.id) continue;
     items.push({ kind: 'idea', id: idea.id, title: idea.title || idea.text || '', date: '', label: idea.title || idea.text || idea.id });
-  }
-  for (const milestone of milestones) {
-    if (!milestone?.id) continue;
-    const title = milestone.title || '';
-    items.push({
-      kind: 'milestone',
-      id: milestone.id,
-      title,
-      date: milestone.date || '',
-      label: `${milestone.date || ''} ${title}`.trim()
-    });
   }
   return items;
 }

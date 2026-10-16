@@ -30,7 +30,7 @@
 <main>
   <div class="kicker">Import</div>
   <h1>一键导入全部历史数据</h1>
-  <p>写入当前源 <code id="origin"></code>。备份里的灵感、里程碑和项目会先按日期写入，打开日程后收成全局一份。同 id 已存在则跳过。</p>
+  <p>写入当前源 <code id="origin"></code>。备份里的灵感和项目会先按日期写入，打开日程后收成全局一份。同 id 已存在则跳过。</p>
 
   <div class="panel">
     <h2>档案内容</h2>
@@ -38,9 +38,9 @@
     <div class="note">
       请打开 <code>http://localhost:5173/restore.html</code> 再导入。
       <ol>
-        <li>打开日程后，灵感、项目、里程碑全局各一份，翻日期不会换成另一份。</li>
+        <li>打开日程后，灵感、项目全局各一份，翻日期不会换成另一份。</li>
         <li>必做和选做仍按日隔离。</li>
-        <li>「同步任务」先选择来源日，只拷该日未完成的必做/选做，不拷灵感、项目或里程碑。</li>
+        <li>「同步任务」先选择来源日，只拷该日未完成的必做/选做，不拷灵感或项目。</li>
       </ol>
     </div>
     <p style="margin-top:22px">
@@ -61,7 +61,7 @@ function row(label, value) {
 }
 
 function emptyDay() {
-  return { required: [], optional: [], ideas: [], milestones: [], reflection: '', reflectionTags: [], aiEval: '' };
+  return { required: [], optional: [], ideas: [], reflection: '', reflectionTags: [] };
 }
 
 fetch('/backup/ceos-full-history.json')
@@ -72,21 +72,19 @@ fetch('/backup/ceos-full-history.json')
   .then((data) => {
     payload = data;
     const dates = Object.keys(data.schedule || {});
-    let tasks = 0, ideas = 0, milestones = 0, texts = 0;
+    let tasks = 0, ideas = 0, texts = 0;
     dates.forEach((d) => {
       const day = data.schedule[d];
       tasks += (day.required || []).length + (day.optional || []).length;
       ideas += (day.ideas || []).length;
-      milestones += (day.milestones || []).length;
-      if (day.reflection || day.aiEval) texts++;
+      if (day.reflection) texts++;
     });
     $('preview').innerHTML =
       row('日期范围', (data.dateRange || []).join(' → ')) +
       row('有记录的天数', dates.length + ' 天') +
       row('任务', tasks + ' 条') +
       row('灵感（按日）', ideas + ' 条') +
-      row('里程碑（按目标日）', milestones + ' 个') +
-      row('含感悟 / AI 日报', texts + ' 天') +
+      row('含感悟', texts + ' 天') +
       '<div class="src" style="margin-top:14px">schema v' + (data.schemaVersion || '?') +
         (data.sources ? '<br>' + data.sources.map((s) => s.source).join(' · ') : '') +
       '</div>';
@@ -110,7 +108,7 @@ $('go').onclick = () => {
     ceoMilestones: localStorage.getItem('ceoMilestones')
   }));
 
-  let addedDays = 0, addedTasks = 0, addedIdeas = 0, addedMs = 0, filledTexts = 0;
+  let addedDays = 0, addedTasks = 0, addedIdeas = 0, filledTexts = 0;
 
   const schedule = readJson('ceoSchedule', {}) || {};
   Object.keys(payload.schedule || {}).forEach((dateKey) => {
@@ -135,16 +133,7 @@ $('go').onclick = () => {
       addedIdeas += added.length;
     }
 
-    if (!Array.isArray(dst.milestones)) dst.milestones = [];
-    {
-      const have = new Set(dst.milestones.map((m) => m.id));
-      const added = (src.milestones || []).filter((m) => m && m.id && !have.has(m.id));
-      dst.milestones = dst.milestones.concat(added);
-      addedMs += added.length;
-    }
-
     if (!dst.reflection && src.reflection) { dst.reflection = src.reflection; filledTexts++; }
-    if (!dst.aiEval && src.aiEval) { dst.aiEval = src.aiEval; filledTexts++; }
     if ((!dst.reflectionTags || !dst.reflectionTags.length) && src.reflectionTags && src.reflectionTags.length) {
       dst.reflectionTags = src.reflectionTags.slice();
     }
@@ -161,9 +150,8 @@ $('go').onclick = () => {
   $('openApp').disabled = false;
   $('result').innerHTML =
     '<pre>新增日期 ' + addedDays + ' 天\n新增任务 ' + addedTasks +
-    ' 条\n新增灵感 ' + addedIdeas + ' 条\n新增里程碑 ' + addedMs +
-    ' 个\n补回感悟/日报 ' + filledTexts + ' 处</pre>' +
-    '<p>导入完成。<a href="/ceo-schedule.html">打开日程</a>后，灵感、项目和里程碑会收成全局一份。</p>' +
+    ' 条\n新增灵感 ' + addedIdeas + ' 条\n补回感悟 ' + filledTexts + ' 处</pre>' +
+    '<p>导入完成。<a href="/ceo-schedule.html">打开日程</a>后，灵感和项目会收成全局一份。</p>' +
     '<p style="color:var(--muted);font-size:12px">导入前快照在 <code>ceoBackupBeforeRestore</code>。</p>';
 };
 </script>

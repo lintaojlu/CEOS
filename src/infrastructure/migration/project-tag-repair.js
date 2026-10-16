@@ -105,7 +105,6 @@ export function applyProjectTagRepair(adapter, payload) {
   if (tagsChanged) {
     new WorkspaceRepository(adapter).save({
       ideas: raw.ideas,
-      milestones: raw.milestones,
       tags: merged
     });
   }

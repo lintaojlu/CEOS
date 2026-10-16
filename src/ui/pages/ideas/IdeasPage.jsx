@@ -81,9 +81,7 @@ export function IdeasPage({ filter, onFilter, openIdeaId, onOpenIdea }) {
     <div className="ideas-split">
       <aside className="ideas-list" aria-label="灵感列表">
         <div className="ideas-list-head">
-          <div className="ideas-list-tools">
-            <IdeaStatusFilter value={filter} onChange={onFilter} />
-          </div>
+          <IdeaStatusFilter value={filter} onChange={onFilter} />
         </div>
         <div className="ideas-list-scroll">
           <IdeaListView filter={filter} selectedId={selected ? selected.id : null} onSelect={onOpenIdea} />

@@ -1,21 +1,18 @@
 import React from 'react';
 import { useApp } from '../../app/context.jsx';
-import { ideaBody, ideaPreview, ideaTitle } from '../../../domain/ideas/idea-document.js';
+import { ideaTitle } from '../../../domain/ideas/idea-document.js';
+import { ideaListDate } from './idea-list-date.js';
 
 export function IdeaListView({ onSelect, selectedId, filter }) {
   const app = useApp();
   const { ready, completed } = app.ideaInboxService.partition();
-  const byPinThenCreated = (a, b) => {
-    if (!!a.pinned !== !!b.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-    return (b.createdAt || 0) - (a.createdAt || 0);
-  };
+  const byCreated = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
   const visible = (filter === 'done' ? completed : filter === 'all' ? [...ready, ...completed] : ready)
     .slice()
-    .sort(byPinThenCreated);
+    .sort(byCreated);
 
   function renderIdea(idea) {
     const title = ideaTitle(idea) || '未命名';
-    const excerpt = ideaPreview(ideaBody(idea));
     const selected = idea.id === selectedId;
     return (
       <button
@@ -26,11 +23,8 @@ export function IdeaListView({ onSelect, selectedId, filter }) {
         aria-current={selected ? 'true' : undefined}
         onClick={() => onSelect(idea.id)}
       >
-        <span className="idea-row-titleline">
-          <span className="idea-row-title">{title}</span>
-          {idea.pinned ? <span className="idea-row-pin">置顶</span> : null}
-        </span>
-        <span className="idea-row-preview">{excerpt}</span>
+        <span className="idea-row-title">{title}</span>
+        <span className="idea-row-date">{ideaListDate(idea.createdAt)}</span>
       </button>
     );
   }

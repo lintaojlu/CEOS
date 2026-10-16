@@ -16,13 +16,11 @@ export class ExportService {
    * @param {object} deps
    * @param {import('./schedule-service.js').ScheduleService} deps.scheduleService
    * @param {import('./idea-inbox-service.js').IdeaInboxService} deps.ideaInboxService
-   * @param {import('./milestone-service.js').MilestoneService} deps.milestoneService
    * @param {() => number} deps.getSchemaVersion
    */
-  constructor({ scheduleService, ideaInboxService, milestoneService, getSchemaVersion }) {
+  constructor({ scheduleService, ideaInboxService, getSchemaVersion }) {
     this.scheduleService = scheduleService;
     this.ideaInboxService = ideaInboxService;
-    this.milestoneService = milestoneService;
     this.getSchemaVersion = getSchemaVersion;
   }
 
@@ -49,16 +47,6 @@ export class ExportService {
     const weekday = weekdays[this.scheduleService.currentDate.getDay()];
 
     let md = `# CEO 日程记录 - ${dateStr} ${weekday}\n\n`;
-
-    md += `## 🎯 目标里程碑\n\n`;
-    if (this.milestoneService.milestones.length > 0) {
-      this.milestoneService.milestones.forEach((m) => {
-        md += `- [${m.completed ? 'x' : ' '}] ${m.date} - ${m.title}\n`;
-      });
-    } else {
-      md += `> 暂无里程碑\n`;
-    }
-    md += `\n`;
 
     md += `## ✅ 任务清单\n\n`;
     md += `### 必做任务\n`;
@@ -115,11 +103,6 @@ export class ExportService {
     const tags = data.reflectionTags && data.reflectionTags.length ? data.reflectionTags : [];
     if (tags.length) md += `**今日标签**: ${tags.join('、')}\n\n`;
     md += data.reflection || '> 暂无记录';
-    md += `\n\n`;
-
-    md += `## 🤖 AI评估\n\n`;
-    const aiEvalText = (data.aiEval || '').trim();
-    md += aiEvalText ? aiEvalText : '> 暂无评估';
     md += `\n`;
 
     return md;

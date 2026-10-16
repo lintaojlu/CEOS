@@ -1,22 +1,31 @@
 /**
- * 界面偏好：当前页、侧边栏是否收起。
- * 页面名单须与 router.PAGES 一致，否则记下的页会被丢回首页。
+ * 界面偏好：当前页、侧边栏是否收起、侧边栏宽度。
+ * 页面名单须与 router.PAGES 一致，否则记下的页会被丢回统计。
  */
 
 const KEY = 'ceoUiPrefs';
 
-export const UI_PAGES = ['home', 'tasks', 'ideas'];
+export const UI_PAGES = ['agent', 'tasks', 'ideas', 'home'];
 
 /**
  * @typedef {Object} UiPrefs
- * @property {'home'|'tasks'|'ideas'} page
+ * @property {'agent'|'home'|'tasks'|'ideas'} page
  * @property {boolean} sidebarHidden
+ * @property {number} sidebarWidth
  * @property {number} taskListHeight
  * @property {number} ideasListWidth
  */
 
+export const SIDEBAR_WIDTH = { min: 180, max: 480, default: 220 };
 export const TASK_LIST_HEIGHT = { min: 160, max: 840, default: 420 };
 export const IDEA_LIST_WIDTH = { min: 200, max: 560, default: 300 };
+
+/** @param {any} value */
+export function normalizeSidebarWidth(value) {
+  const width = Number(value);
+  if (!Number.isFinite(width)) return SIDEBAR_WIDTH.default;
+  return Math.min(SIDEBAR_WIDTH.max, Math.max(SIDEBAR_WIDTH.min, Math.round(width)));
+}
 
 /** @param {any} value */
 export function normalizeTaskListHeight(value) {
@@ -37,6 +46,7 @@ export function normalizeUiPrefs(raw) {
   return {
     page: UI_PAGES.includes(raw?.page) ? raw.page : 'home',
     sidebarHidden: raw?.sidebarHidden === true,
+    sidebarWidth: normalizeSidebarWidth(raw?.sidebarWidth),
     taskListHeight: normalizeTaskListHeight(raw?.taskListHeight),
     ideasListWidth: normalizeIdeaListWidth(raw?.ideasListWidth)
   };

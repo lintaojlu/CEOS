@@ -6,7 +6,6 @@ import {
   noteDetailDate,
   readListDay,
   readListTags,
-  readNearMilestones,
   readOpenDays,
   readOpenTasks,
   readReadyIdeas
@@ -30,12 +29,10 @@ export class AgentRuntime {
    * @param {object} deps
    * @param {import('./schedule-service.js').ScheduleService} deps.scheduleService
    * @param {import('./idea-inbox-service.js').IdeaInboxService} deps.ideaInboxService
-   * @param {import('./milestone-service.js').MilestoneService} deps.milestoneService
    */
-  constructor({ scheduleService, ideaInboxService, milestoneService }) {
+  constructor({ scheduleService, ideaInboxService }) {
     this.scheduleService = scheduleService;
     this.ideaInboxService = ideaInboxService;
-    this.milestoneService = milestoneService;
     this.rowSerial = 0;
   }
 
@@ -99,13 +96,6 @@ export class AgentRuntime {
       if (!noted.ok) return { ok: false, error: noted.error, detailDates };
       return { ok: true, data: readOpenTasks(world.schedule, date), detailDates: noted.used };
     }
-    if (name === 'list_near_milestones') {
-      return {
-        ok: true,
-        data: readNearMilestones(this.milestoneService.listAll(), date || world.today),
-        detailDates
-      };
-    }
     return { ok: false, error: '没有这个函数', detailDates };
   }
 
@@ -119,7 +109,6 @@ export class AgentRuntime {
       tags: world.tags,
       schedule: world.schedule,
       ideas: world.ideas,
-      milestones: this.milestoneService.listAll(),
       writableDates: turn?.writableDates || []
     });
   }

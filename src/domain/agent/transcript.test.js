@@ -24,7 +24,6 @@ describe('transcript', () => {
       today: '2026-10-15',
       tags: [{ id: 'work', name: '工作' }],
       ideas: [{ id: 'idea-1', text: '写引言', dueDate: '' }],
-      milestones: [{ id: 'mile-1', title: '交稿', date: '2026-10-20' }],
       schedule: {
         '2026-10-14': { required: [{ id: 'past-1', text: '昨天的论文' }], optional: [] },
         '2026-10-15': { required: [], optional: [] }

@@ -1,9 +1,10 @@
 /**
- * 用设置里的小模型，根据任务标题生成标签名，并挂到当前查看日的这一条上。
+ * 用设置里的创建标签模型，根据任务标题生成标签名，并挂到当前查看日的这一条上。
+ * 这一行空着时用默认模型。
  */
 
 import { LlmRequestError } from './llm-service.js';
-import { TAG_NAME_SYSTEM, buildTagNamePrompt, tagNameFromModel } from '../domain/schedule/tag-name.js';
+import { TAG_NAME_SYSTEM, buildTagNamePrompt, projectNameFromModel } from '../domain/schedule/tag-name.js';
 
 export class TaskTagService {
   /**
@@ -27,17 +28,21 @@ export class TaskTagService {
     if (!task) throw new Error('这条任务已经不在了');
 
     const title = String(task.text || '').trim();
+    const notes = (Array.isArray(task.notes) ? task.notes : []).map((note) => note?.text || '');
+    const projects = (this.scheduleService.workspace.tags || []).map((tag) => tag?.name || '');
     let raw = '';
     try {
-      raw = await this.llmService.completeSmall({
+      raw = await this.llmService.complete({
+        slot: 'tagModel',
+        maxTokens: 64,
         system: TAG_NAME_SYSTEM,
-        user: buildTagNamePrompt(title)
+        user: buildTagNamePrompt({ title, notes, projects })
       });
     } catch (error) {
       if (error instanceof LlmRequestError && error.code === 'not-configured') throw error;
       raw = '';
     }
-    const name = tagNameFromModel(raw, title);
+    const name = projectNameFromModel(raw, title, projects);
     if (!name) throw new Error('没有得到可用的标签名');
 
     const saved = this.scheduleService.attachTagNamed(type, taskId, name, dateKey);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { chatCompletionWithTools, chatCompletionsUrl, modelsUrl } from './openai-compatible-client.js';
-import { normalizeLlmSettings } from '../storage/llm-settings-repository.js';
+import { chatCompletionWithTools, chatCompletionsUrl, modelsUrl, streamChatCompletionWithTools } from './openai-compatible-client.js';
+import { DEFAULT_JEV_BASE_URL, DEFAULT_JEV_MODEL, normalizeLlmSettings, resolveJevModel } from '../storage/llm-settings-repository.js';
 
 describe('openai compatible urls', () => {
   it('appends chat/completions and models to a base endpoint', () => {
@@ -71,6 +71,52 @@ describe('chatCompletionWithTools', () => {
   });
 });
 
+describe('streamChatCompletionWithTools', () => {
+  it('emits content as each event arrives', async () => {
+    const encoder = new TextEncoder();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"今"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"天"}}]}\n\n',
+      'data: [DONE]\n\n'
+    ];
+    /** @type {string[]} */
+    const seen = [];
+    const result = await streamChatCompletionWithTools({
+      baseUrl: 'https://example.com/v1',
+      apiKey: 'sk-test',
+      model: 'demo',
+      messages: [],
+      tools: [],
+      onDelta: (delta) => { if (delta.type === 'content') seen.push(delta.text); },
+      fetchImpl: async (_url, init) => {
+        const body = JSON.parse(init.body);
+        expect(body.stream).toBe(true);
+        let index = 0;
+        return {
+          ok: true,
+          status: 200,
+          body: {
+            getReader() {
+              return {
+                async read() {
+                  if (index >= chunks.length) return { done: true, value: undefined };
+                  const value = encoder.encode(chunks[index]);
+                  index += 1;
+                  return { done: false, value };
+                },
+                async cancel() {}
+              };
+            }
+          }
+        };
+      }
+    });
+    expect(seen).toEqual(['今', '天']);
+    expect(result.content).toBe('今天');
+    expect(result.toolCalls).toEqual([]);
+  });
+});
+
 describe('normalizeLlmSettings', () => {
   it('keeps the full-url flag and still defaults the endpoint', () => {
     expect(normalizeLlmSettings({}).fullUrl).toBe(false);
@@ -79,7 +125,29 @@ describe('normalizeLlmSettings', () => {
       fullUrl: true,
       apiKey: '',
       model: '',
-      smallModel: ''
+      agentModel: '',
+      breakdownModel: '',
+      tagModel: '',
+      standardizeModel: '',
+      jevApiKey: '',
+      jevBaseUrl: DEFAULT_JEV_BASE_URL,
+      jevModel: ''
     });
+  });
+
+  it('keeps a previously saved small model as the tag model', () => {
+    expect(normalizeLlmSettings({ model: 'big', smallModel: 'tiny' })).toMatchObject({
+      model: 'big',
+      tagModel: 'tiny',
+      agentModel: '',
+      breakdownModel: '',
+      standardizeModel: '',
+      jevApiKey: '',
+      jevBaseUrl: DEFAULT_JEV_BASE_URL,
+      jevModel: ''
+    });
+    expect(normalizeLlmSettings({ model: 'big', smallModel: 'tiny', tagModel: 'kept' }).tagModel).toBe('kept');
+    expect(resolveJevModel({ model: 'big', jevModel: '' })).toBe(DEFAULT_JEV_MODEL);
+    expect(resolveJevModel({ model: 'big', jevModel: 'jev-1.14.0' })).toBe('jev-1.14.0');
   });
 });

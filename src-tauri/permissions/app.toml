@@ -4,6 +4,11 @@ description = "Append one line to the developer agent log"
 commands.allow = ["append_agent_log"]
 
 [[permission]]
+identifier = "allow-append-model-log"
+description = "Append one line to the model call log"
+commands.allow = ["append_model_log"]
+
+[[permission]]
 identifier = "allow-agent-store"
 description = "Read and append agent conversation transcripts"
 commands.allow = ["read_agent_index", "write_agent_index", "read_agent_session", "append_agent_session", "delete_agent_session"]
@@ -11,7 +16,7 @@ commands.allow = ["read_agent_index", "write_agent_index", "read_agent_session",
 [[permission]]
 identifier = "allow-llm-http"
 description = "Send the configured model API request outside the webview"
-commands.allow = ["llm_http"]
+commands.allow = ["llm_http", "llm_http_stream", "llm_http_cancel"]
 
 [[permission]]
 identifier = "allow-idea-store"

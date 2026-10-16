@@ -11,8 +11,7 @@ describe('syncPrevDayTasks', () => {
       ],
       optional: [{ id: 'o1', text: 'opt', completed: false }],
       reflection: '',
-      reflectionTags: [],
-      aiEval: ''
+      reflectionTags: []
     };
     const current = createEmptyScheduleDay();
     syncPrevDayTasks(prev, current);
@@ -40,8 +39,7 @@ describe('syncPrevDayTasks', () => {
       required: [{ id: 'r1', text: 'a', completed: false }],
       optional: [],
       reflection: '',
-      reflectionTags: [],
-      aiEval: ''
+      reflectionTags: []
     };
     const current = {
       ...createEmptyScheduleDay(),
@@ -162,12 +160,14 @@ describe('normalizeScheduleDay', () => {
       required: [{ id: 't1', text: 'a', completed: false }],
       ideas: [{ id: 'i1', text: 'idea' }],
       milestones: [{ id: 'm1', title: 'm', date: '2026-09-16' }],
-      projects: [{ id: 'p1', name: 'CEOS', tasks: [] }]
+      projects: [{ id: 'p1', name: 'CEOS', tasks: [] }],
+      aiEval: '一份旧日报'
     });
     expect(day.required.map((t) => t.id)).toEqual(['t1']);
     expect(day.ideas).toBeUndefined();
     expect(day.milestones).toBeUndefined();
     expect(day.projects).toBeUndefined();
+    expect(day.aiEval).toBeUndefined();
   });
 
   it('reads a legacy tagId as one entry in tagIds', () => {

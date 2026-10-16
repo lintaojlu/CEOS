@@ -3,14 +3,17 @@ import { Symbol } from './symbols.jsx';
 
 /**
  * 只有一个符号的按钮。label 读给辅助技术，画面上不写字。
- * @param {{ name: string, label: string, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, danger?: boolean, size?: number, className?: string }} props
+ * @param {{ name: string, label: string, title?: string, onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void, danger?: boolean, disabled?: boolean, pressed?: boolean, size?: number, className?: string }} props
  */
-export function IconButton({ name, label, onClick, danger = false, size = 16, className = '' }) {
+export function IconButton({ name, label, title, onClick, danger = false, disabled = false, pressed, size = 16, className = '' }) {
   return (
     <button
       type="button"
-      className={`icon-button${danger ? ' is-danger' : ''} ${className}`.trim()}
+      className={`icon-button${danger ? ' is-danger' : ''}${pressed ? ' is-on' : ''} ${className}`.trim()}
       aria-label={label}
+      aria-pressed={pressed}
+      title={title}
+      disabled={disabled}
       onClick={onClick}
     >
       <Symbol name={name} size={size} />

@@ -5,7 +5,6 @@ import { WorkspaceRepository } from '../infrastructure/storage/workspace-reposit
 import { EventBus } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
-import { MilestoneService } from './milestone-service.js';
 import { AgentRuntime } from './agent-runtime.js';
 import { AgentSession } from './agent-session.js';
 import { getDateKey, addDays } from '../domain/shared/date-key.js';
@@ -29,7 +28,6 @@ function setup() {
   });
   scheduleService.load();
   const ideaInboxService = new IdeaInboxService({ scheduleService, eventBus });
-  const milestoneService = new MilestoneService({ scheduleService, eventBus });
   ideaInboxService.addIdea('写引言');
   const viewed = scheduleService.getDateKey();
   const past = getDateKey(addDays(scheduleService.currentDate, -1));
@@ -37,10 +35,9 @@ function setup() {
     required: [{ id: 'past-1', text: '昨天的论文', note: '', completed: false, tagIds: [], subtasks: [], time: 1, pinned: false, recurrence: '' }],
     optional: [],
     reflection: '',
-    reflectionTags: [],
-    aiEval: ''
+    reflectionTags: []
   };
-  const runtime = new AgentRuntime({ scheduleService, ideaInboxService, milestoneService });
+  const runtime = new AgentRuntime({ scheduleService, ideaInboxService });
   const lines = [];
   return { scheduleService, ideaInboxService, runtime, viewed, past, lines };
 }
@@ -215,5 +212,76 @@ describe('agent session', () => {
     const assistant = session.messages[session.messages.length - 1];
     expect(assistant.events).toEqual([{ kind: 'reasoning', text: '先看今天' }]);
     expect(assistant.text).toBe('好。');
+  });
+
+  it('appends streamed words across a tool round', async () => {
+    const { runtime } = setup();
+    const script = [
+      { content: '我先看。', reasoning: '先看今天', toolCalls: [{ id: 'a', name: 'list_tags', arguments: {} }] },
+      { content: '没有标签。', toolCalls: [] }
+    ];
+    /** @type {string[]} */
+    const seen = [];
+    const session = new AgentSession({
+      runtime,
+      onLive: () => {
+        const last = session.messages[session.messages.length - 1];
+        if (last?.role === 'assistant' && last.text) seen.push(`${session.phase}:${last.text}`);
+      },
+      complete: async ({ onDelta }) => {
+        const next = script.shift();
+        if (next?.content) onDelta?.({ type: 'content', text: next.content });
+        if (next?.toolCalls?.length) onDelta?.({ type: 'tools' });
+        return next;
+      }
+    });
+    const result = await session.submit('今天呢');
+    expect(result.ok).toBe(true);
+    expect(session.messages.at(-1)?.text).toBe('我先看。没有标签。');
+    expect(session.messages.at(-1)?.events?.[0]).toMatchObject({ kind: 'reasoning', text: '先看今天' });
+    expect(seen).toContain('text:我先看。');
+    expect(seen).toContain('text:我先看。没有标签。');
+  });
+
+  it('keeps partial text and appends a failure once', async () => {
+    const { runtime } = setup();
+    const session = new AgentSession({
+      runtime,
+      complete: async ({ onDelta }) => {
+        onDelta?.({ type: 'content', text: '已经' });
+        throw new Error('连接中断');
+      }
+    });
+    const result = await session.submit('今天呢');
+    expect(result.ok).toBe(false);
+    expect(session.messages.at(-1)?.text).toBe('已经\n连接中断');
+  });
+
+  it('stops without a proposal and keeps the words already shown', async () => {
+    const { runtime } = setup();
+    let markReady = () => {};
+    const ready = new Promise((resolve) => { markReady = resolve; });
+    const session = new AgentSession({
+      runtime,
+      complete: ({ onDelta, signal }) => new Promise((_resolve, reject) => {
+        onDelta?.({ type: 'content', text: '先看。' });
+        const stop = () => {
+          const error = new Error('已停止');
+          error.name = 'AbortError';
+          reject(error);
+        };
+        if (signal?.aborted) stop();
+        else signal?.addEventListener('abort', stop, { once: true });
+        markReady();
+      })
+    });
+    const pending = session.submit('晚上发邮件');
+    await ready;
+    session.requestStop();
+    const result = await pending;
+    expect(result.stopped).toBe(true);
+    expect(result.rows).toEqual([]);
+    expect(session.messages.at(-1)?.text).toBe('先看。');
+    expect(session.rows()).toEqual([]);
   });
 });

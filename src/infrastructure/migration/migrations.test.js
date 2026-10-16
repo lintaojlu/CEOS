@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { LocalStorageAdapter } from '../storage/local-storage-adapter.js';
 import { ScheduleRepository } from '../storage/schedule-repository.js';
 import { IdeaRepository } from '../storage/idea-repository.js';
-import { migrateV0ToV1, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5 } from './migrations.js';
+import { migrateV0ToV1, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, migrateV5ToV6, migrateV6ToV7 } from './migrations.js';
 import { TAG_PALETTE } from '../../domain/schedule/tag-palette.js';
 
 function memAdapter(seed = {}) {
@@ -263,5 +263,48 @@ describe('migrations', () => {
     expect(schedule['2026-10-08'].required[0].tagId).toBe('p-old');
     expect(schedule['2026-10-08'].required[0].projectId).toBeUndefined();
     expect(adapter.getSchemaVersion()).toBe(5);
+  });
+
+  it('v5→v6 drops stored milestones', () => {
+    const adapter = memAdapter({
+      ceoSchemaVersion: '5',
+      ceoWorkspace: JSON.stringify({
+        ideas: [{ id: 'i1', text: '灵感' }],
+        tags: [{ id: 't', name: '攀岩', color: '#111111' }],
+        milestones: [{ id: 'm1', title: 'Ship', date: '2026-09-21', completed: false }]
+      }),
+      ceoMilestones: JSON.stringify([{ id: 'old', title: '旧', date: '2026-01-01' }])
+    });
+    migrateV5ToV6(adapter);
+    const workspace = adapter.getJson('ceoWorkspace', {});
+    expect(workspace.milestones).toBeUndefined();
+    expect(workspace.ideas[0].id).toBe('i1');
+    expect(workspace.tags[0].name).toBe('攀岩');
+    expect(adapter.getJson('ceoMilestones', null)).toBe(null);
+    expect(adapter.getSchemaVersion()).toBe(6);
+  });
+
+  it('v6→v7 drops saved daily reports and the report model', () => {
+    const adapter = memAdapter({
+      ceoSchemaVersion: '6',
+      ceoSchedule: JSON.stringify({
+        '2026-10-16': {
+          required: [{ id: 't1', text: '写完', completed: true }],
+          optional: [],
+          reflection: '今天比较顺',
+          aiEval: '一份旧日报'
+        }
+      }),
+      ceoLlmSettings: JSON.stringify({ model: 'default-model', reportModel: 'report-model' })
+    });
+    migrateV6ToV7(adapter);
+    const day = adapter.getJson('ceoSchedule', {})['2026-10-16'];
+    const settings = adapter.getJson('ceoLlmSettings', {});
+    expect(day.aiEval).toBeUndefined();
+    expect(day.reflection).toBe('今天比较顺');
+    expect(day.required[0].id).toBe('t1');
+    expect(settings.reportModel).toBeUndefined();
+    expect(settings.model).toBe('default-model');
+    expect(adapter.getSchemaVersion()).toBe(7);
   });
 });

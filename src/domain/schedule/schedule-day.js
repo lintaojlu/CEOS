@@ -1,6 +1,6 @@
 /**
  * Business rules over a stored day. The record shape itself lives in
- * `src/data/schedule-record.js`. Ideas, tags, and milestones are global.
+ * `src/data/schedule-record.js`. Ideas and tags are global.
  *
  * @typedef {import('../../data/schedule-record.js').ScheduleDayRecord} ScheduleDay
  */
@@ -46,7 +46,7 @@ export function syncPrevDayTasks(prev, current) {
 
 /**
  * Copy a source day's unfinished required/optional onto the current day.
- * Ideas, tags, and milestones are not copied.
+ * Ideas and tags are not copied. Old milestone fields on a day are dropped.
  * @param {ScheduleDay|null|undefined} prev
  * @param {ScheduleDay} current
  * @returns {ScheduleDay}

@@ -32,7 +32,7 @@ export function IdeaStatusFilter({ value, onChange }) {
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <Icon name="filter" />
+        <Icon name="filter" size={18} />
       </button>
       {open ? (
         <div className="filter-panel" role="group" aria-label="显示哪些灵感">

@@ -6,20 +6,19 @@ import { TASK_LIST_HEIGHT, normalizeTaskListHeight } from '../../../infrastructu
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 import { TaskRow } from './TaskRow.jsx';
 
-function TaskProgress() {
+function RequiredProgress() {
   const app = useApp();
   const progress = app.scheduleService.getProgress();
-  const radius = 15;
+  const radius = 5.5;
   const circ = 2 * Math.PI * radius;
   const offset = circ - (progress.percentage / 100) * circ;
   return (
-    <div className="progress-wrap" aria-label={`完成 ${progress.percentage}%`}>
-      <svg className="progress-ring" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
-        <circle className="progress-track" cx="20" cy="20" r={radius} />
-        <circle className="progress-value" cx="20" cy="20" r={radius} strokeDasharray={circ} strokeDashoffset={offset} />
+    <span className="progress-wrap" aria-label={`完成 ${progress.percentage}%`}>
+      <svg className="progress-ring" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <circle className="progress-track" cx="8" cy="8" r={radius} />
+        <circle className="progress-value" cx="8" cy="8" r={radius} strokeDasharray={circ} strokeDashoffset={offset} />
       </svg>
-      <span className="progress-percent">{progress.percentage}%</span>
-    </div>
+    </span>
   );
 }
 
@@ -32,7 +31,7 @@ function clampTaskListHeight(value) {
   return Math.min(visibleTaskListMax(), Math.max(TASK_LIST_HEIGHT.min, normalizeTaskListHeight(value)));
 }
 
-export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
+export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
   const app = useApp();
   const ime = useImeEnterGuard();
   const data = app.scheduleService.getCurrentData();
@@ -162,8 +161,9 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
     if (event.key !== 'Enter' || holdImeEnter(event, ime)) return;
     const text = event.currentTarget.value.trim();
     if (!text) return;
-    app.scheduleService.addTask(type, text, selectedTagIds);
+    const task = app.scheduleService.addTask(type, text, selectedTagIds);
     event.currentTarget.value = '';
+    if (task) void app.taskIntakeService.settle(type, task.id);
   }
 
   function visibleTasks(type) {
@@ -180,27 +180,16 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
   }
 
   return (
-    <Card
-      className="task-board"
-      title="任务清单"
-      titleAside={<TaskProgress />}
-      actions={(
-        <>
-          <button type="button" className="btn btn-mono" onClick={onSync}>同步任务</button>
-          <button
-            type="button"
-            className="btn btn-quiet btn-danger btn-mono"
-            onClick={() => {
-              if (window.confirm('清空当前日期的必做和选做？灵感不受影响。')) app.scheduleService.clearTodayTasks();
-            }}
-          >清空</button>
-        </>
-      )}
-    >
+    <Card className="task-board">
       <div className="columns-2">
         {[['required', '必做'], ['optional', '选做']].map(([type, label]) => (
           <div key={type}>
-            <div className="column-title"><span>{label}</span></div>
+            <div className="column-title">
+              <span className="column-label">
+                {label}
+                {type === 'required' ? <RequiredProgress /> : null}
+              </span>
+            </div>
             <input className="field" style={{ marginBottom: 8 }} placeholder={`添加${label}，回车确认`} {...imeCompositionProps(ime)} onKeyDown={(event) => add(event, type)} />
             <div
               className={over === type ? 'drop-zone is-over task-list' : 'drop-zone task-list'}

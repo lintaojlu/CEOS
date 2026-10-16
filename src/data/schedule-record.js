@@ -33,13 +33,12 @@ import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.j
 
 /**
  * A calendar day stores only that day's tasks plus that day's reflection.
- * Ideas, tags, and milestones live on WorkspaceRecord.
+ * Ideas and tags live outside the day record.
  * @typedef {Object} ScheduleDayRecord
  * @property {DailyTaskRecord[]} required
  * @property {DailyTaskRecord[]} optional
  * @property {string} reflection
  * @property {string[]} reflectionTags
- * @property {string} aiEval
  */
 
 /** @returns {ScheduleDayRecord} */
@@ -48,8 +47,7 @@ export function createEmptyScheduleDay() {
     required: [],
     optional: [],
     reflection: '',
-    reflectionTags: [],
-    aiEval: ''
+    reflectionTags: []
   };
 }
 
@@ -94,7 +92,6 @@ export function normalizeScheduleDay(raw) {
     required: normalizeTasks(raw.required),
     optional: normalizeTasks(raw.optional),
     reflection: typeof raw.reflection === 'string' ? raw.reflection : '',
-    reflectionTags: tags,
-    aiEval: typeof raw.aiEval === 'string' ? raw.aiEval : ''
+    reflectionTags: tags
   };
 }

@@ -1,5 +1,5 @@
 /**
- * Global workspace: one ideas inbox, one milestone list, one tag list.
+ * Global workspace: tags, and any ideas still stored on this record.
  * A daily task stores at most one tag id. Tags do not own a task list.
  */
 
@@ -22,14 +22,6 @@
  */
 
 /**
- * @typedef {Object} MilestoneRecord
- * @property {string} id
- * @property {string} title
- * @property {string} date
- * @property {boolean} completed
- */
-
-/**
  * @typedef {Object} TagRecord
  * @property {string} id
  * @property {string} name
@@ -40,13 +32,12 @@
 /**
  * @typedef {Object} WorkspaceRecord
  * @property {IdeaRecord[]} ideas
- * @property {MilestoneRecord[]} milestones
  * @property {TagRecord[]} tags
  */
 
 /** @returns {WorkspaceRecord} */
 export function createEmptyWorkspace() {
-  return { ideas: [], milestones: [], tags: [] };
+  return { ideas: [], tags: [] };
 }
 
 /**
@@ -89,8 +80,9 @@ export function normalizeIdeas(raw) {
 }
 
 /**
+ * Historical upgrades still fold old milestone rows. The live workspace does not keep them.
  * @param {any} raw
- * @returns {MilestoneRecord[]}
+ * @returns {Array<{ id: string, title: string, date: string, completed: boolean }>}
  */
 export function normalizeMilestones(raw) {
   if (!Array.isArray(raw)) return [];
@@ -131,7 +123,6 @@ export function normalizeWorkspace(raw) {
   if (!raw || typeof raw !== 'object') return createEmptyWorkspace();
   return {
     ideas: normalizeIdeas(raw.ideas),
-    milestones: normalizeMilestones(raw.milestones),
     tags: normalizeTags(raw.tags)
   };
 }

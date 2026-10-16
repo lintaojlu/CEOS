@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DeleteButton, Markdown, Symbol } from '../library/index.js';
+import { repairStreamingMarkdown } from './stream-markdown.js';
 
 function tagName(tags, id) {
   if (!id) return '不挂标签';
@@ -17,6 +18,7 @@ function preview(value) {
  * @param {any[]} props.rows
  * @param {any[]} props.tags
  * @param {boolean} props.busy
+ * @param {boolean} [props.arranging]
  * @param {(id: string, patch: Record<string, any>) => void} props.onEdit
  * @param {(id: string) => void} props.onDrop
  * @param {(id: string, direction: -1 | 1) => void} props.onMove
@@ -24,9 +26,10 @@ function preview(value) {
  * @param {() => void} props.onCancel
  * @param {'dock' | 'page'} [props.layout]
  */
-export function AgentTranscript({ messages, rows, tags, busy, onEdit, onDrop, onMove, onConfirm, onCancel, layout = 'dock' }) {
+export function AgentTranscript({ messages, rows, tags, busy, arranging = false, onEdit, onDrop, onMove, onConfirm, onCancel, layout = 'dock' }) {
   const page = layout === 'page';
-  const lastAssistant = messages.findLastIndex((item) => item.role === 'assistant');
+  const last = messages[messages.length - 1];
+  const waiting = arranging && last?.role !== 'assistant';
   return (
     <div className={page ? 'agent-log is-page' : 'agent-log'} aria-live="polite">
       {messages.map((item, index) => (
@@ -48,11 +51,12 @@ export function AgentTranscript({ messages, rows, tags, busy, onEdit, onDrop, on
             key={`assistant-${index}`}
             message={item}
             layout={layout}
-            pending={busy && index === lastAssistant && !item.text}
+            pending={arranging && index === messages.length - 1}
+            streaming={busy && index === messages.length - 1}
           />
         )
       ))}
-      {busy && lastAssistant === -1 ? (
+      {waiting ? (
         page
           ? (
             <div className="agent-turn agent-turn-assistant">
@@ -181,7 +185,7 @@ function Identity() {
   );
 }
 
-function AssistantTurn({ message, layout, pending }) {
+function AssistantTurn({ message, layout, pending, streaming }) {
   const page = layout === 'page';
   const [open, setOpen] = useState(false);
   const [thinkOpen, setThinkOpen] = useState(false);
@@ -217,15 +221,16 @@ function AssistantTurn({ message, layout, pending }) {
       ) : null}
     </div>
   ) : null;
+  const shown = page && streaming ? repairStreamingMarkdown(message.text) : message.text;
   const body = message.text
-    ? (page ? <div className="agent-answer"><Markdown text={message.text} /></div> : <p className="agent-line">{message.text}</p>)
+    ? (page ? <div className="agent-answer"><Markdown text={shown} /></div> : <p className="agent-line">{message.text}</p>)
     : null;
   return (
     <div className={page ? 'agent-turn agent-turn-assistant' : 'agent-turn'}>
       {page ? <Identity /> : null}
       {page ? process : null}
-      {pending ? <p className="agent-status">正在安排…</p> : null}
       {body}
+      {pending ? <p className="agent-status">正在安排…</p> : null}
       {page ? null : process}
     </div>
   );

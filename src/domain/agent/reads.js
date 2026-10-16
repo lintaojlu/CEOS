@@ -1,4 +1,3 @@
-import { diffDays } from '../shared/date-key.js';
 import { partitionIdeas } from '../ideas/readiness.js';
 import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
 
@@ -102,14 +101,4 @@ export function readReadyIdeas(ideas, schedule, today, dayKey) {
     id: idea.id,
     text: idea.title || idea.text || ''
   }));
-}
-
-/**
- * @param {Array<{ title?: string, date?: string, completed?: boolean }>} milestones
- * @param {string} date
- */
-export function readNearMilestones(milestones, date) {
-  return (milestones || [])
-    .filter((item) => item && !item.completed && item.date && diffDays(date, item.date) <= 14)
-    .map((item) => ({ title: item.title || '', date: item.date }));
 }

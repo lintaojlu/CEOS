@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useApp } from '../../app/context.jsx';
 import { tagPillStyle } from '../../../domain/schedule/fixed-tags.js';
-import { DeleteButton, Icon, Modal, Symbol } from '../../library/index.js';
+import { DeleteButton, IconButton, Modal, Symbol } from '../../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 
 export function TagsCard({ tags = [], selectedIds, onToggle }) {
@@ -26,9 +26,7 @@ export function TagsCard({ tags = [], selectedIds, onToggle }) {
     <section className="tag-block">
       <div className="tag-head">
         <h2 className="card-title">标签</h2>
-        <button type="button" className="tag-add" onClick={() => setAdding(true)} aria-label="新建标签">
-          <Icon name="plus" />
-        </button>
+        <IconButton name="plus" label="新建标签" title="新建标签" size={18} onClick={() => setAdding(true)} />
       </div>
       <div className="tag-board">
         {tags.map((tag) => (
@@ -109,7 +107,6 @@ function TagEditModal({ tag, onClose }) {
   const app = useApp();
   const ime = useImeEnterGuard();
   const [name, setName] = useState(tag.name);
-  const [confirming, setConfirming] = useState(false);
 
   function save() {
     if (!app.scheduleService.renameTag(tag.id, name)) {
@@ -134,17 +131,10 @@ function TagEditModal({ tag, onClose }) {
             save();
           }} />
         </label>
-        {confirming ? (
-          <p className="tag-delete-note">删除标签「{tag.name}」？任务会保留，只是去掉这个标记。</p>
-        ) : null}
         <div className="form-actions">
-          {confirming ? (
-            <DeleteButton label="确认删除" onClick={remove} />
-          ) : (
-            <DeleteButton onClick={() => setConfirming(true)} />
-          )}
+          <DeleteButton onClick={remove} />
           <button type="button" className="btn" onClick={onClose}>取消</button>
-          {confirming ? null : <button type="button" className="btn btn-primary" onClick={save}>保存</button>}
+          <button type="button" className="btn btn-primary" onClick={save}>保存</button>
         </div>
       </div>
     </Modal>

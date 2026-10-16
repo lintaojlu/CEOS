@@ -7,7 +7,9 @@
   ],
   "permissions": [
     "core:default",
+    "core:window:allow-start-dragging",
     "allow-append-agent-log",
+    "allow-append-model-log",
     "allow-agent-store",
     "allow-llm-http",
     "allow-idea-store"

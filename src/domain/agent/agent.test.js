@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { classifyTurn, taskRemainder } from './turn.js';
-import { noteDetailDate, readNearMilestones, readOpenDays, readReadyIdeas } from './reads.js';
+import { noteDetailDate, readOpenDays, readReadyIdeas } from './reads.js';
 import { redact } from './redact.js';
 import { applyProposal } from './apply.js';
 import { applyTurnOverrides, completeWriteArgs, stageWrite, validateProposal } from './writes.js';
@@ -88,14 +88,13 @@ describe('context and tag rewrite', () => {
         '2026-10-07': { required: [{ id: 'p', text: '旧的', completed: false }], optional: [] }
       },
       ideas: [],
-      milestones: [{ title: '交稿', date: '2026-10-12', completed: false }],
       writableDates: [today]
     });
     expect(text).toContain(`${today} 星期五`);
     expect(text).toContain('攀岩项目 id=climb');
     expect(text).toContain('这一天没有任务');
     expect(text).toContain('2026-10-07 1条');
-    expect(text).toContain('交稿 2026-10-12');
+    expect(text).not.toContain('里程碑');
     expect(text).not.toContain('{{');
   });
 
@@ -301,7 +300,7 @@ describe('applyProposal', () => {
 });
 
 describe('reads and redact', () => {
-  it('limits open-task detail to seven dates and keeps near milestones', () => {
+  it('limits open-task detail to seven dates', () => {
     let used = [];
     for (let i = 0; i < 7; i += 1) {
       const next = noteDetailDate(used, `2026-10-0${i + 1}`);
@@ -316,11 +315,6 @@ describe('reads and redact', () => {
       '2026-10-01': { required: [{ id: 'b', text: '旧的', completed: false }, { id: 'c', text: '完成了', completed: true }], optional: [] }
     };
     expect(readOpenDays(schedule, viewed)).toEqual([{ date: '2026-10-01', openCount: 1, titles: ['旧的'] }]);
-    expect(readNearMilestones([
-      { title: '近', date: '2026-10-20', completed: false },
-      { title: '远', date: '2026-12-01', completed: false },
-      { title: '过', date: '2026-10-01', completed: false }
-    ], today).map((item) => item.title)).toEqual(['近', '过']);
   });
 
   it('drops secrets from a log payload', () => {

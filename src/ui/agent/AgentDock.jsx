@@ -5,6 +5,7 @@ import { mentionCatalog } from '../../domain/agent/transcript.js';
 import { navigate } from '../app/router.js';
 import { AgentComposer } from './AgentComposer.jsx';
 import { AgentTranscript } from './AgentTranscript.jsx';
+import { useStickToBottom } from './use-stick-to-bottom.js';
 
 function scrollPageBehind(event) {
   const main = document.querySelector('.app-frame .main');
@@ -30,10 +31,11 @@ export function AgentDock({ page }) {
   const expanded = panelOpen && hasWindow && !onAgentPage;
   const tags = app.scheduleService.workspace.tags || [];
   const world = threads.runtime.world();
+  const tail = view.messages[view.messages.length - 1];
+  useStickToBottom(panelRef, `${expanded}:${tail?.text || ''}:${view.arranging}:${view.rows.length}`);
   const catalog = mentionCatalog({
     tags: world.tags,
     ideas: world.ideas,
-    milestones: app.milestoneService.listAll(),
     schedule: world.schedule,
     today: world.today
   });
@@ -100,6 +102,7 @@ export function AgentDock({ page }) {
             rows={view.rows}
             tags={tags}
             busy={view.busy}
+            arranging={view.arranging}
             onEdit={(id, patch) => { threads.editRow(id, patch); }}
             onDrop={(id) => { threads.dropRow(id); }}
             onMove={(id, direction) => { threads.moveRow(id, direction); }}
@@ -122,6 +125,7 @@ export function AgentDock({ page }) {
           model={view.model}
           busy={view.busy}
           catalog={catalog}
+          onStop={() => { threads.stop(); }}
           onPermission={(next) => { threads.setPermission(next); }}
           onModel={(next) => { threads.setModel(next); }}
           onFocus={() => {

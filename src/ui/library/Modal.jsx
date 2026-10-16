@@ -3,7 +3,7 @@ import { IconButton } from './IconButton.jsx';
 
 export function Modal({ title, children, onClose, wide = false }) {
   return (
-    <div className="modal-backdrop" onMouseDown={onClose} role="presentation">
+    <div className="modal-backdrop" data-tauri-drag-region="false" onMouseDown={onClose} role="presentation">
       <div
         className={`card modal ${wide ? 'modal-wide' : ''}`}
         role="dialog"

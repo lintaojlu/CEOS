@@ -1,10 +1,10 @@
 /** Hash 路由。页名只允许名单内的，非法地址回到上次记住的页面。 */
 
 export const PAGES = [
-  { id: 'home', label: '首页' },
+  { id: 'agent', label: 'Agent' },
   { id: 'tasks', label: '任务' },
   { id: 'ideas', label: '灵感' },
-  { id: 'agent', label: 'Agent' }
+  { id: 'home', label: '统计' }
 ];
 
 /** @param {string} hash @returns {'home'|'tasks'|'ideas'|'agent'|null} */

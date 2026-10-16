@@ -26,8 +26,7 @@ export const READ_TOOLS = [
   tool('read_idea', '读取一条灵感的标题和 Markdown 正文。不含图片。', { ideaId: { type: 'string' } }, ['ideaId']),
   tool('list_day', '列出某一天的全部必做和选做，含已完成。', { date: DATE }, ['date']),
   tool('list_open_days', '列出正在看的那一天以外、还有未完成任务的日期。只含日期、条数和标题。', {}, []),
-  tool('list_open_tasks', '列出某一天未完成任务的正文和说明。一轮最多 7 个不同日期。', { date: DATE }, ['date']),
-  tool('list_near_milestones', '列出已到期或 14 天内的未完成里程碑。只读。', { date: DATE }, ['date'])
+  tool('list_open_tasks', '列出某一天未完成任务的正文和说明。一轮最多 7 个不同日期。', { date: DATE }, ['date'])
 ];
 
 const UPDATE = tool(

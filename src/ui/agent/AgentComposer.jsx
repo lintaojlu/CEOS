@@ -4,7 +4,7 @@ import { Symbol } from '../library/index.js';
 import { AGENT_SKILLS, PERMISSIONS, filterMentions } from '../../domain/agent/transcript.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../keyboard/ime-enter.js';
 
-const KIND_LABEL = { day: '日期', task: '任务', tag: '标签', idea: '灵感', milestone: '里程碑' };
+const KIND_LABEL = { day: '日期', task: '任务', tag: '标签', idea: '灵感' };
 
 /**
  * @param {string} value
@@ -42,9 +42,10 @@ function removeToken(value, token) {
  * @param {(permission: string) => void} props.onPermission
  * @param {(model: string) => void} props.onModel
  * @param {(text: string, mentions: any[]) => void} props.onSend
+ * @param {() => void} [props.onStop]
  * @param {() => void} [props.onFocus]
  */
-export function AgentComposer({ permission, model, busy, catalog, onPermission, onModel, onSend, onFocus }) {
+export function AgentComposer({ permission, model, busy, catalog, onPermission, onModel, onSend, onStop, onFocus }) {
   const app = useApp();
   const [draft, setDraft] = useState('');
   const [mentions, setMentions] = useState([]);
@@ -75,7 +76,7 @@ export function AgentComposer({ permission, model, busy, catalog, onPermission, 
     };
   }, [app]);
 
-  const settingsModel = app.llmService.load().model;
+  const settingsModel = app.llmService.modelFor('agentModel');
   const chosen = model || settingsModel;
   const options = chosen && !models.includes(chosen) ? [chosen, ...models] : models;
   const modelOptions = options.length ? options : (chosen ? [chosen] : []);
@@ -224,8 +225,14 @@ export function AgentComposer({ permission, model, busy, catalog, onPermission, 
             <option key={id} value={id}>{id}</option>
           ))}
         </select>
-        <button type="submit" className="agent-send" disabled={busy || !draft.trim()} aria-label="发送">
-          <Symbol name="send" size={16} />
+        <button
+          type={busy ? 'button' : 'submit'}
+          className="agent-send"
+          disabled={!busy && !draft.trim()}
+          aria-label={busy ? '停止' : '发送'}
+          onClick={() => { if (busy) onStop?.(); }}
+        >
+          <Symbol name={busy ? 'stop' : 'send'} size={16} />
         </button>
       </div>
       {menu ? (

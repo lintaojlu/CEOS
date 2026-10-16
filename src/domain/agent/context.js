@@ -1,5 +1,5 @@
 import { parseDateKey } from '../shared/date-key.js';
-import { readListDay, readNearMilestones, readOpenDays, readReadyIdeas } from './reads.js';
+import { readListDay, readOpenDays, readReadyIdeas } from './reads.js';
 
 const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
@@ -48,7 +48,6 @@ function formatDay(schedule, date, tags) {
  * @param {Array<{ id: string, name: string }>} input.tags
  * @param {Record<string, any>} input.schedule
  * @param {any[]} input.ideas
- * @param {any[]} input.milestones
  * @param {string[]} input.writableDates
  */
 export function buildAgentContext(template, input) {
@@ -57,7 +56,6 @@ export function buildAgentContext(template, input) {
   const today = input.today || '';
   const ready = readReadyIdeas(input.ideas, input.schedule, today, today);
   const openDays = readOpenDays(input.schedule, '').filter((row) => !writableDates.includes(row.date));
-  const milestones = readNearMilestones(input.milestones, today);
   const tasks = writableDates.map((date) => formatDay(input.schedule, date, tags)).join('\n\n');
   return fillAgentContext(template, {
     today,
@@ -66,7 +64,6 @@ export function buildAgentContext(template, input) {
     tags: tags.length ? tags.map((tag) => `${tag.name} id=${tag.id}`).join('\n') : '无',
     tasks: tasks || '无',
     readyIdeas: ready.length ? ready.map((idea) => idea.text).filter(Boolean).join('\n') || '无' : '无',
-    openDays: openDays.length ? openDays.map((row) => `${row.date} ${row.openCount}条`).join('\n') : '无',
-    milestones: milestones.length ? milestones.map((item) => `${item.title} ${item.date}`).join('\n') : '无'
+    openDays: openDays.length ? openDays.map((row) => `${row.date} ${row.openCount}条`).join('\n') : '无'
   });
 }

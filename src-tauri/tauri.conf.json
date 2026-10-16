@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "CEOS",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.ceos.schedule",
   "build": {
     "frontendDist": "../dist",
@@ -17,6 +17,8 @@
         "width": 1280,
         "height": 860,
         "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": 9, "y": 28 },
         "resizable": true,
         "fullscreen": false
       }

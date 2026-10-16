@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>Run yourself like a company.</strong><br/>
-  A local-first daily planner with an idea DAG and an AI daily review.
+  A local-first daily planner with an idea DAG.
 </p>
 
 <p align="center">
@@ -43,10 +43,10 @@ Most to-do apps mix yesterday's leftovers into today, and good ideas disappear i
 
 - **A clean slate each day.** Required and optional tasks belong to one date. Nothing carries over unless you copy it.
 - **An idea DAG.** Ideas live in one global graph. Give an idea a predecessor or a date, and it surfaces when both are satisfied.
-- **Projects and milestones.** A project task and its daily copy share one id. Checking either one, or editing the title, note, or subtasks, updates both the project and the day you are viewing. Milestones sit on a single timeline.
-- **An AI daily review and four insights.** Turn the day's tasks into a report, and ask the model for a short read on completion, rhythm, projects, and ideas.
-- **A home dashboard.** A daily quote, milestones, the report, insights, and a year of activity shown as a heatmap.
-- **Local-first.** Everything is stored in `localStorage`. The network is used only when you generate a report or insights, and the app calls the model directly.
+- **Projects.** A project task and its daily copy share one id. Checking either one, or editing the title, note, or subtasks, updates both the project and the day you are viewing.
+- **Four insights.** Ask the model for a short read on completion, rhythm, projects, and ideas.
+- **A home dashboard.** A daily quote, insights, and a year of activity shown as a heatmap.
+- **Local-first.** Everything is stored in `localStorage`. The network is used only when you generate insights, and the app calls the model directly.
 
 ## Demo
 
@@ -68,12 +68,6 @@ Most to-do apps mix yesterday's leftovers into today, and good ideas disappear i
   <img src="docs/assets/screenshots/projects.png" alt="The projects panel" width="520" />
 </p>
 
-**AI daily review.** A report generated from the day's tasks and notes.
-
-<p align="center">
-  <img src="docs/assets/screenshots/ai-report.png" alt="An AI daily review" width="520" />
-</p>
-
 **Activity.** Active days, the current streak, the longest streak, and a heatmap of how much of each day's required list got done.
 
 <p align="center">
@@ -92,9 +86,9 @@ npm run package:mac # Apple Silicon disk image from origin/main
 `package:mac` writes `release/CEOS_<version>_<commit>_aarch64.dmg`. The image does not include this machine's schedule. The first time someone opens CEOS, they right-click it and choose Open. That note is inside the image.
 
 <details>
-<summary>Optional: AI review</summary>
+<summary>Optional: model</summary>
 
-Open Settings in the sidebar and fill in the model endpoint, model id, and API key. They stay in this machine's `localStorage`. The default endpoint is Volcengine Ark (`https://ark.cn-beijing.volces.com/api/v3`). Use Test connection before generating a report or insights.
+Open Settings in the sidebar and fill in the model endpoint, model id, and API key. They stay in this machine's `localStorage`. The default endpoint is Volcengine Ark (`https://ark.cn-beijing.volces.com/api/v3`). Use Test connection before generating insights.
 
 </details>
 
@@ -122,12 +116,12 @@ flowchart LR
 
 ## How it works
 
-Tasks are scoped to a day. Ideas, projects, and milestones are global and never move when you change the date.
+Tasks are scoped to a day. Ideas and projects are global and never move when you change the date.
 
 | | Where it lives | Moves with the date |
 |---|---|---|
-| Required and optional tasks, notes, AI review | `ceoSchedule[date]` | Yes, one record per day |
-| Ideas, projects, milestones | `ceoWorkspace` | No, one global copy |
+| Required and optional tasks, notes | `ceoSchedule[date]` | Yes, one record per day |
+| Ideas, projects | `ceoWorkspace` | No, one global copy |
 
 **Sync tasks** copies the unfinished required and optional tasks from a day you choose into the day you are viewing. It keeps their original ids. Completed tasks are skipped, and the source day cannot be the day you are viewing.
 
@@ -135,7 +129,7 @@ An idea becomes ready when it is unfinished, every predecessor is done, and its 
 
 ## Tech stack
 
-A React app on Vite, with [React Flow](https://reactflow.dev) for the idea canvas, [Tauri 2](https://tauri.app) for the desktop window, and Vitest for the domain rules. Reports and insights call an OpenAI-compatible model, such as [Volcengine Ark](https://www.volcengine.com/product/ark), directly from the app.
+A React app on Vite, with [React Flow](https://reactflow.dev) for the idea canvas, [Tauri 2](https://tauri.app) for the desktop window, and Vitest for the domain rules. Insights call an OpenAI-compatible model, such as [Volcengine Ark](https://www.volcengine.com/product/ark), directly from the app.
 
 ## Details
 
@@ -148,7 +142,7 @@ src/
   main.jsx                 bootstrap
   data/                    record shapes
   domain/                  day, idea DAG, stats, calendar, prompts
-  application/             schedule, ideas, insights, report, transfer
+  application/             schedule, ideas, insights, transfer
   infrastructure/          repository, migration, model client
   ui/                      sidebar, four pages, idea canvas
 src-tauri/                 Tauri 2 shell
@@ -161,8 +155,8 @@ src-tauri/                 Tauri 2 shell
 
 | Key | Holds |
 |---|---|
-| `ceoSchedule` | Per day: required tasks, optional tasks, notes, AI review |
-| `ceoWorkspace` | Global: ideas, milestones, projects |
+| `ceoSchedule` | Per day: required tasks, optional tasks, notes |
+| `ceoWorkspace` | Global: ideas, projects |
 | `ceoSchemaVersion` | Schema version. v4 is the global workspace |
 | `ceoLlmSettings` | Model endpoint, model id, and API key |
 | `ceoInsights` | Cached insight text, by day |
@@ -173,7 +167,7 @@ src-tauri/                 Tauri 2 shell
 <details>
 <summary>Data and privacy</summary>
 
-Data stays in `localStorage` on your machine. A report or an insight is the only request that leaves the machine, and it goes straight to the model endpoint you configured. Export a JSON backup from Settings whenever you want a copy.
+Data stays in `localStorage` on your machine. An insight is the only request that leaves the machine, and it goes straight to the model endpoint you configured. Export a JSON backup from Settings whenever you want a copy.
 
 </details>
 
@@ -183,8 +177,6 @@ Data stays in `localStorage` on your machine. A report or an insight is the only
 **The page is blank.** Open it through `npm run dev` or `npm run desktop`. The modules need the dev server, so opening the file directly will not work.
 
 **My data disappeared.** Storage is separated by protocol, host, and port. Always use `http://localhost:5173`. The desktop window uses its own storage, separate from your browser. Move data between them with the JSON export.
-
-**The AI review does nothing.** Open Settings, fill in the model id and API key, and use Test connection.
 
 </details>
 

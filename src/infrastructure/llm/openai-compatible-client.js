@@ -5,7 +5,8 @@
  * 桌面端由应用进程发请求，避免页面跨域被 WebKit 报成 Load failed。
  */
 
-import { llmTransport } from './tauri-llm-fetch.js';
+import { createChatStream } from './chat-stream.js';
+import { llmStream, llmTransport } from './tauri-llm-fetch.js';
 
 /** @param {string} address @param {boolean} fullUrl */
 export function chatCompletionsUrl(address, fullUrl) {
@@ -186,6 +187,76 @@ export async function chatCompletionWithTools({ baseUrl, fullUrl = false, apiKey
     throw new LlmRequestError('模型没有返回文本', 'empty');
   }
   return { content, reasoning, toolCalls };
+}
+
+/**
+ * 带函数调用的流式补全。正文片段经 onDelta 送出，思考和工具参数留到结束。
+ * @param {object} input
+ * @param {string} input.baseUrl
+ * @param {boolean} [input.fullUrl]
+ * @param {string} input.apiKey
+ * @param {string} input.model
+ * @param {any[]} input.messages
+ * @param {any[]} input.tools
+ * @param {AbortSignal} [input.signal]
+ * @param {(delta: { type: 'content', text: string } | { type: 'tools' }) => void} [input.onDelta]
+ * @param {typeof fetch} [input.fetchImpl]
+ * @param {boolean} [input.inTauri]
+ * @param {(cmd: string, args: object) => Promise<any>} [input.invoke]
+ * @param {new (onmessage?: (message: any) => void) => { onmessage?: (message: any) => void }} [input.Channel]
+ * @returns {Promise<{ content: string, reasoning: string, toolCalls: { id: string, name: string, arguments: any }[] }>}
+ */
+export async function streamChatCompletionWithTools({
+  baseUrl,
+  fullUrl = false,
+  apiKey,
+  model,
+  messages,
+  tools,
+  signal,
+  onDelta,
+  fetchImpl,
+  inTauri,
+  invoke,
+  Channel
+}) {
+  const url = chatCompletionsUrl(baseUrl, fullUrl);
+  if (!url || !apiKey || !model) {
+    throw new LlmRequestError('请先在设置中填写 API 请求地址、默认模型和 API Key', 'not-configured');
+  }
+  const stream = createChatStream(onDelta);
+  let response;
+  try {
+    response = await llmStream(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ model, messages, tools, stream: true }),
+      signal
+    }, (chunk) => stream.push(chunk), { fetchImpl, inTauri, invoke, Channel });
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error;
+    const message = error && error.message ? error.message : '网络请求失败';
+    throw new LlmRequestError(message, 'network');
+  }
+
+  const parsed = stream.finish();
+  if (!response.ok) {
+    throw new LlmRequestError(parsed.error || `模型返回 HTTP ${response.status}`, 'http');
+  }
+  if (parsed.error && !parsed.content && !parsed.toolCalls.length) {
+    throw new LlmRequestError(parsed.error, 'http');
+  }
+  if (!parsed.content.trim() && !parsed.toolCalls.length) {
+    throw new LlmRequestError(parsed.error || '模型没有返回文本', 'empty');
+  }
+  return {
+    content: parsed.content,
+    reasoning: parsed.reasoning,
+    toolCalls: parsed.toolCalls
+  };
 }
 
 /**

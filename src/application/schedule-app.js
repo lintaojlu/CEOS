@@ -6,7 +6,6 @@ import { LocalStorageAdapter } from '../infrastructure/storage/local-storage-ada
 import { ScheduleRepository } from '../infrastructure/storage/schedule-repository.js';
 import { WorkspaceRepository } from '../infrastructure/storage/workspace-repository.js';
 import { IdeaRepository } from '../infrastructure/storage/idea-repository.js';
-import { MilestoneRepository } from '../infrastructure/storage/milestone-repository.js';
 import { LlmSettingsRepository } from '../infrastructure/storage/llm-settings-repository.js';
 import { UiPrefsRepository } from '../infrastructure/storage/ui-prefs-repository.js';
 import { PomodoroRepository } from '../infrastructure/storage/pomodoro-repository.js';
@@ -17,14 +16,15 @@ import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
 import { IdeaPickupService } from './idea-pickup-service.js';
 import { createIdeaStore } from '../infrastructure/storage/idea-file-store.js';
-import { MilestoneService } from './milestone-service.js';
 import { ExportService } from './export-service.js';
 import { LlmService } from './llm-service.js';
 import { StatsService } from './stats-service.js';
 import { InsightService } from './insight-service.js';
-import { DailyReportService } from './daily-report-service.js';
 import { TaskBreakdownService } from './task-breakdown-service.js';
 import { TaskTagService } from './task-tag-service.js';
+import { TaskStandardizeService } from './task-standardize-service.js';
+import { TaskIntakeService } from './task-intake-service.js';
+import { JevService } from './jev-service.js';
 import { TaskTransferService } from './task-transfer-service.js';
 import { UiPrefsService } from './ui-prefs-service.js';
 import { PomodoroService } from './pomodoro-service.js';
@@ -39,7 +39,6 @@ export class ScheduleApp {
     this.scheduleRepo = new ScheduleRepository(this.adapter);
     this.workspaceRepo = new WorkspaceRepository(this.adapter);
     this.ideaRepo = new IdeaRepository(this.adapter);
-    this.milestoneRepo = new MilestoneRepository(this.adapter);
     this.eventBus = new EventBus();
 
     this.scheduleService = new ScheduleService({
@@ -54,15 +53,9 @@ export class ScheduleApp {
       store: createIdeaStore()
     });
 
-    this.milestoneService = new MilestoneService({
-      scheduleService: this.scheduleService,
-      eventBus: this.eventBus
-    });
-
     this.exportService = new ExportService({
       scheduleService: this.scheduleService,
       ideaInboxService: this.ideaInboxService,
-      milestoneService: this.milestoneService,
       getSchemaVersion: () => this.adapter.getSchemaVersion()
     });
 
@@ -81,13 +74,6 @@ export class ScheduleApp {
       eventBus: this.eventBus
     });
 
-    this.dailyReportService = new DailyReportService({
-      scheduleService: this.scheduleService,
-      ideaInboxService: this.ideaInboxService,
-      llmService: this.llmService,
-      eventBus: this.eventBus
-    });
-
     this.taskBreakdownService = new TaskBreakdownService({
       scheduleService: this.scheduleService,
       llmService: this.llmService
@@ -102,6 +88,23 @@ export class ScheduleApp {
     this.taskTagService = new TaskTagService({
       scheduleService: this.scheduleService,
       llmService: this.llmService
+    });
+
+    this.taskStandardizeService = new TaskStandardizeService({
+      scheduleService: this.scheduleService,
+      llmService: this.llmService
+    });
+
+    this.jevService = new JevService({
+      settingsRepo: this.llmService.settingsRepo
+    });
+
+    this.taskIntakeService = new TaskIntakeService({
+      scheduleService: this.scheduleService,
+      jevService: this.jevService,
+      taskTagService: this.taskTagService,
+      taskStandardizeService: this.taskStandardizeService,
+      taskBreakdownService: this.taskBreakdownService
     });
 
     this.taskTransfer = new TaskTransferService({
@@ -123,14 +126,13 @@ export class ScheduleApp {
     this.agentThreads = new AgentThreads({
       runtime: new AgentRuntime({
         scheduleService: this.scheduleService,
-        ideaInboxService: this.ideaInboxService,
-        milestoneService: this.milestoneService
+        ideaInboxService: this.ideaInboxService
       }),
       complete: (input) => this.llmService.completeWithTools(input),
       log: (record) => appendAgentLog(record).catch(() => {}),
       store: createAgentStore(),
       eventBus: this.eventBus,
-      defaultModel: () => this.llmService.load().model
+      defaultModel: () => this.llmService.modelFor('agentModel')
     });
   }
 
@@ -148,7 +150,6 @@ export class ScheduleApp {
     } catch {
       // 灵感文件读不到时先打开窗口，下次再迁。
     }
-    this.milestoneService.load();
     this.pomodoroService.load();
     this.agentThreads.load().catch(() => {});
 
@@ -161,7 +162,6 @@ export class ScheduleApp {
   persist() {
     this.scheduleService.persist();
     this.ideaInboxService.persist();
-    this.milestoneService.persist();
     this.pomodoroService.persist();
   }
 }

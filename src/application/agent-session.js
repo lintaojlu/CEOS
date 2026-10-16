@@ -12,19 +12,26 @@ export class AgentSession {
   /**
    * @param {object} deps
    * @param {AgentRuntime} deps.runtime
-   * @param {(input: { messages: any[], tools: any[], model?: string }) => Promise<{ content: string, reasoning?: string, toolCalls: any[] }>} deps.complete
+   * @param {(input: { messages: any[], tools: any[], model?: string, signal?: AbortSignal, onDelta?: (delta: any) => void }) => Promise<{ content: string, reasoning?: string, toolCalls: any[] }>} deps.complete
    * @param {(record: any) => Promise<void>|void} [deps.log]
    * @param {(event: any) => Promise<void>|void} [deps.onEvent]
+   * @param {() => void} [deps.onLive]
    * @param {number} [deps.maxRounds]
    */
-  constructor({ runtime, complete, log, onEvent, maxRounds = MAX_ROUNDS }) {
+  constructor({ runtime, complete, log, onEvent, onLive, maxRounds = MAX_ROUNDS }) {
     this.runtime = runtime;
     this.complete = complete;
     this.log = log || (() => {});
     this.onEvent = onEvent || null;
+    this.onLive = onLive || null;
     this.maxRounds = maxRounds;
     this.permission = 'default';
     this.model = '';
+    this.phase = 'idle';
+    this.pendingModelText = '';
+    this.stopped = false;
+    /** @type {AbortController | null} */
+    this.abort = null;
     /** @type {{ role: 'user'|'assistant', text: string, mentions?: any[], events?: any[] }[]} */
     this.messages = [];
     /** @type {{ role: 'user'|'assistant', text: string }[]} */
@@ -40,6 +47,34 @@ export class AgentSession {
   /** @param {any} event */
   async emit(event) {
     if (this.onEvent) await this.onEvent(event);
+  }
+
+  live() {
+    if (this.onLive) this.onLive();
+  }
+
+  prepare() {
+    this.stopped = false;
+    this.pendingModelText = '';
+    this.phase = 'wait';
+    this.abort = new AbortController();
+  }
+
+  requestStop() {
+    this.stopped = true;
+    this.abort?.abort();
+  }
+
+  /** @param {unknown} error */
+  isAbort(error) {
+    return this.stopped || !!this.abort?.signal.aborted || (error instanceof Error && error.name === 'AbortError');
+  }
+
+  /** @param {string} text */
+  appendVisible(text) {
+    if (!text) return;
+    this.ensureAssistant().text += text;
+    this.pendingModelText += text;
   }
 
   /** @param {string} kind @param {any} payload */
@@ -200,6 +235,16 @@ export class AgentSession {
     });
     await this.record('tool_result', { name: call.name, ok, payload });
     await this.emit({ type: 'tool_result', id: call.id, name: call.name, ok, payload });
+    this.live();
+  }
+
+  async pushPendingAnswer() {
+    const text = this.pendingModelText;
+    this.pendingModelText = '';
+    if (!text) return;
+    const last = this.modelMessages[this.modelMessages.length - 1];
+    const already = last && last.role === 'assistant' && !last.tool_calls && last.content === text;
+    if (!already) await this.pushModel({ role: 'assistant', content: text });
   }
 
   /**
@@ -225,82 +270,140 @@ export class AgentSession {
     await this.emit({ type: 'user', text: raw, mentions, modelContent });
     await this.pushModel({ role: 'user', content: modelContent });
     const tools = toolsForTurn(turn, this.permission);
-    let assistantText = '';
+    if (!this.abort || this.phase === 'idle') this.prepare();
+    this.phase = 'wait';
+    this.live();
 
     for (let round = 0; round < this.maxRounds; round += 1) {
+      if (this.isAbort()) return this.halt();
+      this.phase = 'wait';
+      this.live();
       await this.record('model_request', {
         round,
         messages: this.modelMessages,
         tools: tools.map((item) => item.function.name)
       });
+      let streamed = '';
       let response;
       try {
         response = await this.complete({
           messages: this.modelMessages,
           tools,
-          model: this.model || undefined
+          model: this.model || undefined,
+          signal: this.abort?.signal,
+          onDelta: (delta) => {
+            if (this.isAbort()) return;
+            if (delta?.type === 'content' && delta.text) {
+              streamed += delta.text;
+              this.appendVisible(delta.text);
+              this.phase = 'text';
+              this.live();
+            } else if (delta?.type === 'tools') {
+              this.phase = 'tools';
+              this.live();
+            }
+          }
         });
       } catch (error) {
+        if (this.isAbort(error)) return this.halt();
         const message = error && error.message ? error.message : '模型请求失败';
         return this.fail(message);
       }
+      if (this.isAbort()) return this.halt();
       if (!response) return this.fail('模型没有返回文本');
+      const content = typeof response.content === 'string' ? response.content : '';
+      if (content.startsWith(streamed) && content.length > streamed.length) {
+        this.appendVisible(content.slice(streamed.length));
+        streamed = content;
+      } else if (!streamed && content) {
+        this.appendVisible(content);
+        streamed = content;
+      }
       const toolCalls = response.toolCalls || [];
-      await this.record('model_response', { content: response.content || '', toolCalls });
+      await this.record('model_response', { content: streamed, toolCalls });
       if (response.reasoning) {
         this.ensureAssistant().events.push({ kind: 'reasoning', text: response.reasoning });
         await this.emit({ type: 'reasoning', text: response.reasoning });
+        this.live();
       }
-      if (!toolCalls.length) {
-        assistantText = response.content || '';
-        break;
-      }
-      const assistantMessage = {
+      if (!toolCalls.length) break;
+      this.phase = 'tools';
+      this.live();
+      const roundText = this.pendingModelText;
+      this.pendingModelText = '';
+      await this.pushModel({
         role: 'assistant',
-        content: response.content || '',
+        content: roundText,
         tool_calls: toolCalls.map((call) => ({
           id: call.id,
           type: 'function',
           function: { name: call.name, arguments: JSON.stringify(call.arguments || {}) }
         }))
-      };
-      await this.pushModel(assistantMessage);
+      });
       for (const call of toolCalls) {
+        if (this.isAbort()) return this.halt();
         const payload = await this.handleTool(call, turn);
+        if (this.isAbort()) return this.halt();
         await this.pushModel({
           role: 'tool',
           tool_call_id: call.id,
           content: JSON.stringify(payload)
         });
       }
-      if (response.content) assistantText = response.content;
-      if (round === this.maxRounds - 1 && !assistantText) {
-        assistantText = this.staged.length ? '方案在下面，确认后写入。' : '这次没有改动。';
-      }
     }
 
-    if (!assistantText) assistantText = this.staged.length ? '方案在下面，确认后写入。' : '这次没有改动。';
-    return this.finish(assistantText);
+    return this.finish();
   }
 
   /** @param {string} message */
   async fail(message) {
     await this.record('model_response', { error: message });
-    this.ensureAssistant().text = message;
-    this.transcript.push({ role: 'assistant', text: message });
-    await this.emit({ type: 'assistant', text: message });
+    const bubble = this.ensureAssistant();
+    bubble.text = bubble.text ? `${bubble.text}\n${message}` : message;
+    this.phase = 'idle';
+    this.transcript.push({ role: 'assistant', text: bubble.text });
+    await this.emit({ type: 'assistant', text: bubble.text });
+    this.live();
     return { ok: false, error: message, rows: this.rows() };
   }
 
-  /** @param {string} assistantText */
-  async finish(assistantText) {
-    this.ensureAssistant().text = assistantText;
-    this.transcript.push({ role: 'assistant', text: assistantText });
-    await this.emit({ type: 'assistant', text: assistantText });
-    await this.record('assistant_message', { text: assistantText });
-    const last = this.modelMessages[this.modelMessages.length - 1];
-    const already = last && last.role === 'assistant' && !last.tool_calls && last.content === assistantText;
-    if (!already) await this.pushModel({ role: 'assistant', content: assistantText });
-    return { ok: true, text: assistantText, rows: this.rows() };
+  async finish() {
+    const bubble = this.ensureAssistant();
+    if (!bubble.text) {
+      const fallback = this.staged.length ? '方案在下面，确认后写入。' : '这次没有改动。';
+      bubble.text = fallback;
+      this.pendingModelText = fallback;
+    }
+    this.phase = 'idle';
+    this.transcript.push({ role: 'assistant', text: bubble.text });
+    await this.emit({ type: 'assistant', text: bubble.text });
+    await this.record('assistant_message', { text: bubble.text });
+    await this.pushPendingAnswer();
+    return { ok: true, text: bubble.text, rows: this.rows() };
+  }
+
+  async halt() {
+    this.phase = 'idle';
+    this.staged = [];
+    await this.record('cancel', { stopped: true });
+    await this.persistStaged();
+    const last = this.messages[this.messages.length - 1];
+    if (!last || last.role !== 'assistant') {
+      return { ok: true, stopped: true, text: '', rows: [] };
+    }
+    if (!last.text && !(last.events || []).length) {
+      this.messages.pop();
+      this.pendingModelText = '';
+      return { ok: true, stopped: true, text: '', rows: [] };
+    }
+    if (last.text) {
+      this.transcript.push({ role: 'assistant', text: last.text });
+      await this.emit({ type: 'assistant', text: last.text });
+      await this.record('assistant_message', { text: last.text });
+      await this.pushPendingAnswer();
+    } else {
+      this.pendingModelText = '';
+    }
+    return { ok: true, stopped: true, text: last.text || '', rows: [] };
   }
 }

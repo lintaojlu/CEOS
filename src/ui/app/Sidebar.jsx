@@ -3,15 +3,15 @@ import { version } from '../../../src-tauri/tauri.conf.json';
 import { Icon } from '../library/index.js';
 import { PAGES, navigate } from './router.js';
 import { useApp, useShell } from './context.jsx';
+import { SIDEBAR_WIDTH } from '../../infrastructure/storage/ui-prefs-repository.js';
 
-export function Sidebar({ page, onOpenIdeas }) {
+export function Sidebar({ page, onOpenIdeas, width, onResizeStart }) {
   const app = useApp();
   const shell = useShell();
 
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark"><img src="/logo.svg" alt="" /></div>
         <div className="brand-copy">
           <div className="brand-name">
             CEOS
@@ -45,6 +45,16 @@ export function Sidebar({ page, onOpenIdeas }) {
           <span>设置</span>
         </button>
       </div>
+      <div
+        className="sidebar-resize"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="调整侧边栏宽度"
+        aria-valuemin={SIDEBAR_WIDTH.min}
+        aria-valuemax={SIDEBAR_WIDTH.max}
+        aria-valuenow={width}
+        onPointerDown={onResizeStart}
+      />
     </aside>
   );
 }

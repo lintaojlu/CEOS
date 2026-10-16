@@ -60,10 +60,7 @@ export class ScheduleService {
   }
 
   /**
-   * @param {'required'|'optional'} type
-   * @param {string} text
-   */
-  /**
+   * 新建任务放在该列最上方。
    * @param {'required'|'optional'} type
    * @param {string} text
    * @param {string|string[]} [tagIds]
@@ -73,7 +70,7 @@ export class ScheduleService {
     if (!title) return null;
     const data = this.getCurrentData();
     const task = createDailyTask(title, this.currentDate, { tagIds: this._knownTagIds(tagIds) });
-    data[type].push(task);
+    data[type].unshift(task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
     return task;
@@ -304,26 +301,69 @@ export class ScheduleService {
     const data = this.getCurrentData();
     const task = data[type].find((t) => t.id === id);
     if (!task) return null;
-    if (patch.notes !== undefined || patch.note !== undefined || patch.subtasks !== undefined) {
-      patch = { ...patch, notes: normalizeNotes(patch.notes, { note: patch.note, subtasks: patch.subtasks }) };
-      delete patch.note;
-      delete patch.subtasks;
+    this._applyTaskPatch(task, patch);
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
+    return task;
+  }
+
+  /**
+   * 把当前查看日的这条任务改到指定日期。日期不变时只更新当天这一份。
+   * 目标日的必做或选做里已经有同一条 id 时不写入。
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   * @param {string} dateKey
+   * @param {object} patch
+   * @returns {any|null|{ occupied: true }}
+   */
+  moveTaskToDate(type, id, dateKey, patch) {
+    if (type !== 'required' && type !== 'optional') return null;
+    const currentKey = this.getDateKey();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '') || dateKey === currentKey) {
+      return this.updateTask(type, id, patch);
     }
-    if (patch.text != null) {
-      patch = { ...patch, text: String(patch.text).trim() };
+    const list = this.getCurrentData()[type] || [];
+    const index = list.findIndex((task) => task.id === id);
+    if (index === -1) return null;
+    const existing = this.data[dateKey];
+    const occupied = ['required', 'optional'].some((bucket) => (
+      (existing?.[bucket] || []).some((task) => task && task.id === id)
+    ));
+    if (occupied) return { occupied: true };
+    const [task] = list.splice(index, 1);
+    this._applyTaskPatch(task, patch);
+    const target = this.scheduleRepo.ensureDay(this.data, dateKey);
+    target[type].push(task);
+    sortTasks(target[type]);
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
+    return task;
+  }
+
+  /**
+   * @param {any} task
+   * @param {object} patch
+   */
+  _applyTaskPatch(task, patch) {
+    let next = patch || {};
+    if (next.notes !== undefined || next.note !== undefined || next.subtasks !== undefined) {
+      next = { ...next, notes: normalizeNotes(next.notes, { note: next.note, subtasks: next.subtasks }) };
+      delete next.note;
+      delete next.subtasks;
     }
-    if (patch.tagIds != null || patch.tagId != null) {
-      const ids = this._knownTagIds(patch.tagIds != null ? patch.tagIds : patch.tagId);
-      patch = { ...patch, tagIds: ids };
-      delete patch.tagId;
+    if (next.text != null) {
+      next = { ...next, text: String(next.text).trim() };
     }
-    Object.assign(task, patch);
+    if (next.tagIds != null || next.tagId != null) {
+      const ids = this._knownTagIds(next.tagIds != null ? next.tagIds : next.tagId);
+      next = { ...next, tagIds: ids };
+      delete next.tagId;
+    }
+    Object.assign(task, next);
     delete task.tagId;
     delete task.note;
     delete task.subtasks;
     if (!Array.isArray(task.notes)) task.notes = [];
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     return task;
   }
 
@@ -382,14 +422,28 @@ export class ScheduleService {
    * @param {Array<{ id?: string, text?: string }>} notes
    */
   setTaskNotes(dateKey, type, taskId, notes) {
+    return this.updateTaskOnDate(dateKey, type, taskId, { notes });
+  }
+
+  /**
+   * 改某一天某条任务的标题和说明。查看日如果已经翻走，仍然写回这一天。
+   * @param {string} dateKey
+   * @param {'required'|'optional'} type
+   * @param {string} taskId
+   * @param {{ text?: string, notes?: Array<{ id?: string, text?: string }> }} patch
+   */
+  updateTaskOnDate(dateKey, type, taskId, patch) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
     if (type !== 'required' && type !== 'optional') return null;
     const day = this.data[dateKey];
     const task = (day?.[type] || []).find((item) => item && item.id === taskId);
     if (!task) return null;
-    task.notes = normalizeNotes(notes);
-    delete task.note;
-    delete task.subtasks;
+    if (patch.text != null) task.text = String(patch.text).trim();
+    if (patch.notes != null) {
+      task.notes = normalizeNotes(patch.notes);
+      delete task.note;
+      delete task.subtasks;
+    }
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId, dateKey });
     return task;
@@ -551,12 +605,6 @@ export class ScheduleService {
     data.reflectionTags = tags;
     this.persist();
     this.eventBus.emit(Events.REFLECTION_UPDATED, {});
-  }
-
-  setAiEval(text) {
-    const data = this.getCurrentData();
-    data.aiEval = typeof text === 'string' ? text : '';
-    this.persist();
   }
 
   getProgress() {

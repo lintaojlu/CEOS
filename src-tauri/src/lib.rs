@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::fs::{self, create_dir_all, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
 
+use tauri::ipc::Channel;
 use tauri::Manager;
 
 const LLM_BODY_LIMIT: usize = 8 * 1024 * 1024;
@@ -69,18 +71,157 @@ async fn llm_http(
   })
 }
 
+struct LlmCancel {
+  flag: Arc<AtomicBool>,
+  notify: Arc<tokio::sync::Notify>,
+}
+
+fn llm_cancels() -> &'static Mutex<HashMap<String, LlmCancel>> {
+  static MAP: OnceLock<Mutex<HashMap<String, LlmCancel>>> = OnceLock::new();
+  MAP.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+#[derive(Clone, serde::Serialize)]
+struct LlmChunk {
+  chunk: String,
+}
+
+/// 把可能被拆开的 UTF-8 字节留到下一块，避免一个汉字变成替换符。
+fn take_utf8(carry: &mut Vec<u8>, chunk: &[u8]) -> String {
+  carry.extend_from_slice(chunk);
+  match String::from_utf8(std::mem::take(carry)) {
+    Ok(text) => text,
+    Err(err) => {
+      let bytes = err.into_bytes();
+      let valid = match std::str::from_utf8(&bytes) {
+        Ok(_) => bytes.len(),
+        Err(utf8) => utf8.valid_up_to(),
+      };
+      let text = String::from_utf8_lossy(&bytes[..valid]).into_owned();
+      let incomplete = match std::str::from_utf8(&bytes) {
+        Err(utf8) if utf8.error_len().is_none() => true,
+        _ => false,
+      };
+      if incomplete {
+        carry.extend_from_slice(&bytes[valid..]);
+      } else if valid < bytes.len() {
+        carry.extend_from_slice(&bytes[valid + 1..]);
+      }
+      text
+    }
+  }
+}
+
 #[tauri::command]
-fn append_agent_log(app: tauri::AppHandle, line: String) -> Result<(), String> {
+async fn llm_http_stream(
+  id: String,
+  method: String,
+  url: String,
+  headers: HashMap<String, String>,
+  body: Option<String>,
+  channel: Channel<LlmChunk>,
+) -> Result<LlmHttpResponse, String> {
+  let http_method = match method.to_ascii_uppercase().as_str() {
+    "GET" => reqwest::Method::GET,
+    "POST" => reqwest::Method::POST,
+    _ => return Err("只支持读取模型列表和对话请求".into()),
+  };
+  let parsed = reqwest::Url::parse(&url).map_err(|_| "请求地址无效".to_string())?;
+  if parsed.scheme() != "https" && parsed.scheme() != "http" {
+    return Err("请求地址只支持 http 和 https".into());
+  }
+  let cancel = LlmCancel {
+    flag: Arc::new(AtomicBool::new(false)),
+    notify: Arc::new(tokio::sync::Notify::new()),
+  };
+  {
+    let mut map = llm_cancels().lock().map_err(|_| "无法取消请求".to_string())?;
+    map.insert(id.clone(), LlmCancel {
+      flag: cancel.flag.clone(),
+      notify: cancel.notify.clone(),
+    });
+  }
+  let outcome = async {
+    let mut request = llm_client().request(http_method, parsed);
+    for (key, value) in headers {
+      request = request.header(key, value);
+    }
+    if let Some(body) = body {
+      request = request.body(body);
+    }
+    let mut response = request.send().await.map_err(llm_network_message)?;
+    let status = response.status().as_u16();
+    let mut total = 0usize;
+    let mut carry = Vec::new();
+    loop {
+      if cancel.flag.load(Ordering::SeqCst) {
+        return Err("已停止".into());
+      }
+      let next = tokio::select! {
+        _ = cancel.notify.notified() => return Err("已停止".into()),
+        chunk = response.chunk() => chunk,
+      };
+      let Some(bytes) = next.map_err(llm_network_message)? else { break };
+      total += bytes.len();
+      if total > LLM_BODY_LIMIT {
+        return Err("模型服务返回的内容过大".into());
+      }
+      let text = take_utf8(&mut carry, &bytes);
+      if text.is_empty() { continue; }
+      channel.send(LlmChunk { chunk: text }).map_err(|_| "页面已离开".to_string())?;
+    }
+    if !carry.is_empty() {
+      let text = String::from_utf8_lossy(&carry).into_owned();
+      if !text.is_empty() {
+        channel.send(LlmChunk { chunk: text }).map_err(|_| "页面已离开".to_string())?;
+      }
+    }
+    Ok(LlmHttpResponse { status, body: String::new() })
+  }.await;
+  if let Ok(mut map) = llm_cancels().lock() {
+    map.remove(&id);
+  }
+  outcome
+}
+
+#[tauri::command]
+fn llm_http_cancel(id: String) -> Result<(), String> {
+  let found = llm_cancels()
+    .lock()
+    .map_err(|_| "无法取消请求".to_string())?
+    .get(&id)
+    .map(|cancel| LlmCancel {
+      flag: cancel.flag.clone(),
+      notify: cancel.notify.clone(),
+    });
+  if let Some(cancel) = found {
+    cancel.flag.store(true, Ordering::SeqCst);
+    cancel.notify.notify_one();
+  }
+  Ok(())
+}
+
+fn append_log_line(app: &tauri::AppHandle, name: &str, line: String) -> Result<(), String> {
   let dir = app.path().app_log_dir().map_err(|err| err.to_string())?;
   create_dir_all(&dir).map_err(|err| err.to_string())?;
   let mut file = OpenOptions::new()
     .create(true)
     .append(true)
-    .open(dir.join("agent.jsonl"))
+    .open(dir.join(name))
     .map_err(|err| err.to_string())?;
   let single = line.replace(['\n', '\r'], " ");
   writeln!(file, "{single}").map_err(|err| err.to_string())?;
   Ok(())
+}
+
+#[tauri::command]
+fn append_agent_log(app: tauri::AppHandle, line: String) -> Result<(), String> {
+  append_log_line(&app, "agent.jsonl", line)
+}
+
+#[tauri::command]
+fn append_model_log(app: tauri::AppHandle, line: String) -> Result<(), String> {
+  append_log_line(&app, "model.jsonl", line)
 }
 
 fn agent_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -239,7 +380,10 @@ pub fn run() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       append_agent_log,
+      append_model_log,
       llm_http,
+      llm_http_stream,
+      llm_http_cancel,
       read_agent_index,
       write_agent_index,
       read_agent_session,

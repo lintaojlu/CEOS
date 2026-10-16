@@ -150,13 +150,6 @@ export class IdeaInboxService {
   }
 
   /** @param {string} id */
-  pin(id) {
-    const idea = this._nodes.find((node) => node.id === id);
-    if (!idea) return;
-    this.update(id, { pinned: !idea.pinned });
-  }
-
-  /** @param {string} id */
   delete(id) {
     this._nodes = this._nodes.filter((node) => node.id !== id);
     void this.store.remove(id);
@@ -199,7 +192,7 @@ export class IdeaInboxService {
     return this._nodes.find((node) => node.id === id) || null;
   }
 
-  /** 给日报和导出用的标题。 */
+  /** 给导出用的标题。 */
   titleOf(idea) {
     return ideaTitle(idea);
   }

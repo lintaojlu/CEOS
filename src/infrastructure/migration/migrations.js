@@ -1,13 +1,14 @@
 import { createIdeaNode } from '../../domain/ideas/idea-node.js';
 import { SCHEDULE_KEY } from '../storage/schedule-repository.js';
 import { IDEAS_KEY } from '../storage/idea-repository.js';
-import { MILESTONES_KEY } from '../storage/milestone-repository.js';
 import { normalizeScheduleDay } from '../../data/schedule-record.js';
 import { normalizeIdeas, normalizeMilestones, normalizeWorkspace } from '../../data/workspace-record.js';
 import { WorkspaceRepository } from '../storage/workspace-repository.js';
 import { getDateKey } from '../../domain/shared/date-key.js';
 import { createDailyTask } from '../../domain/schedule/daily-task.js';
 import { TAG_PALETTE } from '../../domain/schedule/tag-palette.js';
+
+const MILESTONES_KEY = 'ceoMilestones';
 
 /**
  * v0 → v1 (legacy no-op keep): previously extracted ideas to ceoIdeas.
@@ -383,6 +384,41 @@ export function migrateV4ToV5(adapter) {
   adapter.setSchemaVersion(5);
 }
 
+/**
+ * v5 → v6: goal milestones are gone. Drop them from the workspace and the old key.
+ */
+export function migrateV5ToV6(adapter) {
+  const raw = adapter.getJson('ceoWorkspace', null);
+  if (raw && typeof raw === 'object' && Object.prototype.hasOwnProperty.call(raw, 'milestones')) {
+    const next = { ...raw };
+    delete next.milestones;
+    adapter.setJson('ceoWorkspace', next);
+  }
+  adapter.remove(MILESTONES_KEY);
+  adapter.setSchemaVersion(6);
+}
+
+/**
+ * v6 → v7: the AI daily report is gone. Drop saved text and the report model slot.
+ */
+export function migrateV6ToV7(adapter) {
+  const schedule = adapter.getJson(SCHEDULE_KEY, {}) || {};
+  Object.keys(schedule).forEach((dateKey) => {
+    const day = schedule[dateKey];
+    if (day && typeof day === 'object' && Object.prototype.hasOwnProperty.call(day, 'aiEval')) {
+      delete day.aiEval;
+    }
+  });
+  adapter.setJson(SCHEDULE_KEY, schedule);
+  const settings = adapter.getJson('ceoLlmSettings', null);
+  if (settings && typeof settings === 'object' && Object.prototype.hasOwnProperty.call(settings, 'reportModel')) {
+    const next = { ...settings };
+    delete next.reportModel;
+    adapter.setJson('ceoLlmSettings', next);
+  }
+  adapter.setSchemaVersion(7);
+}
+
 export const MIGRATIONS = [
   { to: 1, run: migrateV0ToV1 },
   {
@@ -393,5 +429,7 @@ export const MIGRATIONS = [
   },
   { to: 3, run: (adapter) => migrateV2ToV3(adapter) },
   { to: 4, run: (adapter) => migrateV3ToV4(adapter) },
-  { to: 5, run: (adapter) => migrateV4ToV5(adapter) }
+  { to: 5, run: (adapter) => migrateV4ToV5(adapter) },
+  { to: 6, run: (adapter) => migrateV5ToV6(adapter) },
+  { to: 7, run: (adapter) => migrateV6ToV7(adapter) }
 ];

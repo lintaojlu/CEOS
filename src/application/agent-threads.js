@@ -59,7 +59,8 @@ export class AgentThreads {
       complete: (input) => this.complete(input),
       log: this.log,
       maxRounds: this.maxRounds,
-      onEvent: (event) => this.recordEvent(event)
+      onEvent: (event) => this.recordEvent(event),
+      onLive: () => { this.emitUpdate(); }
     });
     session.permission = this.meta?.permission || 'default';
     session.model = this.meta?.model || '';
@@ -112,8 +113,9 @@ export class AgentThreads {
       model: this.meta.model || this.defaultModel(),
       permission: this.meta.permission || 'default',
       messages: this.session.messages,
-      rows: this.session.rows(),
+      rows: this.busy ? [] : this.session.rows(),
       busy: this.busy,
+      arranging: this.busy && this.session.phase !== 'text',
       persisted: this.meta.persisted,
       threads: this.sorted()
     };
@@ -252,6 +254,7 @@ export class AgentThreads {
     if (this.busy) return { ok: false, error: '还在回复', rows: this.session.rows() };
     const raw = stripSkillToken(text);
     if (!raw) return { ok: false, error: '先写一句话', rows: this.session.rows() };
+    this.session.prepare();
     this.busy = true;
     this.emitUpdate();
     try {
@@ -262,9 +265,16 @@ export class AgentThreads {
       return await this.session.submit(raw, { mentions });
     } finally {
       this.busy = false;
+      this.session.phase = 'idle';
+      this.session.abort = null;
       await this.touch();
       this.emitUpdate();
     }
+  }
+
+  stop() {
+    if (!this.busy) return;
+    this.session.requestStop();
   }
 
   async confirm() {

@@ -33,12 +33,9 @@ export function partitionIdeas(nodes, ctx) {
     else if (isIdeaReady(node, ctx)) ready.push(node);
     else waiting.push(node);
   }
-  const byPinThenCreated = (a, b) => {
-    if (!!a.pinned !== !!b.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-    return (b.createdAt || 0) - (a.createdAt || 0);
-  };
-  ready.sort(byPinThenCreated);
-  waiting.sort(byPinThenCreated);
-  completed.sort(byPinThenCreated);
+  const byCreated = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
+  ready.sort(byCreated);
+  waiting.sort(byCreated);
+  completed.sort(byCreated);
   return { ready, waiting, completed };
 }

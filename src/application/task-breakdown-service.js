@@ -53,7 +53,7 @@ export class TaskBreakdownService {
       }))
     });
 
-    const raw = await this.llmService.complete({ system: BREAKDOWN_SYSTEM, user });
+    const raw = await this.llmService.complete({ slot: 'breakdownModel', system: BREAKDOWN_SYSTEM, user });
     const parsed = parseBreakdown(raw);
 
     const fresh = this.scheduleService.findTaskOnDate(dateKey, type, taskId);

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { commitNoteDraft, createNote, normalizeNotes } from '../../domain/schedule/daily-task.js';
 import { tagPillStyle } from '../../domain/schedule/fixed-tags.js';
+import { getDateKey, parseDateKey } from '../../domain/shared/date-key.js';
 import { useApp } from '../app/context.jsx';
 import { Modal } from '../library/index.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../keyboard/ime-enter.js';
@@ -15,11 +16,15 @@ export function TaskEditModal({ type, id, onClose }) {
   const ime = useImeEnterGuard();
   const task = type && id ? readTask(app, type, id) : null;
   const [title, setTitle] = useState('');
+  const [date, setDate] = useState(() => getDateKey(app.scheduleService.currentDate));
   const [time, setTime] = useState('');
   const [recurrence, setRecurrence] = useState('');
   const [tagIds, setTagIds] = useState([]);
   const [notes, setNotes] = useState([]);
   const [noteDraft, setNoteDraft] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
+  const ignoreNoteBlur = useRef(false);
 
   useEffect(() => {
     if (!task || !type) return;
@@ -27,9 +32,12 @@ export function TaskEditModal({ type, id, onClose }) {
     setTagIds(task.tagIds || []);
     setNotes(normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks }));
     setNoteDraft('');
-    const date = new Date(task.time);
-    const hh = String(date.getHours()).padStart(2, '0');
-    const mm = String(date.getMinutes()).padStart(2, '0');
+    setEditingNoteId(null);
+    setEditingNoteText('');
+    const clock = new Date(task.time);
+    const hh = String(clock.getHours()).padStart(2, '0');
+    const mm = String(clock.getMinutes()).padStart(2, '0');
+    setDate(getDateKey(app.scheduleService.currentDate));
     setTime(`${hh}:${mm}`);
     setRecurrence(task.recurrence || '');
   }, [type, id, task]);
@@ -43,14 +51,24 @@ export function TaskEditModal({ type, id, onClose }) {
       window.alert('内容不能为空');
       return;
     }
-    const patch = { text, recurrence, tagIds, notes: commitNoteDraft(notes, noteDraft) };
+    const currentKey = app.scheduleService.getDateKey();
+    const dateKey = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : currentKey;
+    const patch = { text, recurrence, tagIds, notes: commitNoteDraft(notesWithEdit(), noteDraft) };
+    const base = parseDateKey(dateKey) || new Date(app.scheduleService.currentDate);
     if (time) {
       const [hh, mm] = time.split(':').map((part) => parseInt(part, 10));
-      const base = new Date(app.scheduleService.currentDate);
       base.setHours(hh, mm, 0, 0);
       patch.time = base.getTime();
+    } else if (dateKey !== currentKey) {
+      const previous = new Date(task.time);
+      base.setHours(previous.getHours(), previous.getMinutes(), 0, 0);
+      patch.time = base.getTime();
     }
-    app.scheduleService.updateTask(type, id, patch);
+    const saved = app.scheduleService.moveTaskToDate(type, id, dateKey, patch);
+    if (saved?.occupied) {
+      window.alert('这一天已经有这条任务');
+      return;
+    }
     onClose();
   }
 
@@ -68,8 +86,60 @@ export function TaskEditModal({ type, id, onClose }) {
     save();
   }
 
+  function notesWithEdit(list = notes) {
+    if (!editingNoteId) return list;
+    const text = editingNoteText.trim();
+    if (!text) return list;
+    return list.map((item) => (item.id === editingNoteId ? { ...item, text } : item));
+  }
+
+  function commitNoteEdit() {
+    if (ignoreNoteBlur.current) {
+      ignoreNoteBlur.current = false;
+      return;
+    }
+    if (!editingNoteId) return;
+    const id = editingNoteId;
+    const text = editingNoteText.trim();
+    setEditingNoteId(null);
+    setEditingNoteText('');
+    if (!text) return;
+    setNotes((current) => current.map((item) => (item.id === id ? { ...item, text } : item)));
+  }
+
+  function startNoteEdit(item) {
+    if (editingNoteId === item.id) return;
+    const text = editingNoteText.trim();
+    const previousId = editingNoteId;
+    setNotes((current) => {
+      if (!previousId || !text) return current;
+      return current.map((note) => (note.id === previousId ? { ...note, text } : note));
+    });
+    setEditingNoteId(item.id);
+    setEditingNoteText(item.text);
+  }
+
   function removeNote(noteId) {
+    if (editingNoteId === noteId) {
+      setEditingNoteId(null);
+      setEditingNoteText('');
+    }
     setNotes((current) => current.filter((item) => item.id !== noteId));
+  }
+
+  function onNoteEditKeyDown(event) {
+    if (holdImeEnter(event, ime)) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      ignoreNoteBlur.current = true;
+      setEditingNoteId(null);
+      setEditingNoteText('');
+      return;
+    }
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    commitNoteEdit();
+    ignoreNoteBlur.current = true;
   }
 
   function addNote(event) {
@@ -92,6 +162,9 @@ export function TaskEditModal({ type, id, onClose }) {
       >
         <label className="field-label">内容
           <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} />
+        </label>
+        <label className="field-label">日期
+          <input className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
         </label>
         <label className="field-label">时间
               <input className="field" type="time" value={time} onChange={(event) => setTime(event.target.value)} />
@@ -125,7 +198,22 @@ export function TaskEditModal({ type, id, onClose }) {
                 <div className="note-edit-list">
                   {notes.map((item) => (
                     <div key={item.id} className="note-edit-item">
-                      <p className="note-edit-text">{item.text}</p>
+                      {editingNoteId === item.id ? (
+                        <textarea
+                          className="field note-input note-edit-field"
+                          rows={Math.min(6, Math.max(1, editingNoteText.split('\n').length))}
+                          value={editingNoteText}
+                          autoFocus
+                          aria-label="编辑说明"
+                          onChange={(event) => setEditingNoteText(event.target.value)}
+                          onKeyDown={onNoteEditKeyDown}
+                          onBlur={commitNoteEdit}
+                        />
+                      ) : (
+                        <button type="button" className="note-edit-text" onClick={() => startNoteEdit(item)}>
+                          {item.text}
+                        </button>
+                      )}
                       <button type="button" className="btn btn-quiet btn-danger" onClick={() => removeNote(item.id)}>删除</button>
                     </div>
                   ))}

@@ -7,7 +7,6 @@ import { replayTranscript } from '../domain/agent/transcript.js';
 import { EventBus } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
-import { MilestoneService } from './milestone-service.js';
 import { AgentRuntime } from './agent-runtime.js';
 import { AgentThreads } from './agent-threads.js';
 
@@ -27,8 +26,7 @@ function setup() {
   scheduleService.load();
   const runtime = new AgentRuntime({
     scheduleService,
-    ideaInboxService: new IdeaInboxService({ scheduleService, eventBus }),
-    milestoneService: new MilestoneService({ scheduleService, eventBus })
+    ideaInboxService: new IdeaInboxService({ scheduleService, eventBus })
   });
   const store = createMemoryAgentStore();
   let serial = 0;
@@ -100,5 +98,50 @@ describe('agent threads', () => {
     release({ content: '好。', toolCalls: [] });
     await pending;
     expect(threads.beginNew().ok).toBe(true);
+  });
+
+  it('hides the proposal until the reply finishes, and stop drops it', async () => {
+    const { threads } = setup();
+    const viewed = threads.runtime.scheduleService.getDateKey();
+    let step = 0;
+    /** @type {(() => void) | null} */
+    let started = null;
+    const untilSecond = new Promise((resolve) => { started = resolve; });
+    threads.complete = ({ onDelta, signal }) => {
+      step += 1;
+      if (step === 1) {
+        onDelta?.({ type: 'content', text: '先看。' });
+        return Promise.resolve({
+          content: '先看。',
+          toolCalls: [{
+            id: 'c',
+            name: 'create_task',
+            arguments: { date: viewed, list: 'required', text: '晚上发邮件', note: '', tagId: '', subtasks: [] }
+          }]
+        });
+      }
+      started?.();
+      return new Promise((resolve, reject) => {
+        onDelta?.({ type: 'content', text: '然后' });
+        const stop = () => {
+          const error = new Error('已停止');
+          error.name = 'AbortError';
+          reject(error);
+        };
+        if (signal?.aborted) stop();
+        else signal?.addEventListener('abort', stop, { once: true });
+      });
+    };
+    const pending = threads.submit('晚上发邮件');
+    await untilSecond;
+    expect(threads.view().arranging).toBe(false);
+    expect(threads.view().messages.at(-1)?.text).toBe('先看。然后');
+    expect(threads.view().rows).toEqual([]);
+    threads.stop();
+    const result = await pending;
+    expect(result.stopped).toBe(true);
+    expect(threads.view().rows).toEqual([]);
+    expect(threads.view().messages.at(-1)?.text).toBe('先看。然后');
+    expect(threads.busy).toBe(false);
   });
 });

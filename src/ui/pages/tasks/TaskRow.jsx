@@ -1,18 +1,19 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { normalizeNotes } from '../../../domain/schedule/daily-task.js';
 import { displayTagColor } from '../../../domain/schedule/fixed-tags.js';
-import { AI_TASK_TITLE, noteBody, noteTitle } from '../../../domain/schedule/task-breakdown.js';
+import { AI_TASK_TITLE, HUMAN_TASK_TITLE, noteBody, noteTitle } from '../../../domain/schedule/task-breakdown.js';
 import { todayKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
-import { Checkbox, ContextMenu, IconButton, Symbol } from '../../library/index.js';
+import { Checkbox, ContextMenu, Symbol } from '../../library/index.js';
 import { TaskText } from './TaskText.jsx';
 
-function NoteCard({ note }) {
+function NoteCard({ note, onFocus }) {
   const textRef = useRef(null);
   const [expanded, setExpanded] = useState(false);
   const [truncated, setTruncated] = useState(false);
   const [copied, setCopied] = useState(false);
   const aiTask = noteTitle(note.text) === AI_TASK_TITLE;
+  const humanTask = noteTitle(note.text) === HUMAN_TASK_TITLE;
 
   useEffect(() => {
     if (!copied) return undefined;
@@ -54,11 +55,18 @@ function NoteCard({ note }) {
           </button>
         ) : null}
       </div>
-      {aiTask ? (
+      {aiTask || (humanTask && onFocus) ? (
         <div className="note-card-actions">
-          <button type="button" className="icon-button" aria-label={copied ? '已复制' : '复制'} onClick={copyBody}>
-            <Symbol name={copied ? 'check' : 'copy'} size={14} />
-          </button>
+          {humanTask && onFocus ? (
+            <button type="button" className="icon-button" aria-label="专注" onClick={onFocus}>
+              <Symbol name="clock" size={14} />
+            </button>
+          ) : null}
+          {aiTask ? (
+            <button type="button" className="icon-button" aria-label={copied ? '已复制' : '复制'} onClick={copyBody}>
+              <Symbol name={copied ? 'check' : 'copy'} size={14} />
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -71,6 +79,7 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
   const [breaking, setBreaking] = useState(false);
   const [breakError, setBreakError] = useState('');
   const [tagState, setTagState] = useState('');
+  const [standardState, setStandardState] = useState('');
   const [menu, setMenu] = useState(null);
   const notes = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
   const recurrence = task.recurrence === 'daily' ? '每日' : task.recurrence === 'weekdays' ? '工作日' : '';
@@ -96,6 +105,17 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
     }
   }
 
+  async function standardize() {
+    if (standardState === 'pending') return;
+    setStandardState('pending');
+    try {
+      await app.taskStandardizeService.standardize(type, task.id);
+      setStandardState('');
+    } catch (error) {
+      setStandardState(error?.message || '标准化失败');
+    }
+  }
+
   async function createTag() {
     if (tagState === 'pending') return;
     setTagState('pending');
@@ -103,7 +123,7 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
       await app.taskTagService.createForTask(type, task.id);
       setTagState('');
     } catch (error) {
-      setTagState(error?.message || '创建标签失败');
+      setTagState(error?.message || '分类失败');
     }
   }
 
@@ -150,22 +170,15 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
             {recurrence ? <span className="chip">{recurrence}</span> : null}
           </div>
         </div>
-        {viewingToday && !task.completed ? (
-          <>
-            <IconButton name="clock" label="专注" onClick={focus} />
-            {breaking ? (
-              <span
-                className="task-break-spin"
-                role="status"
-                aria-label="正在拆解"
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-                onDoubleClick={(event) => event.stopPropagation()}
-              />
-            ) : (
-              <button type="button" className="btn btn-quiet btn-mono" onClick={breakdown}>拆解</button>
-            )}
-          </>
+        {breaking ? (
+          <span
+            className="task-break-spin"
+            role="status"
+            aria-label="正在拆解"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+          />
         ) : null}
       </div>
       {menu ? (
@@ -177,18 +190,21 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
             { id: 'edit', label: '编辑', onSelect: () => onEdit(type, task.id) },
             { id: 'focus', label: '专注', disabled: !canFocus, onSelect: focus },
             { id: 'breakdown', label: '拆解', disabled: !canFocus || breaking, onSelect: breakdown },
-            { id: 'tag', label: '创建标签', disabled: tagState === 'pending', onSelect: createTag }
+            { id: 'standardize', label: '标准化', disabled: standardState === 'pending', onSelect: standardize },
+            { id: 'tag', label: '分类', disabled: tagState === 'pending', onSelect: createTag }
           ]}
         />
       ) : null}
-      {notes.length || breakError || tagState ? (
+      {notes.length || breakError || tagState || standardState ? (
         <div className="note-stack">
-          {tagState === 'pending' ? <p className="task-tag-status" role="status">正在生成标签…</p> : null}
+          {standardState === 'pending' ? <p className="task-tag-status" role="status">正在标准化…</p> : null}
+          {standardState && standardState !== 'pending' ? <p className="task-break-error">{standardState}</p> : null}
+          {tagState === 'pending' ? <p className="task-tag-status" role="status">正在分类…</p> : null}
           {tagState && tagState !== 'pending' ? <p className="task-break-error">{tagState}</p> : null}
           {breakError ? <p className="task-break-error">{breakError}</p> : null}
           {notes.length ? (
             <div className="note-cards">
-              {notes.map((note) => <NoteCard key={note.id} note={note} />)}
+              {notes.map((note) => <NoteCard key={note.id} note={note} onFocus={canFocus ? focus : null} />)}
             </div>
           ) : null}
         </div>

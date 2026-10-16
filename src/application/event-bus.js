@@ -37,12 +37,10 @@ export const Events = {
   TASK_MOVED: 'task:moved',
   TASKS_UPDATED: 'tasks:updated',
   IDEAS_UPDATED: 'ideas:updated',
-  MILESTONES_UPDATED: 'milestones:updated',
   REFLECTION_UPDATED: 'reflection:updated',
   INSIGHTS_UPDATED: 'insights:updated',
   LLM_SETTINGS_UPDATED: 'llm-settings:updated',
   UI_PREFS_UPDATED: 'ui-prefs:updated',
-  REPORT_UPDATED: 'report:updated',
   POMODORO_UPDATED: 'pomodoro:updated',
   AGENT_UPDATED: 'agent:updated'
 };

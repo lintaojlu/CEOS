@@ -1,4 +1,5 @@
 import React from 'react';
+import { version } from '../../../src-tauri/tauri.conf.json';
 import { Icon } from '../library/index.js';
 import { PAGES, navigate } from './router.js';
 import { useApp, useShell } from './context.jsx';
@@ -12,7 +13,10 @@ export function Sidebar({ page, onOpenIdeas }) {
       <div className="brand">
         <div className="brand-mark"><img src="/logo.svg" alt="" /></div>
         <div className="brand-copy">
-          <div className="brand-name">CEOS</div>
+          <div className="brand-name">
+            CEOS
+            <span className="brand-version">v{version}</span>
+          </div>
           <div className="brand-sub">每个人都是自己的 CEO</div>
         </div>
       </div>

@@ -15,6 +15,8 @@ import { applyProjectTagRepair } from '../infrastructure/migration/project-tag-r
 import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
+import { IdeaPickupService } from './idea-pickup-service.js';
+import { createIdeaStore } from '../infrastructure/storage/idea-file-store.js';
 import { MilestoneService } from './milestone-service.js';
 import { ExportService } from './export-service.js';
 import { LlmService } from './llm-service.js';
@@ -48,7 +50,8 @@ export class ScheduleApp {
 
     this.ideaInboxService = new IdeaInboxService({
       scheduleService: this.scheduleService,
-      eventBus: this.eventBus
+      eventBus: this.eventBus,
+      store: createIdeaStore()
     });
 
     this.milestoneService = new MilestoneService({
@@ -74,6 +77,7 @@ export class ScheduleApp {
 
     this.insightService = new InsightService({
       scheduleService: this.scheduleService,
+      ideaInboxService: this.ideaInboxService,
       eventBus: this.eventBus
     });
 
@@ -85,6 +89,12 @@ export class ScheduleApp {
     });
 
     this.taskBreakdownService = new TaskBreakdownService({
+      scheduleService: this.scheduleService,
+      llmService: this.llmService
+    });
+
+    this.ideaPickupService = new IdeaPickupService({
+      ideaInboxService: this.ideaInboxService,
       scheduleService: this.scheduleService,
       llmService: this.llmService
     });
@@ -124,7 +134,7 @@ export class ScheduleApp {
     });
   }
 
-  bootstrap() {
+  async bootstrap() {
     const runner = new MigrationRunner(this.adapter, {
       scheduleRepo: this.scheduleRepo,
       ideaRepo: this.ideaRepo
@@ -133,10 +143,13 @@ export class ScheduleApp {
     applyProjectTagRepair(this.adapter);
 
     this.scheduleService.load();
-    this.ideaInboxService.load();
+    try {
+      await this.ideaInboxService.load();
+    } catch {
+      // 灵感文件读不到时先打开窗口，下次再迁。
+    }
     this.milestoneService.load();
     this.pomodoroService.load();
-    this.ideaInboxService.subscribeToTaskCompletion();
     this.agentThreads.load().catch(() => {});
 
     document.addEventListener('visibilitychange', () => {

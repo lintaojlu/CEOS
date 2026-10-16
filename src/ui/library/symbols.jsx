@@ -23,7 +23,7 @@ export function Symbol({ name, size = 18 }) {
     return <svg {...common}><path d="M8 6h11M8 12h11M8 18h11" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></svg>;
   }
   if (name === 'ideas') {
-    return <svg {...common}><path d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="M4 10 7 5h10l3 5" /><path d="M9 14h6" /></svg>;
+    return <svg {...common}><path d="M7 3.5h8.5a2 2 0 0 1 2 2V20.5H8.5a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2z" /><path d="M7 6.5h10.5M10 10.5h5M10 14h5" /></svg>;
   }
   if (name === 'agent') {
     return <svg {...common}><path d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /></svg>;
@@ -36,6 +36,14 @@ export function Symbol({ name, size = 18 }) {
   }
   if (name === 'plus') {
     return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>;
+  }
+  if (name === 'compose') {
+    return (
+      <svg {...common} strokeWidth="1.7">
+        <path d="M14.2 5.4 18.6 9.8 9.2 19.2 4.6 19.4 4.8 14.8z" />
+        <path d="M12.4 7.2 16.8 11.6" />
+      </svg>
+    );
   }
   if (name === 'filter') {
     return <svg {...common}><path d="M4 7h16M7 12h10M10 17h4" /></svg>;

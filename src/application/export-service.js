@@ -1,5 +1,6 @@
 import { formatTime, getDateKey } from '../domain/shared/date-key.js';
 import { partitionIdeas } from '../domain/ideas/readiness.js';
+import { ideaBody, ideaTitle, markdownForModel } from '../domain/ideas/idea-document.js';
 import { normalizeNotes } from '../domain/schedule/daily-task.js';
 import { todayKey } from '../domain/shared/date-key.js';
 
@@ -87,22 +88,17 @@ export class ExportService {
       ideas: this.ideaInboxService.getNodes(),
       todayKey: todayKey()
     };
-    const { ready, waiting, completed } = partitionIdeas(this.ideaInboxService.getNodes(), ctx);
+    const { ready, completed } = partitionIdeas(this.ideaInboxService.getNodes(), ctx);
 
-    md += `## 💡 灵感收集箱\n\n`;
-    const renderIdea = (t, status) => {
-      const due = t.dueDate ? ` DDL:${t.dueDate}` : '';
-      const deps =
-        t.dependsOn && t.dependsOn.length
-          ? ` 依赖:${t.dependsOn.map((d) => (d.scope === 'idea' ? `灵感#${d.id}` : `${d.dateKey}/${d.list}#${d.id}`)).join('; ')}`
-          : '';
-      md += `- [${t.completed ? 'x' : ' '}] [${status}] ${t.text}${due}${deps}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
+    md += `## 💡 灵感\n\n`;
+    const renderIdea = (item, status) => {
+      const body = markdownForModel(ideaBody(item));
+      md += `- [${item.completed ? 'x' : ' '}] [${status}] ${ideaTitle(item)}${body ? `\n  - 备注: ${body}` : ''}\n`;
     };
-    if (ready.length + waiting.length + completed.length === 0) {
+    if (ready.length + completed.length === 0) {
       md += `> 暂无灵感\n`;
     } else {
-      ready.forEach((t) => renderIdea(t, '可捡起'));
-      waiting.forEach((t) => renderIdea(t, '等待中'));
+      ready.forEach((t) => renderIdea(t, '未完成'));
       completed.forEach((t) => renderIdea(t, '已完成'));
     }
     md += `\n`;

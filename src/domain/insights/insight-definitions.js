@@ -33,9 +33,8 @@ function tagText(snapshot) {
 
 function ideaText(snapshot) {
   const { ideas } = snapshot;
-  const parts = [`共 ${ideas.total} 条，可捡起 ${ideas.ready}，等待 ${ideas.waiting}，已完成 ${ideas.completed}。`];
+  const parts = [`共 ${ideas.total} 条，未完成 ${ideas.ready}，已完成 ${ideas.completed}。`];
   if (ideas.averageDwellDays != null) parts.push(`未完成平均滞留 ${ideas.averageDwellDays} 天。`);
-  if (ideas.overdueCount) parts.push(`过期 ${ideas.overdueCount} 条。`);
   return parts.join('');
 }
 
@@ -71,7 +70,7 @@ export const INSIGHT_DEFS = [
     id: 'ideas',
     title: '灵感转化',
     headline(snapshot) {
-      return { value: String(snapshot.ideas.ready), caption: '可捡起' };
+      return { value: String(snapshot.ideas.ready), caption: '未完成' };
     },
     text: ideaText
   }

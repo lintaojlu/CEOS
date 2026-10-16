@@ -37,7 +37,6 @@ export const Events = {
   TASK_MOVED: 'task:moved',
   TASKS_UPDATED: 'tasks:updated',
   IDEAS_UPDATED: 'ideas:updated',
-  IDEAS_VIEW_MODE: 'ideas:view-mode',
   MILESTONES_UPDATED: 'milestones:updated',
   REFLECTION_UPDATED: 'reflection:updated',
   INSIGHTS_UPDATED: 'insights:updated',

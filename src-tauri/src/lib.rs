@@ -150,6 +150,90 @@ fn delete_agent_session(app: tauri::AppHandle, id: String) -> Result<(), String>
   }
 }
 
+const IDEA_FILE_LIMIT: usize = 32 * 1024 * 1024;
+
+fn ideas_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+  let mut dir = app.path().app_data_dir().map_err(|err| err.to_string())?;
+  dir.push("ideas");
+  create_dir_all(&dir).map_err(|err| err.to_string())?;
+  Ok(dir)
+}
+
+fn safe_idea_id(id: &str) -> Result<(), String> {
+  let ok = !id.is_empty()
+    && id.len() <= 80
+    && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-');
+  if ok { Ok(()) } else { Err("灵感编号无效".into()) }
+}
+
+fn idea_file_path(app: &tauri::AppHandle, id: &str) -> Result<PathBuf, String> {
+  safe_idea_id(id)?;
+  let root = ideas_root(app)?;
+  let path = root.join(format!("{id}.json"));
+  let parent = path.parent().ok_or_else(|| "灵感编号无效".to_string())?;
+  if parent != root.as_path() {
+    return Err("灵感编号无效".into());
+  }
+  Ok(path)
+}
+
+#[tauri::command]
+fn read_idea_file(app: tauri::AppHandle, id: String) -> Result<String, String> {
+  let path = idea_file_path(&app, &id)?;
+  match fs::read_to_string(path) {
+    Ok(text) => Ok(text),
+    Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+    Err(err) => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+fn write_idea_file(app: tauri::AppHandle, id: String, body: String) -> Result<(), String> {
+  if body.len() > IDEA_FILE_LIMIT {
+    return Err("灵感文件过大".into());
+  }
+  let path = idea_file_path(&app, &id)?;
+  let value: serde_json::Value = serde_json::from_str(&body).map_err(|_| "灵感内容无效".to_string())?;
+  if !value.is_object() {
+    return Err("灵感内容无效".into());
+  }
+  fs::write(path, body).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn list_idea_files(app: tauri::AppHandle) -> Result<String, String> {
+  let root = ideas_root(&app)?;
+  let mut docs = Vec::new();
+  let entries = fs::read_dir(&root).map_err(|err| err.to_string())?;
+  for entry in entries {
+    let entry = entry.map_err(|err| err.to_string())?;
+    let name = entry.file_name();
+    let name = name.to_string_lossy();
+    let Some(id) = name.strip_suffix(".json") else { continue };
+    if safe_idea_id(id).is_err() { continue; }
+    let text = match fs::read_to_string(entry.path()) {
+      Ok(text) => text,
+      Err(_) => continue
+    };
+    if text.len() > IDEA_FILE_LIMIT { continue; }
+    match serde_json::from_str::<serde_json::Value>(&text) {
+      Ok(value) if value.is_object() => docs.push(value),
+      _ => continue
+    }
+  }
+  serde_json::to_string(&docs).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn delete_idea_file(app: tauri::AppHandle, id: String) -> Result<(), String> {
+  let path = idea_file_path(&app, &id)?;
+  match fs::remove_file(path) {
+    Ok(()) => Ok(()),
+    Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+    Err(err) => Err(err.to_string())
+  }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -160,7 +244,11 @@ pub fn run() {
       write_agent_index,
       read_agent_session,
       append_agent_session,
-      delete_agent_session
+      delete_agent_session,
+      read_idea_file,
+      write_idea_file,
+      list_idea_files,
+      delete_idea_file
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

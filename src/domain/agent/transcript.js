@@ -113,7 +113,7 @@ export function mentionCatalog(world) {
   }
   for (const idea of ideas) {
     if (!idea?.id) continue;
-    items.push({ kind: 'idea', id: idea.id, title: idea.text || '', date: idea.dueDate || '', label: idea.text || idea.id });
+    items.push({ kind: 'idea', id: idea.id, title: idea.title || idea.text || '', date: '', label: idea.title || idea.text || idea.id });
   }
   for (const milestone of milestones) {
     if (!milestone?.id) continue;

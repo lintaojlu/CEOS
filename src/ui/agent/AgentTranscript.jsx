@@ -77,6 +77,33 @@ export function AgentTranscript({ messages, rows, tags, busy, onEdit, onDrop, on
               </div>
               {row.removing ? (
                 <div className="agent-row-title">{row.title}</div>
+              ) : row.idea ? (
+                <>
+                  <input
+                    className="field agent-title"
+                    value={row.title}
+                    aria-label="标题"
+                    onChange={(event) => onEdit(row.id, { text: event.target.value })}
+                  />
+                  <textarea
+                    className="textarea agent-steps"
+                    aria-label="正文"
+                    placeholder="Markdown 正文"
+                    value={row.note}
+                    onChange={(event) => onEdit(row.id, { note: event.target.value })}
+                  />
+                  <div className="agent-row-fields">
+                    <label className="field-label">
+                      <input
+                        type="checkbox"
+                        className="checkbox"
+                        checked={!!row.completed}
+                        onChange={(event) => onEdit(row.id, { completed: event.target.checked })}
+                      />
+                      已完成
+                    </label>
+                  </div>
+                </>
               ) : (
                 <>
                   <input

@@ -191,7 +191,7 @@ export function DailyTasksCard({ onEdit, onSync, selectedTagIds = [] }) {
             type="button"
             className="btn btn-quiet btn-danger btn-mono"
             onClick={() => {
-              if (window.confirm('清空当前日期的必做和选做？收集箱不受影响。')) app.scheduleService.clearTodayTasks();
+              if (window.confirm('清空当前日期的必做和选做？灵感不受影响。')) app.scheduleService.clearTodayTasks();
             }}
           >清空</button>
         </>

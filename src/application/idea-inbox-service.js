@@ -1,314 +1,196 @@
-import { createIdeaNode } from '../domain/ideas/idea-node.js';
-import { validateDependsOn } from '../domain/ideas/dag-validator.js';
-import { partitionIdeas, getBlockers, isIdeaReady } from '../domain/ideas/readiness.js';
-import { createDailyTask, normalizeNotes } from '../domain/schedule/daily-task.js';
+import {
+  createIdeaDocument,
+  foldStoredTitle,
+  hydrateIdea,
+  ideaBody,
+  ideaTitle,
+  isSafeIdeaId,
+  migrateWorkspaceIdeas,
+  pruneImages,
+  toIdeaFile
+} from '../domain/ideas/idea-document.js';
+import { getBlockers, partitionIdeas } from '../domain/ideas/readiness.js';
+import { normalizeNotes } from '../domain/schedule/daily-task.js';
 import { todayKey } from '../domain/shared/date-key.js';
+import { createMemoryIdeaStore } from '../infrastructure/storage/idea-file-store.js';
 import { Events } from './event-bus.js';
 
 /**
- * Ideas are one global inbox on the workspace.
- * Predecessor tasks are the currently viewed day's unfinished required/optional.
+ * 灵感按文件存放。内存里留一份缓存，界面和测试读 getNodes()。
  */
 export class IdeaInboxService {
   /**
    * @param {object} deps
    * @param {import('./schedule-service.js').ScheduleService} deps.scheduleService
    * @param {import('./event-bus.js').EventBus} deps.eventBus
+   * @param {ReturnType<typeof createMemoryIdeaStore>} [deps.store]
    */
-  constructor({ scheduleService, eventBus }) {
+  constructor({ scheduleService, eventBus, store = createMemoryIdeaStore() }) {
     this.scheduleService = scheduleService;
     this.eventBus = eventBus;
-    /** @type {ReturnType<typeof setTimeout>|null} */
-    this._positionPersistTimer = null;
+    this.store = store;
+    /** @type {any[]} */
+    this._nodes = [];
   }
 
-  load() {
-    // Ideas live on the workspace loaded by ScheduleService.
-  }
-
-  /** @returns {import('../domain/ideas/idea-node.js').IdeaNode[]} */
-  get nodes() {
-    if (!Array.isArray(this.scheduleService.workspace.ideas)) {
-      this.scheduleService.workspace.ideas = [];
+  async load() {
+    const listed = await this.store.list();
+    /** @type {Map<string, any>} */
+    const byId = new Map();
+    for (const raw of listed) {
+      const doc = hydrateIdea(raw);
+      if (doc) byId.set(doc.id, doc);
     }
-    return this.scheduleService.workspace.ideas;
+    const legacy = Array.isArray(this.scheduleService.workspace?.ideas)
+      ? this.scheduleService.workspace.ideas
+      : [];
+    if (legacy.length) {
+      for (const doc of migrateWorkspaceIdeas(legacy)) {
+        if (!doc || byId.has(doc.id)) continue;
+        await this.store.write(doc);
+        byId.set(doc.id, doc);
+      }
+      this.scheduleService.workspace.ideas = [];
+      this.scheduleService.persist();
+    }
+    this._nodes = [...byId.values()];
+    this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'load' });
   }
 
   persist() {
-    this.scheduleService.persist();
-    this.eventBus.emit(Events.IDEAS_UPDATED, {});
+    for (const node of this._nodes) void this.store.write(node);
   }
 
   getNodes() {
-    return this.nodes;
+    return this._nodes;
   }
 
-  /** @returns {import('../domain/ideas/readiness.js').ReadinessContext} */
+  /** @param {any[]} ideas */
+  replaceAll(ideas) {
+    const next = (ideas || []).map((item) => hydrateIdea(item)).filter(Boolean);
+    const nextIds = new Set(next.map((node) => node.id));
+    for (const prev of this._nodes) {
+      if (!nextIds.has(prev.id)) void this.store.remove(prev.id);
+    }
+    this._nodes = next;
+    for (const node of next) void this.store.write(node);
+    this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'replace' });
+  }
+
   getContext() {
-    const dayKey = this.scheduleService.getDateKey();
     return {
       schedule: this.scheduleService.data,
-      ideas: this.nodes,
+      ideas: this._nodes,
       todayKey: todayKey(),
-      dayKey
+      dayKey: this.scheduleService.getDateKey()
     };
   }
 
   partition() {
-    return partitionIdeas(this.nodes.filter(Boolean), this.getContext());
+    return partitionIdeas(this._nodes.filter(Boolean), this.getContext());
   }
 
   /**
    * @param {string} text
-   * @param {Partial<import('../domain/ideas/idea-node.js').IdeaNode>} [extra]
+   * @param {Record<string, any>} [extra]
    */
   addIdea(text, extra = {}) {
-    const node = createIdeaNode({ text, ...extra });
-    this.nodes.push(node);
-    this.persist();
+    const node = hydrateIdea(createIdeaDocument({
+      id: isSafeIdeaId(extra.id) ? extra.id : undefined,
+      title: text,
+      body: extra.body ?? extra.note ?? '',
+      images: extra.images,
+      completed: extra.completed,
+      pinned: extra.pinned,
+      createdAt: extra.createdAt
+    }));
+    this._nodes.push(node);
+    void this.store.write(node);
+    this.eventBus.emit(Events.IDEAS_UPDATED, {});
     return node;
   }
 
   /**
-   * Defer a daily task into the current day's ideas inbox.
+   * 任务放进灵感：标题用任务标题，正文用任务说明。
    * @param {import('../domain/schedule/daily-task.js').DailyTask} task
    */
   deferFromDaily(task) {
-    if (this.nodes.some((n) => n.id === task.id)) return this.nodes.find((n) => n.id === task.id);
-    const node = createIdeaNode({
-      id: task.id,
-      text: task.text,
-      note: normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks }).map((item) => item.text).join('\n'),
-      completed: false,
+    const existing = this._nodes.find((node) => node.id === task.id);
+    if (existing) return existing;
+    const body = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks })
+      .map((item) => item.text)
+      .join('\n');
+    return this.addIdea(task.text || '', {
+      id: isSafeIdeaId(task.id) ? task.id : undefined,
+      body,
       pinned: !!task.pinned,
-      createdAt: Date.now(),
-      dueDate: null,
-      dependsOn: []
+      completed: false
     });
-    this.nodes.push(node);
-    this.persist();
-    return node;
   }
 
-  /**
-   * @param {string} ideaId
-   * @param {'required'|'optional'} [list]
-   */
-  pickUp(ideaId, list = 'required') {
-    const idea = this.nodes.find((n) => n.id === ideaId);
-    if (!idea || idea.completed) return null;
-    if (!isIdeaReady(idea, this.getContext())) {
-      return { error: '灵感尚未就绪，无法列入今日' };
-    }
-    const task = createDailyTask(idea.text, this.scheduleService.currentDate, {
-      id: `${idea.id}-pickup-${Date.now()}`,
-      note: idea.note || '',
-      pinned: idea.pinned
-    });
-    this.scheduleService.insertTask(list, task);
-    // Picked up ≠ done: remove from inbox instead of marking completed.
-    const ideas = this.nodes.filter((n) => n.id !== ideaId);
-    ideas.forEach((n) => {
-      n.dependsOn = (n.dependsOn || []).filter(
-        (r) => !(r.scope === 'idea' && r.id === ideaId)
-      );
-    });
-    this.scheduleService.workspace.ideas = ideas;
-    this.persist();
-    return { task, idea };
-  }
-
+  /** @param {string} id */
   toggleComplete(id) {
-    const idea = this.nodes.find((n) => n.id === id);
+    const idea = this._nodes.find((node) => node.id === id);
     if (!idea) return;
-    idea.completed = !idea.completed;
-    this.persist();
+    this.update(id, { completed: !idea.completed });
   }
 
+  /** @param {string} id */
   pin(id) {
-    const idea = this.nodes.find((n) => n.id === id);
+    const idea = this._nodes.find((node) => node.id === id);
     if (!idea) return;
-    idea.pinned = !idea.pinned;
-    this.persist();
+    this.update(id, { pinned: !idea.pinned });
   }
 
+  /** @param {string} id */
   delete(id) {
-    const ideas = this.nodes.filter((n) => n.id !== id);
-    ideas.forEach((n) => {
-      n.dependsOn = (n.dependsOn || []).filter(
-        (r) => !(r.scope === 'idea' && r.id === id)
-      );
-    });
-    this.scheduleService.workspace.ideas = ideas;
-    this.persist();
+    this._nodes = this._nodes.filter((node) => node.id !== id);
+    void this.store.remove(id);
+    this.eventBus.emit(Events.IDEAS_UPDATED, {});
   }
 
   /**
    * @param {string} id
-   * @param {object} patch
+   * @param {Record<string, any>} patch
    */
   update(id, patch) {
-    const ideas = this.nodes;
-    const idea = ideas.find((n) => n.id === id);
+    const idea = this._nodes.find((node) => node.id === id);
     if (!idea) return { error: '灵感不存在' };
-
-    if (patch.dependsOn) {
-      const dayKey = this.scheduleService.getDateKey();
-      const deps = (patch.dependsOn || []).filter((ref) => {
-        if (!ref) return false;
-        if (ref.scope === 'idea') return true;
-        if (ref.scope === 'daily') return !ref.dateKey || ref.dateKey === dayKey;
-        return false;
-      }).map((ref) =>
-        ref.scope === 'daily'
-          ? { scope: 'daily', dateKey: dayKey, list: ref.list, id: ref.id }
-          : { scope: 'idea', id: ref.id }
-      );
-      const result = validateDependsOn(ideas, id, deps);
-      if (!result.ok) return { error: result.reason };
-      idea.dependsOn = deps;
+    let body = idea.body || '';
+    if (patch.body != null || patch.note != null) body = String(patch.body ?? patch.note);
+    if (patch.title != null || patch.text != null) {
+      body = foldStoredTitle(String(patch.title ?? patch.text), body);
     }
-    if (patch.text != null) idea.text = patch.text;
-    if (patch.note != null) idea.note = patch.note;
-    if (patch.dueDate !== undefined) idea.dueDate = patch.dueDate;
-    this.persist();
+    if (patch.completed != null) idea.completed = !!patch.completed;
+    if (patch.pinned != null) idea.pinned = !!patch.pinned;
+    idea.body = body;
+    idea.title = ideaTitle(idea);
+    idea.images = pruneImages(idea.body, patch.images != null ? patch.images : idea.images);
+    idea.text = idea.title;
+    idea.note = idea.body;
+    void this.store.write(idea);
+    this.eventBus.emit(Events.IDEAS_UPDATED, {});
     return { idea };
   }
 
+  /** @param {string} id */
   getBlockers(id) {
-    const idea = this.nodes.find((n) => n.id === id);
+    const idea = this._nodes.find((node) => node.id === id);
     if (!idea) return null;
     return getBlockers(idea, this.getContext());
   }
 
-  /**
-   * @param {string} [excludeId]
-   */
-  listPredecessorCandidates(excludeId) {
-    const dateKey = this.scheduleService.getDateKey();
-    const ideas = this.nodes
-      .filter((n) => !n.completed && n.id !== excludeId)
-      .map((n) => ({
-        scope: /** @type {const} */ ('idea'),
-        id: n.id,
-        label: `灵感 · ${n.text}`
-      }));
-
-    const daily = this.scheduleService.listIncompleteDailyTasks().map(({ list, task }) => ({
-      scope: /** @type {const} */ ('daily'),
-      dateKey,
-      list,
-      id: task.id,
-        label: `${list === 'required' ? '必做' : '选做'} · ${this.scheduleService.taskTitle(task)}`
-    }));
-
-    return [...ideas, ...daily];
+  /** @param {string} id */
+  find(id) {
+    return this._nodes.find((node) => node.id === id) || null;
   }
 
-  subscribeToTaskCompletion() {
-    this.eventBus.on(Events.TASK_COMPLETED, () => {
-      this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'task:completed' });
-    });
+  /** 给日报和导出用的标题。 */
+  titleOf(idea) {
+    return ideaTitle(idea);
   }
 
-  /**
-   * @param {string} id
-   * @param {{ x: number, y: number }} position
-   */
-  updatePosition(id, position) {
-    if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') return;
-    const idea = this.nodes.find((n) => n.id === id);
-    if (!idea) return;
-    idea.position = { x: position.x, y: position.y };
-    if (this._positionPersistTimer) clearTimeout(this._positionPersistTimer);
-    this._positionPersistTimer = setTimeout(() => {
-      this._positionPersistTimer = null;
-      this.scheduleService.persist();
-    }, 150);
-  }
-
-  /**
-   * @param {string} fromId
-   * @param {string} toId
-   */
-  setIdeaDependency(fromId, toId) {
-    if (!fromId || !toId || fromId === toId) {
-      return { error: '无效的依赖边' };
-    }
-    // Snapshot once — getCurrentData used to re-normalize on every access and
-    // orphaned the first lookup, so dependsOn never stuck.
-    const ideas = this.nodes;
-    const to = ideas.find((n) => n.id === toId);
-    const from = ideas.find((n) => n.id === fromId);
-    if (!to || !from) return { error: '灵感不存在' };
-
-    const deps = [...(to.dependsOn || [])];
-    if (deps.some((r) => r.scope === 'idea' && r.id === fromId)) {
-      return { idea: to };
-    }
-    deps.push({ scope: 'idea', id: fromId });
-    const result = validateDependsOn(ideas, toId, deps);
-    if (!result.ok) return { error: result.reason };
-    to.dependsOn = deps;
-    this.persist();
-    return { idea: to };
-  }
-
-  /**
-   * @param {string} fromId
-   * @param {string} toId
-   */
-  removeIdeaDependency(fromId, toId) {
-    const ideas = this.nodes;
-    const to = ideas.find((n) => n.id === toId);
-    if (!to) return { error: '灵感不存在' };
-    to.dependsOn = (to.dependsOn || []).filter(
-      (r) => !(r.scope === 'idea' && r.id === fromId)
-    );
-    this.persist();
-    return { idea: to };
-  }
-
-  /**
-   * @param {{ ready?: boolean, waiting?: boolean, completed?: boolean }} [filter]
-   */
-  getDagViewModel(filter = { ready: true, waiting: true, completed: false }) {
-    const parts = this.partition();
-    const ideas = [];
-    if (filter.ready) ideas.push(...parts.ready);
-    if (filter.completed) ideas.push(...parts.completed);
-    if (filter.waiting) ideas.push(...parts.waiting);
-    const { ready, waiting, completed } = parts;
-    /** @type {Record<string, 'ready'|'waiting'|'completed'>} */
-    const statusById = {};
-    ready.forEach((n) => {
-      statusById[n.id] = 'ready';
-    });
-    waiting.forEach((n) => {
-      statusById[n.id] = 'waiting';
-    });
-    completed.forEach((n) => {
-      statusById[n.id] = 'completed';
-    });
-
-    /** @type {Array<{ id: string, source: string, target: string }>} */
-    const edges = [];
-    ideas.forEach((n) => {
-      (n.dependsOn || []).forEach((ref) => {
-        if (ref.scope !== 'idea') return;
-        if (!ideas.some((x) => x.id === ref.id)) return;
-        edges.push({
-          id: `e-${ref.id}-${n.id}`,
-          source: ref.id,
-          target: n.id
-        });
-      });
-    });
-
-    return {
-      ideas: ideas.slice(),
-      edges,
-      statusById
-    };
+  bodyOf(idea) {
+    return ideaBody(idea);
   }
 }

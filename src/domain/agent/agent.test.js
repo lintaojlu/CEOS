@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { classifyTurn, taskRemainder } from './turn.js';
-import { noteDetailDate, readNearMilestones, readOpenDays } from './reads.js';
+import { noteDetailDate, readNearMilestones, readOpenDays, readReadyIdeas } from './reads.js';
 import { redact } from './redact.js';
 import { applyProposal } from './apply.js';
 import { applyTurnOverrides, completeWriteArgs, stageWrite, validateProposal } from './writes.js';
@@ -249,7 +249,7 @@ describe('applyProposal', () => {
     expect(copied.text).toBe('昨天的论文');
     expect(draft.schedule[today].optional.map((task) => task.text)).toEqual(['写引言']);
     expect(draft.ideas.map((idea) => idea.id)).toEqual(['idea-2']);
-    expect(draft.ideas[0].dependsOn).toEqual([]);
+    expect(draft.ideas[0].text).toBe('后继');
   });
 
   it('writes nothing when a later call fails', () => {
@@ -272,6 +272,31 @@ describe('applyProposal', () => {
     expect(result.ok).toBe(false);
     expect(result.index).toBe(1);
     expect(draft.schedule[today].required).toEqual([]);
+  });
+
+  it('creates and updates an idea without a schedule date', () => {
+    const base = world();
+    const created = applyTurnOverrides('create_idea', {
+      text: '新灵感', note: '正文'
+    }, base, { writableDates: [] });
+    expect(created.ok).toBe(true);
+    const draft = { schedule: structuredClone(base.schedule), ideas: structuredClone(base.ideas) };
+    expect(applyProposal(draft, [{ id: 'c1', name: 'create_idea', args: created.args }]).ok).toBe(true);
+    expect(draft.ideas.some((idea) => idea.title === '新灵感' && idea.body === '新灵感\n\n正文')).toBe(true);
+
+    const updated = applyTurnOverrides('update_idea', {
+      ideaId: 'idea-1', text: '改标题', note: '# 正文', completed: true
+    }, base, { writableDates: [] });
+    expect(updated.ok).toBe(true);
+    const next = { schedule: structuredClone(base.schedule), ideas: structuredClone(base.ideas) };
+    expect(applyProposal(next, [{ id: 'u1', name: 'update_idea', args: updated.args }]).ok).toBe(true);
+    expect(next.ideas.find((idea) => idea.id === 'idea-1')).toMatchObject({
+      title: '改标题',
+      body: '改标题\n\n# 正文',
+      completed: true
+    });
+    const ready = readReadyIdeas(base.ideas, base.schedule, today, today);
+    expect(ready[0]).toEqual({ id: 'idea-1', text: '写引言' });
   });
 });
 

@@ -12,3 +12,8 @@ commands.allow = ["read_agent_index", "write_agent_index", "read_agent_session",
 identifier = "allow-llm-http"
 description = "Send the configured model API request outside the webview"
 commands.allow = ["llm_http"]
+
+[[permission]]
+identifier = "allow-idea-store"
+description = "Read and write one JSON file per idea"
+commands.allow = ["read_idea_file", "write_idea_file", "list_idea_files", "delete_idea_file"]

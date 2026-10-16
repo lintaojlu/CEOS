@@ -13,8 +13,9 @@ export class InsightService {
    * @param {import('./schedule-service.js').ScheduleService} deps.scheduleService
    * @param {import('./event-bus.js').EventBus} deps.eventBus
    */
-  constructor({ scheduleService, eventBus }) {
+  constructor({ scheduleService, ideaInboxService = null, eventBus }) {
     this.scheduleService = scheduleService;
+    this.ideaInboxService = ideaInboxService;
     this.eventBus = eventBus;
     /** @type {{ dateKey: string, snapshot: ReturnType<typeof buildInsightSnapshot>, texts: Record<string, string> }|null} */
     this.view = null;
@@ -22,9 +23,11 @@ export class InsightService {
 
   /** @param {string} [dateKey] */
   snapshot(dateKey = getDateKey(new Date())) {
+    const fromFiles = this.ideaInboxService ? this.ideaInboxService.getNodes() : undefined;
     return buildInsightSnapshot({
       schedule: this.scheduleService.data,
       workspace: this.scheduleService.workspace,
+      ideas: fromFiles,
       todayKey: dateKey
     });
   }

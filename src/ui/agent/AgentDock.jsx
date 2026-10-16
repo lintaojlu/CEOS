@@ -24,7 +24,7 @@ export function AgentDock({ page }) {
   const fadeRef = useRef(null);
   const sheetRef = useRef(null);
   const panelRef = useRef(null);
-  const dockHidden = phase !== 'idle';
+  const dockHidden = phase !== 'idle' || page === 'ideas';
   const onAgentPage = page === 'agent';
   const hasWindow = view.messages.length > 0 || view.rows.length > 0 || view.busy || !!error;
   const expanded = panelOpen && hasWindow && !onAgentPage;

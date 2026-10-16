@@ -22,7 +22,8 @@ function tool(name, description, properties, required) {
 
 export const READ_TOOLS = [
   tool('list_tags', '列出已有标签的 id 和名字。', {}, []),
-  tool('list_ready_ideas', '列出当前可以捡起的灵感。', {}, []),
+  tool('list_ready_ideas', '列出当前可以捡起的灵感。只有标题。', {}, []),
+  tool('read_idea', '读取一条灵感的标题和 Markdown 正文。不含图片。', { ideaId: { type: 'string' } }, ['ideaId']),
   tool('list_day', '列出某一天的全部必做和选做，含已完成。', { date: DATE }, ['date']),
   tool('list_open_days', '列出正在看的那一天以外、还有未完成任务的日期。只含日期、条数和标题。', {}, []),
   tool('list_open_tasks', '列出某一天未完成任务的正文和说明。一轮最多 7 个不同日期。', { date: DATE }, ['date']),
@@ -46,7 +47,7 @@ const UPDATE = tool(
 
 const PICKUP = tool(
   'pickup_idea',
-  '把一条可捡起的灵感放进某一天。收集箱里这条会消失。',
+  '把一条可捡起的灵感收成某一天的一条任务。灵感里这条会消失。',
   {
     ideaId: { type: 'string' },
     date: DATE,
@@ -96,17 +97,39 @@ const REMOVE = tool(
   ['date', 'taskId']
 );
 
+const CREATE_IDEA = tool(
+  'create_idea',
+  '新建一条灵感。text 会成为正文第一行，note 接在后面。正文是 Markdown，不要放图片。没有截止日期。',
+  {
+    text: { type: 'string', description: '正文第一行' },
+    note: { type: 'string', description: '第一行之后的 Markdown' }
+  },
+  ['text', 'note']
+);
+
+const UPDATE_IDEA = tool(
+  'update_idea',
+  '修改一条灵感的正文或完成状态。text 是正文第一行，note 是其余 Markdown。没有截止日期，也没有前序。',
+  {
+    ideaId: { type: 'string' },
+    text: { type: 'string' },
+    note: { type: 'string' },
+    completed: { type: 'boolean' }
+  },
+  ['ideaId', 'text', 'note', 'completed']
+);
+
 /**
  * @param {{ allowCreate: boolean, allowRemove: boolean }} turn
  * @param {'default'|'read'|'auto'} [permission]
  */
 export function toolsForTurn(turn, permission = 'default') {
   if (permission === 'read') return READ_TOOLS.slice();
-  const writes = [UPDATE, PICKUP, COPY];
+  const writes = [UPDATE, PICKUP, COPY, CREATE_IDEA, UPDATE_IDEA];
   if (turn.allowCreate) writes.push(CREATE);
   if (turn.allowRemove) writes.push(REMOVE);
   return [...READ_TOOLS, ...writes];
 }
 
-export const WRITE_NAMES = new Set(['create_task', 'update_task', 'remove_task', 'pickup_idea', 'copy_open_task']);
+export const WRITE_NAMES = new Set(['create_task', 'update_task', 'remove_task', 'pickup_idea', 'copy_open_task', 'create_idea', 'update_idea']);
 export const READ_NAMES = new Set(READ_TOOLS.map((item) => item.function.name));

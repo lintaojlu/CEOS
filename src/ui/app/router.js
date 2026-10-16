@@ -3,7 +3,7 @@
 export const PAGES = [
   { id: 'home', label: '首页' },
   { id: 'tasks', label: '任务' },
-  { id: 'ideas', label: '收集箱' },
+  { id: 'ideas', label: '灵感' },
   { id: 'agent', label: 'Agent' }
 ];
 

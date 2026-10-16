@@ -19,7 +19,7 @@ async function start() {
       return response.json();
     }
   });
-  scheduleApp.bootstrap();
+  await scheduleApp.bootstrap();
   createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <App app={scheduleApp} />

@@ -74,9 +74,9 @@ function weakestWeekday(schedule, todayKey) {
  * @param {{ ideas?: any[], tags?: any[] }} input.workspace
  * @param {string} input.todayKey
  */
-export function buildInsightSnapshot({ schedule, workspace, todayKey }) {
+export function buildInsightSnapshot({ schedule, workspace, ideas, todayKey }) {
   const data = schedule || {};
-  const ideas = (workspace?.ideas || []).filter(Boolean);
+  const ideaList = (ideas || workspace?.ideas || []).filter(Boolean);
   const tags = workspace?.tags || [];
   const last7 = keysEnding(todayKey, 7);
   const prev7 = keysEnding(getDateKey(addDays(parseDateKey(todayKey), -7)), 7);
@@ -114,9 +114,9 @@ export function buildInsightSnapshot({ schedule, workspace, todayKey }) {
     })
     .filter((row) => row.total > 0);
 
-  const partitioned = partitionIdeas(ideas, {
+  const partitioned = partitionIdeas(ideaList, {
     schedule: data,
-    ideas,
+    ideas: ideaList,
     todayKey,
     dayKey: todayKey
   });
@@ -128,7 +128,7 @@ export function buildInsightSnapshot({ schedule, workspace, todayKey }) {
   const averageDwellDays = dwellDays.length
     ? Math.round(dwellDays.reduce((sum, days) => sum + days, 0) / dwellDays.length)
     : null;
-  const overdueCount = ideas.filter((idea) => idea && !idea.completed && idea.dueDate && idea.dueDate < todayKey).length;
+  const overdueCount = 0;
 
   return {
     todayKey,
@@ -149,7 +149,7 @@ export function buildInsightSnapshot({ schedule, workspace, todayKey }) {
       stalled: tagRows.filter((row) => row.stalled).map((row) => row.name)
     },
     ideas: {
-      total: ideas.length,
+      total: ideaList.length,
       ready: partitioned.ready.length,
       waiting: partitioned.waiting.length,
       completed: partitioned.completed.length,

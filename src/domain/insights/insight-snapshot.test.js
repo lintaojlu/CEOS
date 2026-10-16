@@ -21,10 +21,9 @@ const workspace = {
       completed: false,
       pinned: false,
       createdAt: Date.parse('2026-10-01T12:00:00'),
-      dueDate: '2026-10-03',
-      dependsOn: [{ scope: 'daily', dateKey: '2026-10-05', list: 'required', id: 'b' }]
+      dueDate: '2026-10-20'
     },
-    { id: 'i2', text: '可以做', completed: false, pinned: false, createdAt: Date.parse('2026-10-05T12:00:00'), dueDate: null, dependsOn: [] }
+    { id: 'i2', text: '可以做', completed: false, pinned: false, createdAt: Date.parse('2026-10-05T12:00:00'), dueDate: '2026-10-03' }
   ],
   tags: [
     {
@@ -44,8 +43,9 @@ describe('buildInsightSnapshot', () => {
     expect(snapshot.rhythm.activeDays).toBe(2);
     expect(snapshot.tags.rows).toHaveLength(1);
     expect(snapshot.tags.rows[0]).toMatchObject({ name: '垂搜', done: 1, total: 2, stalled: false });
-    expect(snapshot.ideas.ready).toBe(1);
-    expect(snapshot.ideas.overdueCount).toBe(1);
+    expect(snapshot.ideas.ready).toBe(2);
+    expect(snapshot.ideas.waiting).toBe(0);
+    expect(snapshot.ideas.overdueCount).toBe(0);
     expect(snapshot.ideas.averageDwellDays).toBeGreaterThan(0);
   });
 });
@@ -58,14 +58,14 @@ describe('insight sentences', () => {
     expect(INSIGHT_DEFS[0].headline(snapshot).caption).toBe('近 7 天完成率');
     expect(INSIGHT_DEFS[1].text(snapshot)).toContain('活跃 2 天，当前连续');
     expect(INSIGHT_DEFS[2].text(snapshot)).toBe('标签任务完成 1/2。');
-    expect(INSIGHT_DEFS[3].text(snapshot)).toContain('共 2 条，可捡起 1，等待 1，已完成 0。');
-    expect(INSIGHT_DEFS[3].text(snapshot)).toContain('过期 1 条。');
+    expect(INSIGHT_DEFS[3].text(snapshot)).toContain('共 2 条，未完成 2，已完成 0。');
+    expect(INSIGHT_DEFS[3].text(snapshot)).not.toContain('过期');
   });
 
   it('uses the empty sentences when there is nothing to count', () => {
     const snapshot = buildInsightSnapshot({ schedule: {}, workspace: { ideas: [], tags: [] }, todayKey: '2026-10-05' });
     expect(INSIGHT_DEFS[0].text(snapshot)).toBe('近 7 天没有必做任务。');
     expect(INSIGHT_DEFS[2].text(snapshot)).toBe('还没有标签。');
-    expect(INSIGHT_DEFS[3].text(snapshot)).toBe('共 0 条，可捡起 0，等待 0，已完成 0。');
+    expect(INSIGHT_DEFS[3].text(snapshot)).toBe('共 0 条，未完成 0，已完成 0。');
   });
 });

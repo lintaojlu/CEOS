@@ -100,9 +100,7 @@ export function readReadyIdeas(ideas, schedule, today, dayKey) {
   const parts = partitionIdeas(ideas || [], { schedule, ideas: ideas || [], todayKey: today, dayKey });
   return parts.ready.map((idea) => ({
     id: idea.id,
-    text: idea.text || '',
-    note: idea.note || '',
-    dueDate: idea.dueDate || ''
+    text: idea.title || idea.text || ''
   }));
 }
 

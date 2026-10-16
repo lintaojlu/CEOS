@@ -1,6 +1,7 @@
 import { createEmptyScheduleDay } from '../../data/schedule-record.js';
 import { createDailyTask, createNote, normalizeNotes } from '../schedule/daily-task.js';
 import { parseDateKey } from '../shared/date-key.js';
+import { createIdeaDocument, foldStoredTitle, hydrateIdea, ideaTitle, markdownForModel, pruneImages } from '../ideas/idea-document.js';
 import { findTask } from './writes.js';
 
 /**
@@ -142,21 +143,36 @@ export function applyProposal(draft, calls) {
         if (!idea) return { ok: false, index, error: '灵感还不能捡起' };
         const day = ensureDay(schedule, args.date);
         const base = parseDateKey(args.date) || new Date();
-        const task = createDailyTask(args.text || idea.text, base, {
+        const task = createDailyTask(args.text || idea.title || idea.text, base, {
           id: `${idea.id}-pickup-${Date.now()}-${index}`,
           pinned: !!idea.pinned,
           tagIds: args.tagId ? [args.tagId] : [],
           notes: notesFromWrite([], {
-            note: args.note || idea.note || '',
+            note: args.note || markdownForModel(idea.body || idea.note || ''),
             subtasks: args.subtasks
           })
         });
         day[args.list].push(task);
         call.appliedId = task.id;
         scratch.ideas = (scratch.ideas || []).filter((item) => item.id !== idea.id);
-        scratch.ideas.forEach((item) => {
-          item.dependsOn = (item.dependsOn || []).filter((ref) => !(ref.scope === 'idea' && ref.id === idea.id));
-        });
+      } else if (call.name === 'create_idea') {
+        const doc = hydrateIdea(createIdeaDocument({
+          title: args.text,
+          body: markdownForModel(args.note || ''),
+          completed: !!args.completed
+        }));
+        scratch.ideas.push(doc);
+        call.appliedId = doc.id;
+      } else if (call.name === 'update_idea') {
+        const idea = (scratch.ideas || []).find((item) => item.id === args.ideaId);
+        if (!idea) return { ok: false, index, error: '灵感不存在' };
+        const body = foldStoredTitle(args.text, markdownForModel(args.note || ''));
+        idea.body = body;
+        idea.note = body;
+        idea.title = ideaTitle(idea);
+        idea.text = idea.title;
+        idea.completed = !!args.completed;
+        idea.images = pruneImages(body, idea.images);
       } else if (call.name === 'copy_open_task') {
         const source = findTask(schedule, args.sourceDate, args.taskId);
         if (!source || source.task.completed) return { ok: false, index, error: '来源日没有这条未完成任务' };

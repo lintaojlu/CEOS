@@ -57,23 +57,3 @@ export function createIdeaNode(input) {
     position
   };
 }
-
-/**
- * @param {TaskRef} a
- * @param {TaskRef} b
- * @returns {boolean}
- */
-export function taskRefEquals(a, b) {
-  if (!a || !b || a.scope !== b.scope || a.id !== b.id) return false;
-  if (a.scope === 'idea') return true;
-  return a.dateKey === b.dateKey && a.list === b.list;
-}
-
-/**
- * @param {TaskRef} ref
- * @returns {string}
- */
-export function taskRefKey(ref) {
-  if (ref.scope === 'idea') return `idea:${ref.id}`;
-  return `daily:${ref.dateKey}:${ref.list}:${ref.id}`;
-}

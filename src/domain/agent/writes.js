@@ -1,3 +1,4 @@
+import { bodyAfterTitle, ideaTitle } from '../ideas/idea-document.js';
 import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
 import { WRITE_NAMES } from './catalog.js';
 
@@ -21,7 +22,8 @@ export function findTask(schedule, date, taskId) {
  */
 export function identityKey(call) {
   if (!call) return '';
-  if (call.name === 'pickup_idea') return `idea:${call.args.ideaId}`;
+  if (call.name === 'create_idea') return `create:${call.id}`;
+  if (call.name === 'pickup_idea' || call.name === 'update_idea') return `idea:${call.args.ideaId}`;
   if (call.name === 'create_task') return `create:${call.id}`;
   if (call.args?.taskId) return `task:${call.args.taskId}`;
   return '';
@@ -47,6 +49,15 @@ function storedNotes(task) {
  */
 export function normalizeWriteArgs(name, raw) {
   const args = raw && typeof raw === 'object' ? raw : {};
+  if (name === 'create_idea' || name === 'update_idea') {
+    const next = {
+      text: String(args.text || args.title || '').trim(),
+      note: String(args.note ?? args.body ?? ''),
+      completed: args.completed === true
+    };
+    if (name === 'update_idea') next.ideaId = String(args.ideaId || '').trim();
+    return next;
+  }
   const list = args.list === 'optional' ? 'optional' : 'required';
   const base = {
     date: String(args.date || '').trim(),
@@ -85,6 +96,7 @@ export function countsAsRequiredPlacement(call, world) {
  */
 export function validateCall(call, world, gate) {
   if (!WRITE_NAMES.has(call?.name)) return { ok: false, error: '没有这个函数' };
+  if (call.name === 'create_idea' || call.name === 'update_idea') return validateIdeaWrite(call, world);
   const args = call.args;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(args.date || '')) return { ok: false, error: '日期无效' };
   if (!(gate.writableDates || []).includes(args.date)) {
@@ -128,6 +140,20 @@ export function validateCall(call, world, gate) {
   }
 
   return { ok: false, error: '没有这个函数' };
+}
+
+/**
+ * @param {any} call
+ * @param {any} world
+ * @returns {{ ok: true } | { ok: false, error: string }}
+ */
+function validateIdeaWrite(call, world) {
+  const args = call.args || {};
+  if (!args.text) return { ok: false, error: '灵感标题是空的' };
+  if (call.name === 'create_idea') return { ok: true };
+  const idea = (world.ideas || []).find((item) => item.id === args.ideaId);
+  if (!idea) return { ok: false, error: '灵感不存在' };
+  return { ok: true };
 }
 
 /**
@@ -180,8 +206,16 @@ export function completeWriteArgs(name, raw, world) {
   if (name === 'pickup_idea') {
     const idea = (world.ideas || []).find((item) => item.id === args.ideaId);
     if (idea) {
-      if (!raw || raw.text == null || !args.text) args.text = idea.text || '';
-      if (!raw || raw.note == null) args.note = idea.note || '';
+      if (!raw || raw.text == null || !args.text) args.text = idea.title || idea.text || '';
+      if (!raw || raw.note == null) args.note = idea.body || idea.note || '';
+    }
+  }
+  if (name === 'update_idea') {
+    const idea = (world.ideas || []).find((item) => item.id === args.ideaId);
+    if (idea) {
+      if (!raw || (raw.text == null && raw.title == null) || !args.text) args.text = ideaTitle(idea) || idea.title || idea.text || '';
+      if (!raw || (raw.note == null && raw.body == null)) args.note = bodyAfterTitle(idea.body || idea.note || '');
+      if (!raw || raw.completed == null) args.completed = !!idea.completed;
     }
   }
   if (name === 'copy_open_task') {
@@ -216,6 +250,10 @@ const TAGGED_WRITES = new Set(['create_task', 'update_task', 'pickup_idea', 'cop
  * @returns {{ ok: true, args: any } | { ok: false, error: string }}
  */
 export function applyTurnOverrides(name, raw, world, turn) {
+  if (name === 'create_idea' || name === 'update_idea') {
+    const args = completeWriteArgs(name, raw, world);
+    return { ok: true, args };
+  }
   const allowed = turn?.writableDates || [];
   const given = String(raw?.date || '').trim();
   let date = given;
@@ -265,17 +303,20 @@ export function stageWrite(staged, call, world) {
  * @param {any} call
  */
 export function rowFromCall(call) {
+  const idea = call.name === 'create_idea' || call.name === 'update_idea';
   return {
     id: call.id,
     name: call.name,
-    date: call.args.date,
+    date: idea ? '' : call.args.date,
     title: call.args.text || '',
     note: call.args.note || '',
     list: call.args.list === 'optional' ? 'optional' : 'required',
     tagId: call.args.tagId || '',
     subtasks: call.args.subtasks || [],
     removing: call.name === 'remove_task',
-    writableDates: call.writableDates || []
+    writableDates: call.writableDates || [],
+    idea,
+    completed: idea ? !!call.args.completed : false
   };
 }
 
@@ -294,6 +335,7 @@ export function editStaged(staged, id, patch) {
     if (patch.tagId != null) args.tagId = String(patch.tagId);
     if (Array.isArray(patch.subtasks)) args.subtasks = patch.subtasks.map((item) => String(item || '').trim()).filter(Boolean);
     if (patch.date != null) args.date = String(patch.date);
+    if (patch.completed != null) args.completed = !!patch.completed;
     return { ...call, args };
   });
 }

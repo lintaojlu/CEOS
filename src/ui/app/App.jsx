@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppProvider, useApp, useShell } from './context.jsx';
 import { pageFromHash } from './router.js';
 import { Sidebar } from './Sidebar.jsx';
-import { DateNav, Icon, SegmentedControl } from '../library/index.js';
+import { DateNav, Icon } from '../library/index.js';
 import { SettingsModal } from '../modals/SettingsModal.jsx';
 import { PomodoroOverlay } from '../components/PomodoroOverlay.jsx';
 import { AgentDock } from '../agent/AgentDock.jsx';
@@ -10,15 +10,14 @@ import { AgentPage } from '../agent/AgentPage.jsx';
 import { HomePage } from '../pages/home/HomePage.jsx';
 import { TasksPage } from '../pages/tasks/TasksPage.jsx';
 import { IdeasPage } from '../pages/ideas/IdeasPage.jsx';
-import { DEFAULT_IDEA_FILTER, IdeaStatusFilter } from '../pages/ideas/IdeaStatusFilter.jsx';
+import { DEFAULT_IDEA_FILTER } from '../pages/ideas/IdeaStatusFilter.jsx';
 
-const PAGE_TITLE = { tasks: '任务', ideas: '收集箱', agent: 'Agent' };
+const PAGE_TITLE = { tasks: '任务', ideas: '灵感', agent: 'Agent' };
 
-function TopBar({ page, sidebarHidden, onToggle, toggleRef, ideaFilter, onIdeaFilter }) {
+function TopBar({ page, sidebarHidden, onToggle, toggleRef }) {
   const app = useApp();
   useShell();
   const title = PAGE_TITLE[page] || '';
-  const mode = app.uiPrefs.get().ideasViewMode;
   return (
     <header className="topbar" data-tauri-drag-region>
       <button
@@ -39,17 +38,6 @@ function TopBar({ page, sidebarHidden, onToggle, toggleRef, ideaFilter, onIdeaFi
             onNext={() => app.scheduleService.nextDay()}
             onToday={() => app.scheduleService.goToday()}
           />
-        ) : null}
-        {page === 'ideas' ? (
-          <>
-            <IdeaStatusFilter value={ideaFilter} onChange={onIdeaFilter} />
-            <SegmentedControl
-              label="收集箱视图"
-              value={mode}
-              options={[{ id: 'canvas', label: 'DAG' }, { id: 'list', label: '列表' }]}
-              onChange={(next) => app.uiPrefs.update({ ideasViewMode: next })}
-            />
-          </>
         ) : null}
       </div>
     </header>
@@ -109,14 +97,12 @@ function Shell() {
           sidebarHidden={sidebarHidden}
           onToggle={toggleSidebar}
           toggleRef={toggleRef}
-          ideaFilter={ideaFilter}
-          onIdeaFilter={setIdeaFilter}
         />
         {sidebarHidden ? null : <Sidebar page={page} />}
         <main className="main">
           {page === 'home' ? <HomePage /> : null}
           {page === 'tasks' ? <TasksPage /> : null}
-          {page === 'ideas' ? <IdeasPage filter={ideaFilter} /> : null}
+          {page === 'ideas' ? <IdeasPage filter={ideaFilter} onFilter={setIdeaFilter} /> : null}
           {page === 'agent' ? <AgentPage /> : null}
         </main>
         <SettingsModal />

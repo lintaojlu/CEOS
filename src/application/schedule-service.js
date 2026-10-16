@@ -452,8 +452,18 @@ export class ScheduleService {
    * @param {import('../domain/schedule/daily-task.js').DailyTask} task
    */
   insertTask(type, task) {
-    const data = this.getCurrentData();
-    if (data[type].some((t) => t.id === task.id)) return;
+    return this.insertTaskOnDate(this.getDateKey(), type, task);
+  }
+
+  /**
+   * 写入指定日期，不改当前正在看的那一天。
+   * @param {string} dateKey
+   * @param {'required'|'optional'} type
+   * @param {import('../domain/schedule/daily-task.js').DailyTask} task
+   */
+  insertTaskOnDate(dateKey, type, task) {
+    const data = this.scheduleRepo.ensureDay(this.data, dateKey);
+    if (data[type].some((item) => item.id === task.id)) return;
     const next = {
       ...task,
       tagIds: this._knownTagIds(normalizeTagIds(task)),
@@ -465,7 +475,7 @@ export class ScheduleService {
     delete next.subtasks;
     data[type].push(next);
     this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type });
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, dateKey });
   }
 
   /**

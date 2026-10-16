@@ -2,19 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Icon } from '../../library/index.js';
 
 const OPTIONS = [
-  ['ready', '可捡起'],
-  ['completed', '已完成'],
-  ['waiting', '等待中']
+  ['open', '未完成'],
+  ['all', '全部'],
+  ['done', '已完成']
 ];
 
-export const DEFAULT_IDEA_FILTER = { ready: true, completed: false, waiting: true };
+export const DEFAULT_IDEA_FILTER = 'open';
 
 export function IdeaStatusFilter({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
-  const changed = value.ready !== DEFAULT_IDEA_FILTER.ready
-    || value.completed !== DEFAULT_IDEA_FILTER.completed
-    || value.waiting !== DEFAULT_IDEA_FILTER.waiting;
+  const changed = value !== DEFAULT_IDEA_FILTER;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -37,17 +35,19 @@ export function IdeaStatusFilter({ value, onChange }) {
         <Icon name="filter" />
       </button>
       {open ? (
-        <div className="filter-panel" role="group" aria-label="显示哪些任务">
+        <div className="filter-panel" role="group" aria-label="显示哪些灵感">
           {OPTIONS.map(([id, label]) => (
-            <label key={id} className="filter-option">
-              <input
-                type="checkbox"
-                className="checkbox"
-                checked={!!value[id]}
-                onChange={() => onChange({ ...value, [id]: !value[id] })}
-              />
-              <span>{label}</span>
-            </label>
+            <button
+              key={id}
+              type="button"
+              className={value === id ? 'filter-option is-selected' : 'filter-option'}
+              onClick={() => {
+                onChange(id);
+                setOpen(false);
+              }}
+            >
+              {label}
+            </button>
           ))}
         </div>
       ) : null}

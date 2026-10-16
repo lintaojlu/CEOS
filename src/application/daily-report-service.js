@@ -3,6 +3,7 @@
  */
 
 import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
+import { ideaBody, ideaTitle, markdownForModel } from '../domain/ideas/idea-document.js';
 import { buildDailyReportPrompt, DAILY_REPORT_SYSTEM } from '../domain/report/daily-report-prompt.js';
 import { Events } from './event-bus.js';
 
@@ -30,10 +31,9 @@ export class DailyReportService {
       required: (data.required || []).map((task) => this._taskInput(task)),
       optional: (data.optional || []).map((task) => this._taskInput(task)),
       ideas: (this.ideaInboxService.getNodes() || []).filter(Boolean).map((idea) => ({
-        text: idea.text,
+        text: ideaTitle(idea),
         completed: idea.completed,
-        note: idea.note,
-        dueDate: idea.dueDate || ''
+        note: markdownForModel(ideaBody(idea))
       })),
       tags: tagSummary(data, workspace.tags || []),
       milestones: (workspace.milestones || []).map((item) => ({

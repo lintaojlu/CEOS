@@ -27,10 +27,7 @@ export class TaskTransferService {
     }
 
     if (from === 'ideas' && (to === 'required' || to === 'optional')) {
-      const result = this.ideaInboxService.pickUp(id, to);
-      if (result && result.error) return { ok: false, error: result.error };
-      if (!result) return { ok: false, error: '这条灵感不存在' };
-      return { ok: true };
+      return { ok: false, error: '请在灵感里列入今日' };
     }
 
     if ((from === 'required' || from === 'optional') && (to === 'required' || to === 'optional')) {

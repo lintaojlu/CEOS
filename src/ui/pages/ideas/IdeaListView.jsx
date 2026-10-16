@@ -1,53 +1,46 @@
 import React from 'react';
 import { useApp } from '../../app/context.jsx';
-import { Checkbox } from '../../library/index.js';
+import { ideaBody, ideaPreview, ideaTitle } from '../../../domain/ideas/idea-document.js';
 
-export function IdeaListView({ onEdit, filter }) {
+export function IdeaListView({ onSelect, selectedId, filter }) {
   const app = useApp();
-  const { ready, waiting, completed } = app.ideaInboxService.partition();
+  const { ready, completed } = app.ideaInboxService.partition();
+  const byPinThenCreated = (a, b) => {
+    if (!!a.pinned !== !!b.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  };
+  const visible = (filter === 'done' ? completed : filter === 'all' ? [...ready, ...completed] : ready)
+    .slice()
+    .sort(byPinThenCreated);
 
-  function renderIdea(idea, status) {
-    const blockers = status === 'waiting' ? app.ideaInboxService.getBlockers(idea.id) : null;
+  function renderIdea(idea) {
+    const title = ideaTitle(idea) || '未命名';
+    const excerpt = ideaPreview(ideaBody(idea));
+    const selected = idea.id === selectedId;
     return (
-      <div key={idea.id} className="task-row" onDoubleClick={() => onEdit(idea.id)}>
-        <Checkbox checked={idea.completed} onChange={() => app.ideaInboxService.toggleComplete(idea.id)} />
-        <div className="task-main">
-          <div className="task-line">
-            <span className={idea.completed ? 'task-title is-done' : 'task-title'}>{idea.text}</span>
-            {status === 'waiting' && blockers?.waitingPreds.length ? <span className="chip">等前序</span> : null}
-            {status === 'waiting' && blockers?.waitingDueDate ? <span className="chip">等 {blockers.waitingDueDate}</span> : null}
-            {status === 'ready' && idea.dueDate ? <span className="chip chip-accent">DDL {idea.dueDate}</span> : null}
-          </div>
-          {idea.note ? <div className="card-note">{idea.note}</div> : null}
-        </div>
-        {status === 'ready' ? (
-          <button type="button" className="btn btn-mono" onClick={() => {
-            const result = app.ideaInboxService.pickUp(idea.id, 'required');
-            if (result && result.error) window.alert(result.error);
-          }}>列入今日</button>
-        ) : null}
-      </div>
+      <button
+        key={idea.id}
+        type="button"
+        id={`idea-row-${idea.id}`}
+        className={['idea-row', selected ? 'is-selected' : '', idea.completed ? 'is-done' : ''].filter(Boolean).join(' ')}
+        aria-current={selected ? 'true' : undefined}
+        onClick={() => onSelect(idea.id)}
+      >
+        <span className="idea-row-titleline">
+          <span className="idea-row-title">{title}</span>
+          {idea.pinned ? <span className="idea-row-pin">置顶</span> : null}
+        </span>
+        <span className="idea-row-preview">{excerpt}</span>
+      </button>
     );
   }
 
-  const groups = [
-    ['ready', '可捡起', filter.ready ? ready : []],
-    ['completed', '已完成', filter.completed ? completed : []],
-    ['waiting', '等待中', filter.waiting ? waiting : []]
-  ];
-  const visibleCount = groups.reduce((sum, [, , list]) => sum + list.length, 0);
-  const total = ready.length + waiting.length + completed.length;
-
+  const total = ready.length + completed.length;
   return (
     <div>
-      {visibleCount === 0 ? (
-        <p className="empty">{total === 0 ? '暂无灵感。把暂时做不了的事放这里，设好前序或日期后再捡起来。' : '当前筛选下没有任务。'}</p>
-      ) : groups.map(([status, label, list]) => list.length ? (
-        <div key={status}>
-          <div className={status === 'ready' ? 'group-label group-label-accent' : 'group-label'}>{label}（{list.length}）</div>
-          {list.map((idea) => renderIdea(idea, status))}
-        </div>
-      ) : null)}
+      {visible.length === 0 ? (
+        <p className="empty">{total === 0 ? '暂无灵感。' : '当前筛选下没有灵感。'}</p>
+      ) : visible.map((idea) => renderIdea(idea))}
     </div>
   );
 }

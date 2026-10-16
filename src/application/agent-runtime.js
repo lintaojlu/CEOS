@@ -1,3 +1,4 @@
+import { ideaBody, ideaTitle, markdownForModel } from '../domain/ideas/idea-document.js';
 import { partitionIdeas } from '../domain/ideas/readiness.js';
 import { todayKey } from '../domain/shared/date-key.js';
 import { applyProposal } from '../domain/agent/apply.js';
@@ -72,6 +73,22 @@ export class AgentRuntime {
         detailDates
       };
     }
+    if (name === 'read_idea') {
+      const id = String(args?.ideaId || '').trim();
+      const idea = (world.ideas || []).find((item) => item.id === id);
+      if (!idea) return { ok: false, error: '灵感不存在', detailDates };
+      return {
+        ok: true,
+        data: {
+          id: idea.id,
+          title: ideaTitle(idea),
+          body: markdownForModel(ideaBody(idea)),
+          completed: !!idea.completed,
+          pinned: !!idea.pinned
+        },
+        detailDates
+      };
+    }
     if (name === 'list_day') return { ok: true, data: readListDay(world.schedule, date), detailDates };
     if (name === 'list_open_days') {
       return { ok: true, data: readOpenDays(world.schedule, ''), detailDates };
@@ -132,7 +149,7 @@ export class AgentRuntime {
     if (!checked.ok) return checked;
     const draft = {
       schedule: this.scheduleService.data,
-      ideas: this.scheduleService.workspace.ideas || []
+      ideas: this.ideaInboxService.getNodes()
     };
     const snapshot = structuredClone(draft);
     let applied;
@@ -140,13 +157,12 @@ export class AgentRuntime {
       applied = applyProposal(draft, staged.map((call) => ({ ...call, args: { ...call.args } })));
     } catch (error) {
       this.scheduleService.data = snapshot.schedule;
-      this.scheduleService.workspace.ideas = snapshot.ideas;
       const message = error && error.message ? error.message : '写入失败';
       return { ok: false, index: 0, error: message };
     }
     if (!applied.ok) return applied;
     this.scheduleService.data = draft.schedule;
-    this.scheduleService.workspace.ideas = draft.ideas;
+    this.ideaInboxService.replaceAll(draft.ideas);
     this.scheduleService.persist();
     this.scheduleService.eventBus.emit(Events.TASKS_UPDATED, { reason: 'agent' });
     this.scheduleService.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'agent' });

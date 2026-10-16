@@ -3,11 +3,12 @@
  * records. Sync, readiness, and time parsing live in the domain layer.
  */
 
+import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
+
 /**
- * @typedef {Object} SubtaskRecord
+ * @typedef {Object} TaskNoteRecord
  * @property {string} id
  * @property {string} text
- * @property {boolean} completed
  */
 
 /**
@@ -17,10 +18,9 @@
  * @property {boolean} completed
  * @property {number} time
  * @property {boolean} pinned
- * @property {string} note
  * @property {string} recurrence
- * @property {string} projectId
- * @property {SubtaskRecord[]} subtasks
+ * @property {string[]} tagIds
+ * @property {TaskNoteRecord[]} notes
  */
 
 /**
@@ -33,7 +33,7 @@
 
 /**
  * A calendar day stores only that day's tasks plus that day's reflection.
- * Ideas, projects, and milestones live on WorkspaceRecord.
+ * Ideas, tags, and milestones live on WorkspaceRecord.
  * @typedef {Object} ScheduleDayRecord
  * @property {DailyTaskRecord[]} required
  * @property {DailyTaskRecord[]} optional
@@ -55,25 +55,11 @@ export function createEmptyScheduleDay() {
 
 /**
  * @param {any} raw
- * @returns {SubtaskRecord[]}
- */
-function normalizeSubtasks(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((s) => s && (s.id || s.text))
-    .map((s) => ({
-      id: s.id ? String(s.id) : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      text: String(s.text || '').trim(),
-      completed: !!s.completed
-    }));
-}
-
-/**
- * @param {any} raw
  * @returns {DailyTaskRecord[]}
  */
 function normalizeTasks(raw) {
   if (!Array.isArray(raw)) return [];
+  const seen = new Set();
   return raw
     .filter((t) => t && t.id)
     .map((t) => ({
@@ -82,11 +68,15 @@ function normalizeTasks(raw) {
       completed: !!t.completed,
       time: typeof t.time === 'number' ? t.time : Date.now(),
       pinned: !!t.pinned,
-      note: t.note || '',
       recurrence: t.recurrence || '',
-      projectId: typeof t.projectId === 'string' ? t.projectId : '',
-      subtasks: normalizeSubtasks(t.subtasks)
-    }));
+      tagIds: normalizeTagIds(t),
+      notes: normalizeNotes(t.notes, { note: t.note, subtasks: t.subtasks })
+    }))
+    .filter((task) => {
+      if (seen.has(task.id)) return false;
+      seen.add(task.id);
+      return true;
+    });
 }
 
 /**

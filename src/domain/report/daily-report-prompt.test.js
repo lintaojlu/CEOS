@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { buildDailyReportPrompt, formatBullets } from './daily-report-prompt.js';
 
 describe('buildDailyReportPrompt', () => {
-  it('asks for a personal brief from done work, open work, projects, milestones, and ideas', () => {
+  it('asks for a personal brief from done work, open work, tags, milestones, and ideas', () => {
     const prompt = buildDailyReportPrompt({
       dateKey: '2026-10-05',
       required: [{ label: '写完接口', completed: true, note: '已合入' }, { label: '还没做', completed: false }],
       optional: [],
       ideas: [{ text: '一个想法', completed: false }],
-      projects: [{ name: '垂搜', tasks: [{ text: '对索引', completed: false }, { text: '看日志', completed: true }] }],
+      tags: [{ name: '垂搜', tasks: [{ text: '对索引', completed: false }, { text: '看日志', completed: true }] }],
       milestones: [{ title: '做出可演示的第一版', date: '2026-10-20', completed: false }],
       reflection: '今天比较顺'
     });

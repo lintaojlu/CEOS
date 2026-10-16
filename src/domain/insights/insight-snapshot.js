@@ -2,6 +2,7 @@
  * 四个洞察共用的数字快照。提示词只引用这里的数字，避免模型自行加总。
  */
 
+import { normalizeTagIds } from '../schedule/daily-task.js';
 import { partitionIdeas } from '../ideas/readiness.js';
 import { addDays, diffDays, getDateKey, parseDateKey } from '../shared/date-key.js';
 import { summarizeActivity } from '../stats/activity-stats.js';
@@ -70,38 +71,48 @@ function weakestWeekday(schedule, todayKey) {
 /**
  * @param {object} input
  * @param {Record<string, any>} input.schedule
- * @param {{ ideas?: any[], projects?: any[] }} input.workspace
+ * @param {{ ideas?: any[], tags?: any[] }} input.workspace
  * @param {string} input.todayKey
  */
 export function buildInsightSnapshot({ schedule, workspace, todayKey }) {
   const data = schedule || {};
   const ideas = (workspace?.ideas || []).filter(Boolean);
-  const projects = workspace?.projects || [];
+  const tags = workspace?.tags || [];
   const last7 = keysEnding(todayKey, 7);
   const prev7 = keysEnding(getDateKey(addDays(parseDateKey(todayKey), -7)), 7);
   const last30 = keysEnding(todayKey, 30);
   const activity = summarizeActivity(data, { today: todayKey });
 
-  const recentProjectIds = new Set();
-  last7.forEach((key) => {
+  const recentTagIds = new Set();
+  const totals = new Map();
+  Object.keys(data).forEach((key) => {
     const day = data[key];
     if (!day) return;
     [...(day.required || []), ...(day.optional || [])].forEach((task) => {
-      if (task && task.completed && task.projectId) recentProjectIds.add(task.projectId);
+      normalizeTagIds(task).forEach((tagId) => {
+        const row = totals.get(tagId) || { done: 0, total: 0 };
+        row.total += 1;
+        if (task.completed) {
+          row.done += 1;
+          if (last7.includes(key)) recentTagIds.add(tagId);
+        }
+        totals.set(tagId, row);
+      });
     });
   });
 
-  const projectRows = projects.map((project) => {
-    const tasks = project.tasks || [];
-    const done = tasks.filter((task) => task.completed).length;
-    return {
-      id: project.id,
-      name: project.name,
-      done,
-      total: tasks.length,
-      stalled: tasks.length > done && !recentProjectIds.has(project.id)
-    };
-  });
+  const tagRows = tags
+    .map((tag) => {
+      const counts = totals.get(tag.id) || { done: 0, total: 0 };
+      return {
+        id: tag.id,
+        name: tag.name,
+        done: counts.done,
+        total: counts.total,
+        stalled: counts.total > counts.done && !recentTagIds.has(tag.id)
+      };
+    })
+    .filter((row) => row.total > 0);
 
   const partitioned = partitionIdeas(ideas, {
     schedule: data,
@@ -133,9 +144,9 @@ export function buildInsightSnapshot({ schedule, workspace, todayKey }) {
       ...activity,
       weakest: weakestWeekday(data, todayKey)
     },
-    projects: {
-      rows: projectRows,
-      stalled: projectRows.filter((row) => row.stalled).map((row) => row.name)
+    tags: {
+      rows: tagRows,
+      stalled: tagRows.filter((row) => row.stalled).map((row) => row.name)
     },
     ideas: {
       total: ideas.length,

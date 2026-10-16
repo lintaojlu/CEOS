@@ -6,6 +6,8 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    "allow-append-agent-log",
+    "allow-agent-store"
   ]
 }

@@ -86,7 +86,10 @@ Most to-do apps mix yesterday's leftovers into today, and good ideas disappear i
 npm install
 npm run dev        # http://localhost:5173/ceo-schedule.html
 npm run desktop    # desktop window, requires Rust
+npm run package:mac # Apple Silicon disk image from origin/main
 ```
+
+`package:mac` writes `release/CEOS_<version>_<commit>_aarch64.dmg`. The image does not include this machine's schedule. The first time someone opens CEOS, they right-click it and choose Open. That note is inside the image.
 
 <details>
 <summary>Optional: AI review</summary>

@@ -1,6 +1,14 @@
 import { formatTime, getDateKey } from '../domain/shared/date-key.js';
 import { partitionIdeas } from '../domain/ideas/readiness.js';
+import { normalizeNotes } from '../domain/schedule/daily-task.js';
 import { todayKey } from '../domain/shared/date-key.js';
+
+/** @param {any} task */
+function noteLines(task) {
+  const notes = normalizeNotes(task?.notes, { note: task?.note, subtasks: task?.subtasks });
+  if (!notes.length) return '\n';
+  return `\n${notes.map((item) => `  - 说明: ${item.text}`).join('\n')}\n`;
+}
 
 export class ExportService {
   /**
@@ -56,7 +64,7 @@ export class ExportService {
     if (data.required.length > 0) {
       data.required.forEach((t) => {
         const time = formatTime(new Date(t.time));
-        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${this.scheduleService.taskTitle(t)}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
+        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${this.scheduleService.taskTitle(t)}${noteLines(t)}`;
       });
     } else {
       md += `> 暂无任务\n`;
@@ -67,7 +75,7 @@ export class ExportService {
     if (data.optional.length > 0) {
       data.optional.forEach((t) => {
         const time = formatTime(new Date(t.time));
-        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${this.scheduleService.taskTitle(t)}${t.note ? `\n  - 备注: ${t.note}` : ''}\n`;
+        md += `- [${t.completed ? 'x' : ' '}] ${time} - ${this.scheduleService.taskTitle(t)}${noteLines(t)}`;
       });
     } else {
       md += `> 暂无任务\n`;

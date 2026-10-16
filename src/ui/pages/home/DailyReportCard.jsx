@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { LlmRequestError } from '../../../application/llm-service.js';
 import { useApp, useShell } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
-import { Markdown } from '../../components/Markdown.jsx';
+import { Card, Markdown } from '../../library/index.js';
 
 export function DailyReportCard() {
   const app = useApp();
   const shell = useShell();
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState('根据完成的任务、待完成的任务、项目、里程碑和灵感，生成日报和建议。');
+  const [status, setStatus] = useState('根据完成的任务、待完成的任务、标签、里程碑和灵感，生成日报和建议。');
   const report = app.scheduleService.getCurrentData().aiEval || '';
 
   async function generate() {

@@ -22,8 +22,8 @@ export class MigrationRunner {
       }
     }
 
-    if (this.adapter.getSchemaVersion() < 4) {
-      this.adapter.setSchemaVersion(4);
+    if (this.adapter.getSchemaVersion() < 5) {
+      this.adapter.setSchemaVersion(5);
     }
   }
 }

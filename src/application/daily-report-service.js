@@ -2,6 +2,7 @@
  * 把当天任务整理成日报提示词，调用 LLM，写回当天的 aiEval。
  */
 
+import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 import { buildDailyReportPrompt, DAILY_REPORT_SYSTEM } from '../domain/report/daily-report-prompt.js';
 import { Events } from './event-bus.js';
 
@@ -34,10 +35,7 @@ export class DailyReportService {
         note: idea.note,
         dueDate: idea.dueDate || ''
       })),
-      projects: (workspace.projects || []).map((project) => ({
-        name: project.name,
-        tasks: (project.tasks || []).map((task) => ({ text: task.text, completed: !!task.completed }))
-      })),
+      tags: tagSummary(data, workspace.tags || []),
       milestones: (workspace.milestones || []).map((item) => ({
         title: item.title,
         date: item.date,
@@ -56,7 +54,23 @@ export class DailyReportService {
     return {
       label: this.scheduleService.taskTitle(task),
       completed: !!task.completed,
-      note: task.note || ''
+      note: normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks }).map((item) => item.text).join('；')
     };
   }
+}
+
+/**
+ * @param {{ required?: any[], optional?: any[] }} data
+ * @param {Array<{ id: string, name: string }>} tags
+ */
+function tagSummary(data, tags) {
+  const tasks = [...(data.required || []), ...(data.optional || [])];
+  return tags
+    .map((tag) => ({
+      name: tag.name,
+      tasks: tasks
+        .filter((task) => task && normalizeTagIds(task).includes(tag.id))
+        .map((task) => ({ text: task.text, completed: !!task.completed }))
+    }))
+    .filter((row) => row.tasks.length > 0);
 }

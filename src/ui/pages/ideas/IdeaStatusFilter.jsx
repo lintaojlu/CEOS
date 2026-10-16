@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Icon } from '../../components/Icon.jsx';
+import { Icon } from '../../library/index.js';
 
 const OPTIONS = [
   ['ready', '可捡起'],

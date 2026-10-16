@@ -2,7 +2,7 @@
  * 读取本机 LLM 设置并发起补全。未配置时抛出 LlmRequestError。
  */
 
-import { chatCompletion, listModels, LlmRequestError } from '../infrastructure/llm/openai-compatible-client.js';
+import { chatCompletion, chatCompletionWithTools, listModels, LlmRequestError } from '../infrastructure/llm/openai-compatible-client.js';
 import { Events } from './event-bus.js';
 
 export class LlmService {
@@ -52,6 +52,25 @@ export class LlmService {
       model: settings.model,
       system,
       user
+    });
+  }
+
+  /**
+   * @param {{ messages: any[], tools: any[], model?: string }} input
+   */
+  completeWithTools({ messages, tools, model }) {
+    const settings = this.load();
+    const chosen = String(model || settings.model || '').trim();
+    if (!settings.apiKey || !chosen) {
+      throw new LlmRequestError('请先在设置中填写默认模型和 API Key', 'not-configured');
+    }
+    return chatCompletionWithTools({
+      baseUrl: settings.baseUrl,
+      fullUrl: settings.fullUrl,
+      apiKey: settings.apiKey,
+      model: chosen,
+      messages,
+      tools
     });
   }
 

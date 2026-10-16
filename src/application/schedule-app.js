@@ -8,9 +8,10 @@ import { WorkspaceRepository } from '../infrastructure/storage/workspace-reposit
 import { IdeaRepository } from '../infrastructure/storage/idea-repository.js';
 import { MilestoneRepository } from '../infrastructure/storage/milestone-repository.js';
 import { LlmSettingsRepository } from '../infrastructure/storage/llm-settings-repository.js';
-import { InsightsRepository } from '../infrastructure/storage/insights-repository.js';
 import { UiPrefsRepository } from '../infrastructure/storage/ui-prefs-repository.js';
+import { PomodoroRepository } from '../infrastructure/storage/pomodoro-repository.js';
 import { MigrationRunner } from '../infrastructure/migration/migration-runner.js';
+import { applyProjectTagRepair } from '../infrastructure/migration/project-tag-repair.js';
 import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
@@ -20,8 +21,14 @@ import { LlmService } from './llm-service.js';
 import { StatsService } from './stats-service.js';
 import { InsightService } from './insight-service.js';
 import { DailyReportService } from './daily-report-service.js';
+import { TaskBreakdownService } from './task-breakdown-service.js';
 import { TaskTransferService } from './task-transfer-service.js';
 import { UiPrefsService } from './ui-prefs-service.js';
+import { PomodoroService } from './pomodoro-service.js';
+import { AgentRuntime } from './agent-runtime.js';
+import { AgentThreads } from './agent-threads.js';
+import { createAgentStore } from '../infrastructure/agent/transcript-store.js';
+import { appendAgentLog } from '../infrastructure/log/agent-log.js';
 
 export class ScheduleApp {
   constructor() {
@@ -61,14 +68,11 @@ export class ScheduleApp {
     });
 
     this.statsService = new StatsService({
-      scheduleService: this.scheduleService,
-      milestoneService: this.milestoneService
+      scheduleService: this.scheduleService
     });
 
     this.insightService = new InsightService({
       scheduleService: this.scheduleService,
-      llmService: this.llmService,
-      insightsRepo: new InsightsRepository(this.adapter),
       eventBus: this.eventBus
     });
 
@@ -77,6 +81,11 @@ export class ScheduleApp {
       ideaInboxService: this.ideaInboxService,
       llmService: this.llmService,
       eventBus: this.eventBus
+    });
+
+    this.taskBreakdownService = new TaskBreakdownService({
+      scheduleService: this.scheduleService,
+      llmService: this.llmService
     });
 
     this.taskTransfer = new TaskTransferService({
@@ -88,6 +97,25 @@ export class ScheduleApp {
       repo: new UiPrefsRepository(this.adapter),
       eventBus: this.eventBus
     });
+
+    this.pomodoroService = new PomodoroService({
+      pomodoroRepo: new PomodoroRepository(this.adapter),
+      scheduleService: this.scheduleService,
+      eventBus: this.eventBus
+    });
+
+    this.agentThreads = new AgentThreads({
+      runtime: new AgentRuntime({
+        scheduleService: this.scheduleService,
+        ideaInboxService: this.ideaInboxService,
+        milestoneService: this.milestoneService
+      }),
+      complete: (input) => this.llmService.completeWithTools(input),
+      log: (record) => appendAgentLog(record).catch(() => {}),
+      store: createAgentStore(),
+      eventBus: this.eventBus,
+      defaultModel: () => this.llmService.load().model
+    });
   }
 
   bootstrap() {
@@ -96,14 +124,18 @@ export class ScheduleApp {
       ideaRepo: this.ideaRepo
     });
     runner.run();
+    applyProjectTagRepair(this.adapter);
 
     this.scheduleService.load();
     this.ideaInboxService.load();
     this.milestoneService.load();
+    this.pomodoroService.load();
     this.ideaInboxService.subscribeToTaskCompletion();
+    this.agentThreads.load().catch(() => {});
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') this.persist();
+      else if (document.visibilityState === 'visible') this.pomodoroService.tick();
     });
   }
 
@@ -111,6 +143,7 @@ export class ScheduleApp {
     this.scheduleService.persist();
     this.ideaInboxService.persist();
     this.milestoneService.persist();
+    this.pomodoroService.persist();
   }
 }
 

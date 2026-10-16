@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { getDateKey } from '../../../domain/shared/date-key.js';
 import { useApp } from '../../app/context.jsx';
-import { Card } from '../../components/Card.jsx';
-import { Icon } from '../../components/Icon.jsx';
-import { Modal } from '../../components/Modal.jsx';
+import { Card, DeleteButton, Icon, Modal } from '../../library/index.js';
+import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
 
 function statusOf(milestone, today) {
   const target = new Date(`${milestone.date}T12:00:00`);
@@ -17,6 +16,7 @@ function statusOf(milestone, today) {
 
 export function MilestonesCard() {
   const app = useApp();
+  const ime = useImeEnterGuard();
   const [editing, setEditing] = useState(null);
   const today = getDateKey(new Date());
   const milestones = [...app.milestoneService.milestones].sort((a, b) => {
@@ -28,6 +28,7 @@ export function MilestonesCard() {
 
   function save(event) {
     event.preventDefault();
+    if (ime.shouldIgnoreSubmit()) return;
     const data = new FormData(event.currentTarget);
     const title = String(data.get('title') || '').trim();
     const date = String(data.get('date') || '');
@@ -48,7 +49,7 @@ export function MilestonesCard() {
           {milestones.map((milestone) => {
             const status = statusOf(milestone, today);
             return (
-              <button key={milestone.id} type="button" className="milestone-card" onClick={() => setEditing(milestone)}>
+              <button key={milestone.id} type="button" className={editing?.id === milestone.id ? 'milestone-card is-on' : 'milestone-card'} onClick={() => setEditing(milestone)}>
                 <span className={status.dot} />
                 <span>
                   <strong className={milestone.completed ? 'task-title is-done' : 'task-title'}>{milestone.title}</strong>
@@ -64,7 +65,7 @@ export function MilestonesCard() {
       )}
       {editing ? (
         <Modal title={editing.id ? '编辑里程碑' : '添加里程碑'} onClose={() => setEditing(null)}>
-          <form className="form-stack" onSubmit={save}>
+          <form className="form-stack" {...imeCompositionProps(ime)} onKeyDown={(event) => { holdImeEnter(event, ime); }} onSubmit={save}>
             <label className="field-label">目标名称
               <input className="field" name="title" defaultValue={editing.title} autoFocus />
             </label>
@@ -73,7 +74,7 @@ export function MilestonesCard() {
             </label>
             <div className="form-actions">
               {editing.id ? (
-                <button type="button" className="btn btn-danger" onClick={() => { app.milestoneService.delete(editing.id); setEditing(null); }}>删除</button>
+                <DeleteButton onClick={() => { app.milestoneService.delete(editing.id); setEditing(null); }} />
               ) : null}
               <button type="button" className="btn" onClick={() => setEditing(null)}>取消</button>
               <button type="submit" className="btn btn-primary">保存</button>

@@ -17,6 +17,8 @@ logs/
 dist/
 build/
 src-tauri/target/
+.packaging/
+release/
 
 # macOS
 .DS_Store
@@ -24,4 +26,5 @@ src-tauri/target/
 # 用户数据，与 src/、src-tauri/ 分开
 /data/**/*.json
 /data/*.json
+src/infrastructure/migration/project-tag-repair.data.js
 

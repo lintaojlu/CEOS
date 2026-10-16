@@ -1,21 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { createDailyTask, createSubtask, normalizeSubtasks, splitTimeMentions } from './daily-task.js';
+import { commitNoteDraft, createDailyTask, createNote, normalizeNotes, splitTimeMentions, cloneDailyTask } from './daily-task.js';
 
 describe('createDailyTask', () => {
-  it('defaults to an empty subtasks array', () => {
+  it('defaults to an empty notes array', () => {
     const task = createDailyTask('hello', new Date('2026-09-21'));
-    expect(task.subtasks).toEqual([]);
+    expect(task.notes).toEqual([]);
+    expect(task.note).toBeUndefined();
+    expect(task.subtasks).toBeUndefined();
+    expect(task.pomodoros).toBeUndefined();
   });
 
-  it('normalizes provided subtasks', () => {
+  it('merges the old note and subtasks into notes', () => {
     const task = createDailyTask('parent', new Date('2026-09-21'), {
+      note: '原说明',
       subtasks: [{ id: 's1', text: 'a', completed: true }, null, { text: 'b' }]
     });
-    expect(task.subtasks).toHaveLength(2);
-    expect(task.subtasks[0]).toEqual({ id: 's1', text: 'a', completed: true });
-    expect(task.subtasks[1].text).toBe('b');
-    expect(task.subtasks[1].completed).toBe(false);
-    expect(task.subtasks[1].id).toBeTruthy();
+    expect(task.notes).toHaveLength(3);
+    expect(task.notes[0].text).toBe('原说明');
+    expect(task.notes[1]).toEqual({ id: 's1', text: 'a' });
+    expect(task.notes[2].text).toBe('b');
+    expect(task.notes[2].id).toBeTruthy();
+    expect(task.note).toBeUndefined();
+    expect(task.subtasks).toBeUndefined();
   });
 });
 
@@ -31,13 +37,37 @@ describe('splitTimeMentions', () => {
   });
 });
 
-describe('createSubtask / normalizeSubtasks', () => {
-  it('createSubtask trims text', () => {
-    expect(createSubtask('  x  ')).toMatchObject({ text: 'x', completed: false });
+describe('createNote / normalizeNotes', () => {
+  it('createNote trims text and keeps internal line breaks', () => {
+    expect(createNote('  第一行\n第二行  ')).toMatchObject({ text: '第一行\n第二行' });
   });
 
-  it('normalizeSubtasks returns [] for non-arrays', () => {
-    expect(normalizeSubtasks(null)).toEqual([]);
-    expect(normalizeSubtasks(undefined)).toEqual([]);
+  it('keeps a draft that was typed but not confirmed with enter', () => {
+    const notes = [{ id: 'n1', text: '已有' }];
+    expect(commitNoteDraft(notes, '  ')).toBe(notes);
+    const saved = commitNoteDraft(notes, '  新说明\n第二行  ');
+    expect(saved).toHaveLength(2);
+    expect(saved[0]).toBe(notes[0]);
+    expect(saved[1].text).toBe('新说明\n第二行');
+  });
+
+  it('normalizeNotes returns [] when there is nothing to merge', () => {
+    expect(normalizeNotes(null)).toEqual([]);
+    expect(normalizeNotes(undefined, { note: '  ', subtasks: [] })).toEqual([]);
+  });
+
+  it('does not merge legacy fields again once notes exist', () => {
+    expect(normalizeNotes([{ id: 'n1', text: '新的' }], { note: '旧的', subtasks: [{ text: '步骤' }] }))
+      .toEqual([{ id: 'n1', text: '新的' }]);
+  });
+});
+
+describe('cloneDailyTask', () => {
+  it('does not keep a pomodoro count on sync copies', () => {
+    const task = createDailyTask('x', new Date('2026-09-21'), { pomodoros: 3 });
+    expect(task.pomodoros).toBeUndefined();
+    const cloned = cloneDailyTask({ ...task, pomodoros: 3 });
+    expect(cloned.pomodoros).toBeUndefined();
+    expect(cloned.id).toBe(task.id);
   });
 });

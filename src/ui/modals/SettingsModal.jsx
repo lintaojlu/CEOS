@@ -245,7 +245,7 @@ export function SettingsModal() {
           })}
         </div>
 
-        <p className="card-note">只存在这台机器的 localStorage。某一行空着时使用默认模型。</p>
+        <p className="card-note">只存在这台机器的应用数据目录。某一行空着时使用默认模型。</p>
 
         <div className="form-stack">
           <div className="settings-label">JEV</div>

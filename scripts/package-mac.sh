@@ -81,6 +81,31 @@ fi
 mkdir -p "$mount"
 hdiutil attach "$rw" -mountpoint "$mount" -nobrowse -noverify -noautoopen >/dev/null
 cp "$NOTE" "$mount/首次打开.txt"
+# Finder 会把 .VolumeIcon.icns 画在窗口里，隐藏标记也挡不住。去掉它，窗口里就只剩应用。
+rm -f "$mount/.VolumeIcon.icns"
+SetFile -a c "$mount"
+# 窗口宽 760、高 260。三个图标的中心等距，并在窗口里水平居中；纵坐标抬高，避免上方空出一大块。
+osascript <<EOF
+tell application "Finder"
+  set theFolder to POSIX file "$mount" as alias
+  open theFolder
+  set w to container window of theFolder
+  set current view of w to icon view
+  set toolbar visible of w to false
+  set statusbar visible of w to false
+  set bounds of w to {120, 80, 880, 340}
+  set opts to icon view options of w
+  set arrangement of opts to not arranged
+  set icon size of opts to 128
+  set position of item "CEOS.app" of theFolder to {158, 110}
+  set position of item "首次打开.txt" of theFolder to {380, 110}
+  set position of item "Applications" of theFolder to {602, 110}
+  set selection to {}
+  update theFolder without registering applications
+  delay 1
+  close w
+end tell
+EOF
 sync
 hdiutil detach "$mount" >/dev/null
 

@@ -3,6 +3,7 @@
  */
 
 import { LocalStorageAdapter } from '../infrastructure/storage/local-storage-adapter.js';
+import { loadUserRecords } from '../infrastructure/storage/file-record-store.js';
 import { ScheduleRepository } from '../infrastructure/storage/schedule-repository.js';
 import { WorkspaceRepository } from '../infrastructure/storage/workspace-repository.js';
 import { IdeaRepository } from '../infrastructure/storage/idea-repository.js';
@@ -136,7 +137,16 @@ export class ScheduleApp {
     });
   }
 
-  async bootstrap() {
+  async bootstrap(options = {}) {
+    if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      this.adapter.storage = await loadUserRecords({
+        read: () => invoke('read_user_records'),
+        write: (key, body) => invoke('write_user_record', { key, body }),
+        legacy: typeof localStorage !== 'undefined' ? localStorage : null,
+        fetchBackup: options.fetchBackup || null
+      });
+    }
     const runner = new MigrationRunner(this.adapter, {
       scheduleRepo: this.scheduleRepo,
       ideaRepo: this.ideaRepo

@@ -42,6 +42,18 @@ export class LocalStorageAdapter {
     if (!this.storage) return;
     this.storage.setItem(SCHEMA_KEY, String(version));
   }
+
+  /** @param {string} key */
+  getItem(key) {
+    if (!this.storage) return null;
+    return this.storage.getItem(key);
+  }
+
+  /** @param {string} key @param {string} value */
+  setItem(key, value) {
+    if (!this.storage) return;
+    this.storage.setItem(key, String(value));
+  }
 }
 
 export { SCHEMA_KEY };

@@ -375,6 +375,131 @@ fn delete_idea_file(app: tauri::AppHandle, id: String) -> Result<(), String> {
   }
 }
 
+const USER_RECORD_LIMIT: usize = 32 * 1024 * 1024;
+
+fn user_record_file(key: &str) -> Option<&'static str> {
+  match key {
+    "ceoSchedule" => Some("schedule.json"),
+    "ceoWorkspace" => Some("workspace.json"),
+    "ceoLlmSettings" => Some("llm-settings.json"),
+    "ceoUiPrefs" => Some("ui-prefs.json"),
+    "ceoInsights" => Some("insights.json"),
+    "ceoPomodoro" => Some("pomodoro.json"),
+    _ => None,
+  }
+}
+
+fn is_user_meta_key(key: &str) -> bool {
+  matches!(key, "ceoSchemaVersion" | "ceoTagRepairApplied" | "ceoImportedBackupAt")
+}
+
+fn user_data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+  let dir = app.path().app_data_dir().map_err(|err| err.to_string())?;
+  create_dir_all(&dir).map_err(|err| err.to_string())?;
+  Ok(dir)
+}
+
+fn read_meta(dir: &std::path::Path) -> Result<serde_json::Map<String, serde_json::Value>, String> {
+  let path = dir.join("meta.json");
+  match fs::read_to_string(&path) {
+    Ok(text) => {
+      let value: serde_json::Value = serde_json::from_str(&text).map_err(|_| "记录内容无效".to_string())?;
+      match value {
+        serde_json::Value::Object(map) => Ok(map),
+        _ => Err("记录内容无效".into()),
+      }
+    }
+    Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(serde_json::Map::new()),
+    Err(err) => Err(err.to_string()),
+  }
+}
+
+fn write_meta(dir: &std::path::Path, map: &serde_json::Map<String, serde_json::Value>) -> Result<(), String> {
+  let path = dir.join("meta.json");
+  if map.is_empty() {
+    return match fs::remove_file(&path) {
+      Ok(()) => Ok(()),
+      Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+      Err(err) => Err(err.to_string()),
+    };
+  }
+  let text = serde_json::to_string(map).map_err(|err| err.to_string())?;
+  fs::write(path, text).map_err(|err| err.to_string())
+}
+
+#[derive(serde::Serialize)]
+struct UserRecords {
+  exists: bool,
+  records: HashMap<String, String>,
+}
+
+#[tauri::command]
+fn read_user_records(app: tauri::AppHandle) -> Result<UserRecords, String> {
+  let dir = user_data_dir(&app)?;
+  let mut records = HashMap::new();
+  let mut exists = dir.join("meta.json").is_file();
+  for key in ["ceoSchedule", "ceoWorkspace", "ceoLlmSettings", "ceoUiPrefs", "ceoInsights", "ceoPomodoro"] {
+    let Some(name) = user_record_file(key) else { continue };
+    let path = dir.join(name);
+    match fs::read_to_string(&path) {
+      Ok(text) => {
+        if text.len() > USER_RECORD_LIMIT {
+          return Err("记录文件过大".into());
+        }
+        exists = true;
+        records.insert(key.to_string(), text);
+      }
+      Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
+      Err(err) => return Err(err.to_string()),
+    }
+  }
+  let meta = read_meta(&dir)?;
+  if dir.join("meta.json").is_file() {
+    exists = true;
+  }
+  for (key, value) in meta {
+    if !is_user_meta_key(&key) { continue; }
+    if let Some(text) = value.as_str() {
+      records.insert(key, text.to_string());
+    }
+  }
+  Ok(UserRecords { exists, records })
+}
+
+#[tauri::command]
+fn write_user_record(app: tauri::AppHandle, key: String, body: Option<String>) -> Result<(), String> {
+  if let Some(text) = body.as_ref() {
+    if text.len() > USER_RECORD_LIMIT {
+      return Err("记录文件过大".into());
+    }
+  }
+  let dir = user_data_dir(&app)?;
+  if let Some(name) = user_record_file(&key) {
+    let path = dir.join(name);
+    return match body {
+      Some(text) => fs::write(path, text).map_err(|err| err.to_string()),
+      None => match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(err) => Err(err.to_string()),
+      },
+    };
+  }
+  if !is_user_meta_key(&key) {
+    return Err("记录名称无效".into());
+  }
+  let mut meta = read_meta(&dir)?;
+  match body {
+    Some(text) => {
+      meta.insert(key, serde_json::Value::String(text));
+    }
+    None => {
+      meta.remove(&key);
+    }
+  }
+  write_meta(&dir, &meta)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -392,7 +517,9 @@ pub fn run() {
       read_idea_file,
       write_idea_file,
       list_idea_files,
-      delete_idea_file
+      delete_idea_file,
+      read_user_records,
+      write_user_record
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

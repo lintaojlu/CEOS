@@ -22,3 +22,8 @@ commands.allow = ["llm_http", "llm_http_stream", "llm_http_cancel"]
 identifier = "allow-idea-store"
 description = "Read and write one JSON file per idea"
 commands.allow = ["read_idea_file", "write_idea_file", "list_idea_files", "delete_idea_file"]
+
+[[permission]]
+identifier = "allow-user-records"
+description = "Read and write schedule, tags, and settings in the app data directory"
+commands.allow = ["read_user_records", "write_user_record"]

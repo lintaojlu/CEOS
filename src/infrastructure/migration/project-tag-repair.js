@@ -17,7 +17,7 @@ const REPAIR_MARK = 'ceoTagRepairApplied';
 export function applyProjectTagRepair(adapter, payload) {
   const data = payload === undefined ? bundledRepair() : payload;
   if (!data?.tags?.length) return false;
-  if (adapter.storage?.getItem(REPAIR_MARK) === '1') return false;
+  if (adapter.getItem(REPAIR_MARK) === '1') return false;
 
   const raw = adapter.getJson('ceoWorkspace', {}) || {};
   const existing = Array.isArray(raw.tags) ? raw.tags : [];
@@ -31,7 +31,7 @@ export function applyProjectTagRepair(adapter, payload) {
   const canonicalIds = new Set(data.tags.map((tag) => String(tag.id)));
   const alreadyThere = data.tags.every((tag) => existing.some((item) => item && String(item.id) === String(tag.id)));
   if (alreadyThere) {
-    adapter.storage?.setItem(REPAIR_MARK, '1');
+    adapter.setItem(REPAIR_MARK, '1');
     return false;
   }
   /** @type {Array<{ id: string, name: string, color: string }>} */
@@ -109,7 +109,7 @@ export function applyProjectTagRepair(adapter, payload) {
     });
   }
   if (scheduleChanged) new ScheduleRepository(adapter).save(schedule);
-  adapter.storage?.setItem(REPAIR_MARK, '1');
+  adapter.setItem(REPAIR_MARK, '1');
   return tagsChanged || scheduleChanged;
 }
 

@@ -1,5 +1,5 @@
 /**
- * LLM 连接设置。只存在本机 localStorage，不进仓库、不进日程记录。
+ * LLM 连接设置。桌面端写在本机应用数据目录，不进仓库、不进日程记录。
  */
 
 const KEY = 'ceoLlmSettings';

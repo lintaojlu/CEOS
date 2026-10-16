@@ -12,6 +12,7 @@
     "allow-append-model-log",
     "allow-agent-store",
     "allow-llm-http",
-    "allow-idea-store"
+    "allow-idea-store",
+    "allow-user-records"
   ]
 }

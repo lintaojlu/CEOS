@@ -108,14 +108,14 @@ const CREATE_IDEA = tool(
 
 const UPDATE_IDEA = tool(
   'update_idea',
-  '修改一条灵感的正文或完成状态。text 是正文第一行，note 是其余 Markdown。没有截止日期，也没有前序。',
+  '修改一条灵感的正文，或归档 / 取消归档。text 是正文第一行，note 是其余 Markdown。归档后灵感从灵感页收起，只在设置里能看到。没有截止日期，也没有前序。',
   {
     ideaId: { type: 'string' },
     text: { type: 'string' },
     note: { type: 'string' },
-    completed: { type: 'boolean' }
+    archived: { type: 'boolean', description: 'true 表示归档' }
   },
-  ['ideaId', 'text', 'note', 'completed']
+  ['ideaId', 'text', 'note', 'archived']
 );
 
 const ASK_CHOICES = tool(

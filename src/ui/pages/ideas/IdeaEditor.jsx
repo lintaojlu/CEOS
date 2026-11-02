@@ -1,9 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Events } from '../../../application/event-bus.js';
 import { createIdeaId, MAX_IMAGE_CHARS, referencedImageIds } from '../../../domain/ideas/idea-document.js';
 import { useApp, useShell } from '../../app/context.jsx';
-import { flyTextToComposer } from '../../agent/fly-to-composer.js';
-import { Checkbox, IconButton, Modal } from '../../library/index.js';
+import { IconButton, Modal } from '../../library/index.js';
 import { IdeaMarkdownEditor } from './IdeaMarkdownEditor.jsx';
 
 const IdeaBoard = lazy(() => import('./IdeaBoard.jsx').then((mod) => ({ default: mod.IdeaBoard })));
@@ -25,13 +23,11 @@ export function IdeaEditor({ ideaId, wide, onWide }) {
   useShell();
   const idea = app.ideaInboxService.find(ideaId);
   const boardRef = useRef(null);
-  const breakRef = useRef(null);
   const previousId = useRef(ideaId);
   const [surface, setSurface] = useState(() => surfaceMemory.get(ideaId) || 'doc');
   const [boardView, setBoardView] = useState({ elements: false, corrupt: false });
   const [clearOpen, setClearOpen] = useState(false);
   const [note, setNote] = useState('');
-  const [breaking, setBreaking] = useState(false);
 
   useEffect(() => {
     if (previousId.current === ideaId) return;
@@ -47,25 +43,8 @@ export function IdeaEditor({ ideaId, wide, onWide }) {
 
   if (!idea) return null;
 
-  const ready = !idea.completed;
   const imageIds = [...referencedImageIds(idea.body)].filter((id) => idea.images?.[id]);
   const onBoard = surface === 'board';
-
-  async function breakdown() {
-    if (breaking) return;
-    setBreaking(true);
-    setNote('');
-    try {
-      const draft = app.ideaBreakdownService.prepareComposer(idea.id);
-      const from = breakRef.current?.getBoundingClientRect();
-      if (from) await flyTextToComposer(from, draft.flyText);
-      app.eventBus.emit(Events.AGENT_COMPOSER_DRAFT, draft);
-    } catch (error) {
-      setNote(error?.message || '拆解失败');
-    } finally {
-      setBreaking(false);
-    }
-  }
 
   function show(next) {
     if (surface === 'board' && next !== 'board') {
@@ -119,21 +98,6 @@ export function IdeaEditor({ ideaId, wide, onWide }) {
   return (
     <div className={onBoard ? 'idea-doc is-board' : 'idea-doc'}>
       <div className={wide ? 'idea-editor-tools is-wide' : 'idea-editor-tools'} data-tauri-drag-region="deep">
-        <label className="idea-complete">
-          <Checkbox checked={!!idea.completed} onChange={() => app.ideaInboxService.toggleComplete(idea.id)} />
-          是否完成
-        </label>
-        {ready ? (
-          <button
-            ref={breakRef}
-            type="button"
-            className="chrome-label is-framed"
-            disabled={breaking}
-            onClick={breakdown}
-          >
-            {breaking ? '拆解…' : '拆解'}
-          </button>
-        ) : null}
         <div className="idea-surface" role="tablist" aria-label="灵感内容">
           <button type="button" role="tab" aria-selected={surface === 'doc'} className={surface === 'doc' ? 'is-on' : ''} onClick={() => show('doc')}>正文</button>
           <button type="button" role="tab" aria-selected={onBoard} className={onBoard ? 'is-on' : ''} onClick={() => show('board')}>画板</button>

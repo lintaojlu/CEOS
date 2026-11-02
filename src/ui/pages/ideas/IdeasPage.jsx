@@ -10,13 +10,14 @@ function clampIdeaListWidth(value) {
   return Math.min(max, Math.max(IDEA_LIST_WIDTH.min, normalizeIdeaListWidth(value)));
 }
 
-export function IdeasPage({ filter, openIdeaId, onOpenIdea }) {
+export function IdeasPage({ openIdeaId, onOpenIdea }) {
   const app = useApp();
   useShell();
   const [boardWide, setBoardWide] = useState(false);
   const preferredWidth = useRef(normalizeIdeaListWidth(app.uiPrefs.get().ideasListWidth));
   const [listWidth, setListWidth] = useState(() => clampIdeaListWidth(preferredWidth.current));
-  const selected = openIdeaId ? app.ideaInboxService.find(openIdeaId) : null;
+  const found = openIdeaId ? app.ideaInboxService.find(openIdeaId) : null;
+  const selected = found && !found.archived ? found : null;
 
   useLayoutEffect(() => {
     const shell = document.querySelector('.app-shell');
@@ -73,19 +74,14 @@ export function IdeasPage({ filter, openIdeaId, onOpenIdea }) {
     document.getElementById(`idea-row-${selected.id}`)?.scrollIntoView({ block: 'nearest' });
   }, [selected?.id]);
 
-  const { ready, completed } = app.ideaInboxService.partition();
-  const total = ready.length + completed.length;
-  const visible = filter === 'done' ? completed.length : filter === 'all' ? total : ready.length;
-
-  let blank = '从左边选择一条灵感。';
-  if (total === 0) blank = '还没有灵感。';
-  else if (visible === 0) blank = '当前筛选下没有灵感。';
+  const { ready, waiting } = app.ideaInboxService.partition();
+  const blank = ready.length + waiting.length === 0 ? '还没有灵感。' : '从左边选择一条灵感。';
 
   return (
     <div className={boardWide ? 'ideas-split is-board-wide' : 'ideas-split'}>
       <aside className="ideas-list" aria-label="灵感列表">
         <div className="ideas-list-scroll">
-          <IdeaListView filter={filter} selectedId={selected ? selected.id : null} onSelect={onOpenIdea} />
+          <IdeaListView selectedId={selected ? selected.id : null} onSelect={onOpenIdea} />
         </div>
         <div
           className="ideas-list-resize"

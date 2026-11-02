@@ -154,6 +154,41 @@ export function Symbol({ name, size = 18 }) {
       </svg>
     );
   }
+  if (name === 'model') {
+    return (
+      <svg {...common}>
+        <path d="M12 3.2 19.6 7.6v8.8L12 20.8 4.4 16.4V7.6z" />
+        <path d="M12 12 8 9.5M12 12l4-2.5M12 12v4.6" />
+      </svg>
+    );
+  }
+  if (name === 'decision') {
+    return (
+      <svg {...common}>
+        <path d="M12 3.5v5" />
+        <path d="M12 8.5 6.5 14v6.5M12 8.5l5.5 5.5v6.5" />
+        <circle cx="12" cy="3.5" r="0.6" />
+      </svg>
+    );
+  }
+  if (name === 'database') {
+    return (
+      <svg {...common}>
+        <ellipse cx="12" cy="6" rx="7" ry="2.6" />
+        <path d="M5 6v6c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6" />
+        <path d="M5 12v6c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-6" />
+      </svg>
+    );
+  }
+  if (name === 'unarchive') {
+    return (
+      <svg {...common}>
+        <path d="M3.5 7.5V18a1.5 1.5 0 0 0 1.5 1.5h7" />
+        <path d="M3.5 7.5V6A1.5 1.5 0 0 1 5 4.5h4l2 2h8A1.5 1.5 0 0 1 20.5 8v3.5" />
+        <path d="M17.5 20.5v-7M14.5 16.5l3-3 3 3" />
+      </svg>
+    );
+  }
   if (name === 'sync') {
     return (
       <svg {...common}>

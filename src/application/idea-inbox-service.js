@@ -139,7 +139,8 @@ export class IdeaInboxService {
       title: text,
       body: extra.body ?? extra.note ?? '',
       images: extra.images,
-      completed: extra.completed,
+      archived: extra.archived,
+      archivedAt: extra.archivedAt,
       pinned: extra.pinned,
       createdAt: extra.createdAt
     }));
@@ -163,15 +164,16 @@ export class IdeaInboxService {
       id: isSafeIdeaId(task.id) ? task.id : undefined,
       body,
       pinned: !!task.pinned,
-      completed: false
+      archived: false
     });
   }
 
-  /** @param {string} id */
-  toggleComplete(id) {
-    const idea = this._nodes.find((node) => node.id === id);
-    if (!idea) return;
-    this.update(id, { completed: !idea.completed });
+  /**
+   * @param {string} id
+   * @param {boolean} [archived]
+   */
+  setArchived(id, archived = true) {
+    return this.update(id, { archived });
   }
 
   /** @param {string} id */
@@ -248,7 +250,10 @@ export class IdeaInboxService {
     if (patch.title != null || patch.text != null) {
       body = foldStoredTitle(String(patch.title ?? patch.text), body);
     }
-    if (patch.completed != null) idea.completed = !!patch.completed;
+    if (patch.archived != null && !!patch.archived !== !!idea.archived) {
+      idea.archived = !!patch.archived;
+      idea.archivedAt = idea.archived ? Date.now() : null;
+    }
     if (patch.pinned != null) idea.pinned = !!patch.pinned;
     idea.body = body;
     idea.title = ideaTitle(idea);

@@ -164,12 +164,15 @@ export function createIdeaDocument(input = {}) {
     String(input.body ?? input.note ?? '')
   ));
   const title = firstLineTitle(body);
+  const archived = !!(input.archived || input.completed);
+  const archivedAt = Number(input.archivedAt);
   return {
     id,
     title,
     body,
     images: pruneImages(body, input.images),
-    completed: !!input.completed,
+    archived,
+    archivedAt: archived && Number.isFinite(archivedAt) && archivedAt > 0 ? archivedAt : null,
     pinned: !!input.pinned,
     createdAt: Number.isFinite(Number(input.createdAt)) ? Number(input.createdAt) : Date.now()
   };
@@ -192,7 +195,8 @@ export function toIdeaFile(doc) {
     id: idea.id,
     body: idea.body,
     images: idea.images,
-    completed: !!idea.completed,
+    archived: !!idea.archived,
+    archivedAt: idea.archivedAt,
     pinned: !!idea.pinned,
     createdAt: idea.createdAt
   };
@@ -219,7 +223,8 @@ export function migrateWorkspaceIdeas(ideas) {
       title,
       body,
       images: raw.images,
-      completed: raw.completed,
+      archived: !!(raw.archived || raw.completed),
+      archivedAt: raw.archivedAt,
       pinned: raw.pinned,
       createdAt: raw.createdAt
     });

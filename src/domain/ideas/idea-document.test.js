@@ -23,12 +23,21 @@ describe('idea documents', () => {
       }
     });
     const file = toIdeaFile(doc);
-    expect(Object.keys(file)).toEqual(['id', 'body', 'images', 'completed', 'pinned', 'createdAt']);
+    expect(Object.keys(file)).toEqual(['id', 'body', 'images', 'archived', 'archivedAt', 'pinned', 'createdAt']);
     expect(file.title).toBeUndefined();
     expect(file.body).toBe('标题\n\n见 ![](idea-image:pic1)');
     expect(file.images.pic1).toEqual({ mime: 'image/png', base64: 'aaaa' });
     expect(file.images.loose).toBeUndefined();
     expect(JSON.stringify(file)).not.toContain('data:');
+  });
+
+  it('reads an old completed flag as archived', () => {
+    const doc = createIdeaDocument({ id: 'old', body: '旧的', completed: true, archivedAt: 5 });
+    expect(doc.archived).toBe(true);
+    expect(doc.archivedAt).toBe(5);
+    expect(doc.completed).toBeUndefined();
+    expect(createIdeaDocument({ id: 'n', body: '新的', archived: false, completed: true }).archived).toBe(true);
+    expect(createIdeaDocument({ id: 'm', body: '平常', archivedAt: 9 }).archivedAt).toBeNull();
   });
 
   it('rejects unsafe ids and drops unreferenced images', () => {

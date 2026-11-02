@@ -17,22 +17,22 @@ describe('readiness', () => {
     expect(isIdeaReady(node, { schedule: {}, ideas: [node], todayKey })).toBe(true);
   });
 
-  it('completed ideas are not ready', () => {
-    const node = createIdeaNode({ id: 'a', text: 'A', completed: true });
+  it('archived ideas are not ready', () => {
+    const node = createIdeaNode({ id: 'a', text: 'A', archived: true });
     expect(isIdeaReady(node, { schedule: {}, ideas: [node], todayKey })).toBe(false);
   });
 
-  it('partition separates open and completed', () => {
+  it('partition separates normal and archived', () => {
     const ready = createIdeaNode({ id: 'r', text: 'R', createdAt: 2 });
     const also = createIdeaNode({ id: 'w', text: 'W', dueDate: '2099-01-01', createdAt: 1 });
-    const done = createIdeaNode({ id: 'd', text: 'D', completed: true });
-    const parts = partitionIdeas([ready, also, done], {
+    const shelved = createIdeaNode({ id: 'd', text: 'D', archived: true });
+    const parts = partitionIdeas([ready, also, shelved], {
       schedule: {},
-      ideas: [ready, also, done],
+      ideas: [ready, also, shelved],
       todayKey
     });
     expect(parts.ready.map((n) => n.id)).toEqual(['r', 'w']);
     expect(parts.waiting).toEqual([]);
-    expect(parts.completed.map((n) => n.id)).toEqual(['d']);
+    expect(parts.archived.map((n) => n.id)).toEqual(['d']);
   });
 });

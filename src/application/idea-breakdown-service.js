@@ -24,7 +24,7 @@ export class IdeaBreakdownService {
   prepareComposer(ideaId) {
     const idea = this.ideaInboxService.find(ideaId);
     if (!idea) throw new Error('这条灵感已经不在了');
-    if (idea.completed) throw new Error('已完成的灵感不能拆解');
+    if (idea.archived) throw new Error('已归档的灵感不能拆解');
 
     const today = this.now();
     const materials = ideaBreakdownMaterials(idea, today);

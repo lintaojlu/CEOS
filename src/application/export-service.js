@@ -76,18 +76,19 @@ export class ExportService {
       ideas: this.ideaInboxService.getNodes(),
       todayKey: todayKey()
     };
-    const { ready, completed } = partitionIdeas(this.ideaInboxService.getNodes(), ctx);
+    const { ready, waiting, archived } = partitionIdeas(this.ideaInboxService.getNodes(), ctx);
+    const normal = [...ready, ...waiting];
 
     md += `## 💡 灵感\n\n`;
     const renderIdea = (item, status) => {
       const body = markdownForModel(ideaBody(item));
-      md += `- [${item.completed ? 'x' : ' '}] [${status}] ${ideaTitle(item)}${body ? `\n  - 备注: ${body}` : ''}\n`;
+      md += `- [${status}] ${ideaTitle(item)}${body ? `\n  - 备注: ${body}` : ''}\n`;
     };
-    if (ready.length + completed.length === 0) {
+    if (normal.length + archived.length === 0) {
       md += `> 暂无灵感\n`;
     } else {
-      ready.forEach((t) => renderIdea(t, '未完成'));
-      completed.forEach((t) => renderIdea(t, '已完成'));
+      normal.forEach((t) => renderIdea(t, '正常'));
+      archived.forEach((t) => renderIdea(t, '归档'));
     }
     md += `\n`;
 

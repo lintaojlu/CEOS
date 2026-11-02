@@ -33,8 +33,8 @@ function tagText(snapshot) {
 
 function ideaText(snapshot) {
   const { ideas } = snapshot;
-  const parts = [`共 ${ideas.total} 条，未完成 ${ideas.ready}，已完成 ${ideas.completed}。`];
-  if (ideas.averageDwellDays != null) parts.push(`未完成平均滞留 ${ideas.averageDwellDays} 天。`);
+  const parts = [`共 ${ideas.total} 条，正常 ${ideas.ready}，归档 ${ideas.archived}。`];
+  if (ideas.averageDwellDays != null) parts.push(`正常灵感平均滞留 ${ideas.averageDwellDays} 天。`);
   return parts.join('');
 }
 
@@ -70,7 +70,7 @@ export const INSIGHT_DEFS = [
     id: 'ideas',
     title: '灵感转化',
     headline(snapshot) {
-      return { value: String(snapshot.ideas.ready), caption: '未完成' };
+      return { value: String(snapshot.ideas.ready), caption: '在灵感页' };
     },
     text: ideaText
   }

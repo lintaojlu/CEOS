@@ -152,7 +152,7 @@ export function buildInsightSnapshot({ schedule, workspace, ideas, todayKey }) {
       total: ideaList.length,
       ready: partitioned.ready.length,
       waiting: partitioned.waiting.length,
-      completed: partitioned.completed.length,
+      archived: partitioned.archived.length,
       averageDwellDays,
       overdueCount
     }

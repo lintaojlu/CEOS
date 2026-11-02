@@ -80,7 +80,7 @@ export class AgentRuntime {
           id: idea.id,
           title: ideaTitle(idea),
           body: markdownForModel(ideaBody(idea)),
-          completed: !!idea.completed,
+          archived: !!idea.archived,
           pinned: !!idea.pinned
         },
         detailDates

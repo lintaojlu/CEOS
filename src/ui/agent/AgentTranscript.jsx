@@ -122,10 +122,10 @@ export function AgentTranscript({
                       <input
                         type="checkbox"
                         className="checkbox"
-                        checked={!!row.completed}
-                        onChange={(event) => onEdit(row.id, { completed: event.target.checked })}
+                        checked={!!row.archived}
+                        onChange={(event) => onEdit(row.id, { archived: event.target.checked })}
                       />
-                      已完成
+                      归档
                     </label>
                   </div>
                 </>

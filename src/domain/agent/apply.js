@@ -159,7 +159,8 @@ export function applyProposal(draft, calls) {
         const doc = hydrateIdea(createIdeaDocument({
           title: args.text,
           body: markdownForModel(args.note || ''),
-          completed: !!args.completed
+          archived: !!args.archived,
+          archivedAt: args.archived ? Date.now() : null
         }));
         scratch.ideas.push(doc);
         call.appliedId = doc.id;
@@ -171,7 +172,10 @@ export function applyProposal(draft, calls) {
         idea.note = body;
         idea.title = ideaTitle(idea);
         idea.text = idea.title;
-        idea.completed = !!args.completed;
+        if (!!args.archived !== !!idea.archived) {
+          idea.archived = !!args.archived;
+          idea.archivedAt = idea.archived ? Date.now() : null;
+        }
         idea.images = pruneImages(body, idea.images);
       } else if (call.name === 'copy_open_task') {
         const source = findTask(schedule, args.sourceDate, args.taskId);

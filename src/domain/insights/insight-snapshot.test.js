@@ -58,7 +58,7 @@ describe('insight sentences', () => {
     expect(INSIGHT_DEFS[0].headline(snapshot).caption).toBe('近 7 天完成率');
     expect(INSIGHT_DEFS[1].text(snapshot)).toContain('活跃 2 天，当前连续');
     expect(INSIGHT_DEFS[2].text(snapshot)).toBe('标签任务完成 1/2。');
-    expect(INSIGHT_DEFS[3].text(snapshot)).toContain('共 2 条，未完成 2，已完成 0。');
+    expect(INSIGHT_DEFS[3].text(snapshot)).toContain('共 2 条，正常 2，归档 0。');
     expect(INSIGHT_DEFS[3].text(snapshot)).not.toContain('过期');
   });
 
@@ -66,6 +66,6 @@ describe('insight sentences', () => {
     const snapshot = buildInsightSnapshot({ schedule: {}, workspace: { ideas: [], tags: [] }, todayKey: '2026-10-05' });
     expect(INSIGHT_DEFS[0].text(snapshot)).toBe('近 7 天没有必做任务。');
     expect(INSIGHT_DEFS[2].text(snapshot)).toBe('还没有标签。');
-    expect(INSIGHT_DEFS[3].text(snapshot)).toBe('共 0 条，未完成 0，已完成 0。');
+    expect(INSIGHT_DEFS[3].text(snapshot)).toBe('共 0 条，正常 0，归档 0。');
   });
 });

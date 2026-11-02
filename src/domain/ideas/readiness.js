@@ -1,5 +1,5 @@
 /**
- * 未完成的都可以捡起。没有截止日期，也没有前序。
+ * 没归档的都可以捡起。没有截止日期，也没有前序。
  * @param {any} node
  * @returns {{ waitingDueDate: null }}
  */
@@ -14,28 +14,29 @@ export function getBlockers(node) {
  * @returns {boolean}
  */
 export function isIdeaReady(node, ctx) {
-  if (!node || node.completed) return false;
+  if (!node || node.archived) return false;
   return !getBlockers(node, ctx).waitingDueDate;
 }
 
 /**
  * @param {any[]} nodes
  * @param {{ todayKey?: string }} ctx
- * @returns {{ ready: any[], waiting: any[], completed: any[] }}
+ * @returns {{ ready: any[], waiting: any[], archived: any[] }}
  */
 export function partitionIdeas(nodes, ctx) {
   const ready = [];
   const waiting = [];
-  const completed = [];
+  const archived = [];
   for (const node of nodes || []) {
     if (!node) continue;
-    if (node.completed) completed.push(node);
+    if (node.archived) archived.push(node);
     else if (isIdeaReady(node, ctx)) ready.push(node);
     else waiting.push(node);
   }
   const byCreated = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
+  const byArchived = (a, b) => (b.archivedAt || b.createdAt || 0) - (a.archivedAt || a.createdAt || 0);
   ready.sort(byCreated);
   waiting.sort(byCreated);
-  completed.sort(byCreated);
-  return { ready, waiting, completed };
+  archived.sort(byArchived);
+  return { ready, waiting, archived };
 }

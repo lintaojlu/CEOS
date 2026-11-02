@@ -3,16 +3,18 @@ import { createPortal } from 'react-dom';
 import { LlmRequestError } from '../../application/llm-service.js';
 import { DEFAULT_JEV_BASE_URL } from '../../infrastructure/storage/llm-settings-repository.js';
 import { useApp, useShell } from '../app/context.jsx';
-import { Modal, Symbol } from '../library/index.js';
+import { Symbol } from '../library/index.js';
+import { ArchivedIdeas } from './ArchivedIdeas.jsx';
 import { groupModelIds } from './model-list.js';
 import { readSecret, secretsToSave } from './secret-field.js';
+import { DEFAULT_SETTINGS_SECTION, SETTINGS_GROUPS, filterSettingsGroups } from './settings-nav.js';
 
 const MODEL_ROWS = [
-  { id: 'model', label: '默认', placeholder: '选择或填写模型 ID' },
-  { id: 'agentModel', label: 'Agent', placeholder: '同默认' },
-  { id: 'breakdownModel', label: '拆解', placeholder: '同默认' },
-  { id: 'tagModel', label: '分类', placeholder: '同默认' },
-  { id: 'standardizeModel', label: '标准化', placeholder: '同默认' }
+  { id: 'model', label: '默认', hint: '其他用途空着时都用它', placeholder: '选择或填写模型 ID' },
+  { id: 'agentModel', label: 'Agent', hint: '底部对话框和 Agent 页', placeholder: '同默认' },
+  { id: 'breakdownModel', label: '拆解', hint: '把任务拆成人类与 AI 两部分', placeholder: '同默认' },
+  { id: 'tagModel', label: '分类', hint: '给新任务挂标签', placeholder: '同默认' },
+  { id: 'standardizeModel', label: '标准化', hint: '整理任务标题与说明', placeholder: '同默认' }
 ];
 
 const EMPTY_MODELS = {
@@ -23,10 +25,22 @@ const EMPTY_MODELS = {
   standardizeModel: ''
 };
 
+const DATA_TABS = [
+  { id: 'archived', label: '归档的灵感' },
+  { id: 'export', label: '导出' }
+];
+
+const SECTION_LABEL = Object.fromEntries(
+  SETTINGS_GROUPS.flatMap((group) => group.items.map((item) => [item.id, item.label]))
+);
+
 export function SettingsModal() {
   const app = useApp();
   const shell = useShell();
   const saved = app.llmService.load();
+  const [section, setSection] = useState(DEFAULT_SETTINGS_SECTION);
+  const [dataTab, setDataTab] = useState('archived');
+  const [query, setQuery] = useState('');
   const [baseUrl, setBaseUrl] = useState(saved.baseUrl);
   const [fullUrl, setFullUrl] = useState(saved.fullUrl);
   const [modelsBySlot, setModelsBySlot] = useState(() => slotValues(saved));
@@ -65,9 +79,21 @@ export function SettingsModal() {
     setJevModel(next.jevModel || '');
     setJevModelIds([]);
     setStatus('');
+    setQuery('');
   }, [shell.settingsOpen, app]);
 
+  useEffect(() => {
+    if (!shell.settingsOpen) return undefined;
+    function onKey(event) {
+      if (event.key === 'Escape' && !openPicker) shell.closeSettings();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [shell.settingsOpen, openPicker, shell]);
+
   if (!shell.settingsOpen) return null;
+
+  const groups = filterSettingsGroups(query);
 
   function liveSecrets() {
     return secretsToSave(pressed.current, {
@@ -99,10 +125,16 @@ export function SettingsModal() {
     setModelsBySlot((current) => ({ ...current, [id]: value }));
   }
 
+  function choose(id) {
+    setSection(id);
+    setStatus('');
+    setOpenPicker('');
+  }
+
   function persist() {
     app.llmService.save(draft());
     pressed.current = null;
-    shell.closeSettings();
+    setStatus('已保存。');
   }
 
   async function test() {
@@ -129,7 +161,7 @@ export function SettingsModal() {
       if (ids.length === 0) {
         setStatus('这个地址没有返回模型。可以直接填写模型 ID。');
       } else {
-        setStatus(`已读取 ${ids.length} 个模型。`);
+        setStatus(`已读取 ${ids.length} 个模型，点输入框右边的箭头选择。`);
       }
     } catch (error) {
       const message = error instanceof LlmRequestError ? error.message : (error?.message || '读取模型失败');
@@ -158,75 +190,100 @@ export function SettingsModal() {
     }
   }
 
-  return (
-    <Modal title="设置" onClose={shell.closeSettings} wide>
-      <div className="form-stack">
-        <label className="settings-label">API Key
-          <span className="field-affix">
+  const footer = (
+    <div className="settings-footer">
+      <p className="settings-status" role="status">{status}</p>
+      <button type="button" className="settings-btn is-primary" onMouseDown={holdSecrets} onClick={persist}>保存</button>
+    </div>
+  );
+
+  function secretField({ inputRef, value, onChange, shown, onToggle, label }) {
+    return (
+      <span className="field-affix settings-control">
+        <input
+          ref={inputRef}
+          className={shown ? 'field' : 'field is-masked'}
+          type="text"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label={label}
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck="false"
+        />
+        <button
+          type="button"
+          className="field-affix-btn"
+          aria-label={shown ? `隐藏 ${label}` : `显示 ${label}`}
+          onClick={onToggle}
+        >
+          <Symbol name={shown ? 'eye-off' : 'eye'} size={16} />
+        </button>
+      </span>
+    );
+  }
+
+  let body = null;
+  if (section === 'model') {
+    body = (
+      <>
+        <section className="settings-card">
+          <header className="settings-card-head">
+            <div>
+              <h3 className="settings-card-title">模型服务</h3>
+              <p className="settings-card-desc">兼容 OpenAI 格式的服务端点，请求发到该地址下的 /chat/completions。只存在这台机器的应用数据目录。</p>
+            </div>
+            <button type="button" className="settings-btn" onMouseDown={holdSecrets} onClick={test} disabled={busy}>测试连接</button>
+          </header>
+          <div className="settings-row">
+            <div className="settings-row-label">API Key</div>
+            {secretField({
+              inputRef: apiKeyRef,
+              value: apiKey,
+              onChange: setApiKey,
+              shown: showKey,
+              onToggle: () => setShowKey((value) => !value),
+              label: 'API Key'
+            })}
+          </div>
+          <div className="settings-row">
+            <div className="settings-row-label">请求地址</div>
             <input
-              ref={apiKeyRef}
-              className={showKey ? 'field' : 'field is-masked'}
-              type="text"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              autoComplete="off"
-              autoCapitalize="off"
+              className="field settings-control"
+              value={baseUrl}
+              onChange={(event) => setBaseUrl(event.target.value)}
+              placeholder="https://api.openai.com/v1"
+              aria-label="API 请求地址"
               spellCheck="false"
             />
-            <button
-              type="button"
-              className="field-affix-btn"
-              aria-label={showKey ? '隐藏 API Key' : '显示 API Key'}
-              onClick={() => setShowKey((value) => !value)}
-            >
-              <Symbol name={showKey ? 'eye-off' : 'eye'} size={16} />
-            </button>
-          </span>
-        </label>
-
-        <div>
-          <div className="settings-label-row">
-            <span className="settings-label">API 请求地址</span>
-            <button type="button" className="btn btn-quiet" onMouseDown={holdSecrets} onClick={test} disabled={busy}>测试连接</button>
           </div>
-          <input
-            className="field"
-            value={baseUrl}
-            onChange={(event) => setBaseUrl(event.target.value)}
-            placeholder="https://api.openai.com/v1"
-            spellCheck="false"
-          />
-        </div>
+        </section>
 
-        <p className="endpoint-hint">
-          <span aria-hidden="true">💡</span>
-          填写兼容 OpenAI 格式的服务端点地址。请求会发到该地址下的 /chat/completions。
-        </p>
-
-        <div className="form-stack">
-          <div className="settings-label">模型</div>
+        <section className="settings-card">
+          <header className="settings-card-head">
+            <div>
+              <h3 className="settings-card-title">模型分工</h3>
+              <p className="settings-card-desc">不同用途可以用不同模型。某一行空着时使用默认模型。</p>
+            </div>
+            <button type="button" className="settings-btn" onMouseDown={holdSecrets} onClick={refreshModels} disabled={busy}>获取模型列表</button>
+          </header>
           {MODEL_ROWS.map((row) => {
             const value = modelsBySlot[row.id] || '';
             return (
-              <label key={row.id}>
-                <span className="settings-label">{row.label}</span>
-                <span className="model-row">
+              <div key={row.id} className="settings-row">
+                <div>
+                  <div className="settings-row-label">{row.label}</div>
+                  <div className="settings-row-hint">{row.hint}</div>
+                </div>
+                <span className="model-row settings-control">
                   <input
                     className="field"
                     value={value}
                     onChange={(event) => setSlot(row.id, event.target.value)}
                     placeholder={row.placeholder}
+                    aria-label={`${row.label}模型`}
                     spellCheck="false"
                   />
-                  <button
-                    type="button"
-                    className="model-icon-btn"
-                    aria-label={`获取${row.label}的模型列表`}
-                    onClick={refreshModels}
-                    disabled={busy}
-                  >
-                    <Symbol name="download" size={16} />
-                  </button>
                   <ModelPicker
                     label={row.label}
                     ids={modelIds}
@@ -240,65 +297,57 @@ export function SettingsModal() {
                     }}
                   />
                 </span>
-              </label>
+              </div>
             );
           })}
-        </div>
-
-        <p className="card-note">只存在这台机器的应用数据目录。某一行空着时使用默认模型。</p>
-
-        <div className="form-stack">
-          <div className="settings-label">JEV</div>
-          <label className="settings-label">API Key
-            <span className="field-affix">
-              <input
-                ref={jevKeyRef}
-                className={showJevKey ? 'field' : 'field is-masked'}
-                type="text"
-                value={jevApiKey}
-                onChange={(event) => setJevApiKey(event.target.value)}
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-              <button
-                type="button"
-                className="field-affix-btn"
-                aria-label={showJevKey ? '隐藏 JEV API Key' : '显示 JEV API Key'}
-                onClick={() => setShowJevKey((value) => !value)}
-              >
-                <Symbol name={showJevKey ? 'eye-off' : 'eye'} size={16} />
-              </button>
-            </span>
-          </label>
-          <label className="settings-label">请求地址
+        </section>
+        {footer}
+      </>
+    );
+  } else if (section === 'jev') {
+    body = (
+      <>
+        <section className="settings-card">
+          <header className="settings-card-head">
+            <div>
+              <h3 className="settings-card-title">决策模型（JEV）</h3>
+              <p className="settings-card-desc">和对话模型分开。Key 空着时不判断，模型空着时用 jev-latest。只发送文字。</p>
+            </div>
+            <button type="button" className="settings-btn" onMouseDown={holdSecrets} onClick={refreshJevModels} disabled={busy}>获取模型列表</button>
+          </header>
+          <div className="settings-row">
+            <div className="settings-row-label">API Key</div>
+            {secretField({
+              inputRef: jevKeyRef,
+              value: jevApiKey,
+              onChange: setJevApiKey,
+              shown: showJevKey,
+              onToggle: () => setShowJevKey((value) => !value),
+              label: 'JEV API Key'
+            })}
+          </div>
+          <div className="settings-row">
+            <div className="settings-row-label">请求地址</div>
             <input
-              className="field"
+              className="field settings-control"
               value={jevBaseUrl}
               onChange={(event) => setJevBaseUrl(event.target.value)}
               placeholder={DEFAULT_JEV_BASE_URL}
+              aria-label="JEV 请求地址"
               spellCheck="false"
             />
-          </label>
-          <label>
-            <span className="settings-label">模型</span>
-            <span className="model-row">
+          </div>
+          <div className="settings-row">
+            <div className="settings-row-label">模型</div>
+            <span className="model-row settings-control">
               <input
                 className="field"
                 value={jevModel}
                 onChange={(event) => setJevModel(event.target.value)}
                 placeholder="jev-latest"
+                aria-label="JEV 模型"
                 spellCheck="false"
               />
-              <button
-                type="button"
-                className="model-icon-btn"
-                aria-label="获取 JEV 模型列表"
-                onClick={refreshJevModels}
-                disabled={busy}
-              >
-                <Symbol name="download" size={16} />
-              </button>
               <ModelPicker
                 label="JEV"
                 ids={jevModelIds}
@@ -312,16 +361,90 @@ export function SettingsModal() {
                 }}
               />
             </span>
+          </div>
+        </section>
+        {footer}
+      </>
+    );
+  } else if (section === 'data') {
+    body = (
+      <>
+        <div className="settings-tabs" role="tablist" aria-label="数据管理">
+          {DATA_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={dataTab === tab.id}
+              className={dataTab === tab.id ? 'settings-tab is-on' : 'settings-tab'}
+              onClick={() => setDataTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {dataTab === 'archived' ? <ArchivedIdeas /> : (
+          <section className="settings-card">
+            <header className="settings-card-head">
+              <div>
+                <h3 className="settings-card-title">导出数据</h3>
+                <p className="settings-card-desc">把每天的任务、标签和灵感导出成一个 JSON 文件。</p>
+              </div>
+              <button type="button" className="settings-btn" onClick={() => app.exportService.downloadJSON()}>导出 JSON</button>
+            </header>
+          </section>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className="settings-backdrop" data-tauri-drag-region="false" onMouseDown={shell.closeSettings} role="presentation">
+      <div
+        className="settings-window"
+        role="dialog"
+        aria-modal="true"
+        aria-label="设置"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <aside className="settings-nav">
+          <button type="button" className="settings-close" aria-label="关闭设置" onClick={shell.closeSettings} />
+          <label className="settings-search">
+            <Symbol name="search" size={16} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜索设置项"
+              aria-label="搜索设置项"
+              spellCheck="false"
+            />
           </label>
-        </div>
-        <p className="card-note">决策模型，和上面的对话模型分开。Key 空着时不判断。模型空着时用 jev-latest。只发送文字。</p>
-        <p className="status-line">{status}</p>
-        <div className="form-actions">
-          <button type="button" className="btn" onClick={() => app.exportService.downloadJSON()}>导出 JSON</button>
-          <button type="button" className="btn btn-primary" onMouseDown={holdSecrets} onClick={persist}>保存</button>
-        </div>
+          <nav className="settings-groups" aria-label="设置分类">
+            {groups.length === 0 ? <p className="settings-nav-empty">没有匹配的设置项</p> : null}
+            {groups.map((group) => (
+              <div key={group.label} className="settings-group">
+                <div className="settings-group-label">{group.label}</div>
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={section === item.id ? 'settings-nav-item is-active' : 'settings-nav-item'}
+                    aria-current={section === item.id ? 'page' : undefined}
+                    onClick={() => choose(item.id)}
+                  >
+                    <Symbol name={item.icon} size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </nav>
+        </aside>
+        <main className="settings-main" aria-label={SECTION_LABEL[section] || '设置'}>
+          {body}
+        </main>
       </div>
-    </Modal>
+    </div>
   );
 }
 

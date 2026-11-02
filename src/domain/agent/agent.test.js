@@ -307,7 +307,7 @@ describe('applyProposal', () => {
     expect(draft.ideas.some((idea) => idea.title === '新灵感' && idea.body === '新灵感\n\n正文')).toBe(true);
 
     const updated = applyTurnOverrides('update_idea', {
-      ideaId: 'idea-1', text: '改标题', note: '# 正文', completed: true
+      ideaId: 'idea-1', text: '改标题', note: '# 正文', archived: true
     }, base, { writableDates: [] });
     expect(updated.ok).toBe(true);
     const next = { schedule: structuredClone(base.schedule), ideas: structuredClone(base.ideas) };
@@ -315,8 +315,14 @@ describe('applyProposal', () => {
     expect(next.ideas.find((idea) => idea.id === 'idea-1')).toMatchObject({
       title: '改标题',
       body: '改标题\n\n# 正文',
-      completed: true
+      archived: true
     });
+    expect(next.ideas.find((idea) => idea.id === 'idea-1').archivedAt).toBeGreaterThan(0);
+
+    const legacy = applyTurnOverrides('update_idea', {
+      ideaId: 'idea-1', text: '写引言', note: '', completed: true
+    }, base, { writableDates: [] });
+    expect(legacy.args.archived).toBe(true);
     const ready = readReadyIdeas(base.ideas, base.schedule, today, today);
     expect(ready[0]).toEqual({ id: 'idea-1', text: '写引言' });
   });

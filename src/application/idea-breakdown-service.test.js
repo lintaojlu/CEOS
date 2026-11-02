@@ -47,12 +47,12 @@ describe('IdeaBreakdownService.prepareComposer', () => {
     }]);
   });
 
-  it('rejects missing or completed ideas', async () => {
+  it('rejects missing or archived ideas', async () => {
     const { inbox } = setup();
     await inbox.load();
-    const idea = inbox.addIdea('已做完的', { completed: true });
+    const idea = inbox.addIdea('收起来的', { archived: true });
     const service = new IdeaBreakdownService({ ideaInboxService: inbox, now: () => '2026-11-02' });
     expect(() => service.prepareComposer('missing')).toThrow('这条灵感已经不在了');
-    expect(() => service.prepareComposer(idea.id)).toThrow('已完成的灵感不能拆解');
+    expect(() => service.prepareComposer(idea.id)).toThrow('已归档的灵感不能拆解');
   });
 });

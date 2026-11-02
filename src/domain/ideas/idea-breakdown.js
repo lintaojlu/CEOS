@@ -16,7 +16,7 @@ export const IDEA_BREAKDOWN_AGENT_RULES = `你在把用户提到的那一条灵�
 - text 是任务标题
 - 可选说明放 note（或 subtasks）；不要写「人类任务」「AI任务」那两套标题
 
-全部任务写完后，用 update_idea 把该灵感标为 completed=true。text / note 按灵感原文带上，只改完成状态。不要删除灵感。
+全部任务写完后，用 update_idea 把该灵感归档（archived=true）。text / note 按灵感原文带上，只改归档状态。不要删除灵感。
 
 信息不够、没法拆时，先调用 ask_choices 问清。不要猜。`;
 

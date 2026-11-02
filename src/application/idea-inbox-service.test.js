@@ -178,4 +178,28 @@ describe('idea file migration', () => {
     expect(await store.readBoard(node.id)).toBe('');
     expect(await store.listBoardMeta()).toEqual([]);
   });
+
+  it('archives and restores an idea with a timestamp', async () => {
+    const { service, store } = setup([]);
+    await service.load();
+    const node = service.addIdea('要归档的');
+    service.setArchived(node.id, true);
+    expect(service.partition().ready.map((idea) => idea.id)).toEqual([]);
+    expect(service.partition().archived.map((idea) => idea.id)).toEqual([node.id]);
+    const file = JSON.parse(await store.read(node.id));
+    expect(file.archived).toBe(true);
+    expect(file.archivedAt).toBeGreaterThan(0);
+    expect(file.completed).toBeUndefined();
+    service.setArchived(node.id, false);
+    expect(service.find(node.id)?.archivedAt).toBeNull();
+    expect(service.partition().ready.map((idea) => idea.id)).toEqual([node.id]);
+  });
+
+  it('loads an old completed file as archived', async () => {
+    const { service, store } = setup([]);
+    await store.write({ id: 'old', body: '做完的', images: {}, completed: true, pinned: false, createdAt: 3 });
+    await service.load();
+    expect(service.find('old')?.archived).toBe(true);
+    expect(service.partition().archived.map((idea) => idea.id)).toEqual(['old']);
+  });
 });

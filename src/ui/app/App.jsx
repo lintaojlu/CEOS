@@ -12,7 +12,6 @@ import { HomePage } from '../pages/home/HomePage.jsx';
 import { TasksPage } from '../pages/tasks/TasksPage.jsx';
 import { TasksTopBar } from '../pages/tasks/TasksTopBar.jsx';
 import { IdeasPage } from '../pages/ideas/IdeasPage.jsx';
-import { DEFAULT_IDEA_FILTER, IdeaStatusFilter } from '../pages/ideas/IdeaStatusFilter.jsx';
 import { msUntilNextHour, quoteForHour } from '../../domain/quotes/quote-library.js';
 import { SIDEBAR_WIDTH, normalizeSidebarWidth } from '../../infrastructure/storage/ui-prefs-repository.js';
 
@@ -43,7 +42,7 @@ function QuoteTitle() {
   );
 }
 
-function TopBar({ page, sidebarHidden, onToggle, toggleRef, onCreateIdea, ideaFilter, onIdeaFilter }) {
+function TopBar({ page, sidebarHidden, onToggle, toggleRef, onCreateIdea }) {
   useShell();
   const title = PAGE_TITLE[page] || '';
   return (
@@ -74,7 +73,6 @@ function TopBar({ page, sidebarHidden, onToggle, toggleRef, onCreateIdea, ideaFi
                   <button type="button" className="idea-compose" aria-label="新建灵感" onClick={onCreateIdea}>
                     <Icon name="compose" />
                   </button>
-                  <IdeaStatusFilter value={ideaFilter} onChange={onIdeaFilter} />
                 </span>
               ) : null}
             </div>
@@ -123,14 +121,12 @@ function Shell() {
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
   const toggleRef = useRef(null);
   const sidebarHiddenRef = useRef(sidebarHidden);
-  const [ideaFilter, setIdeaFilter] = useState(DEFAULT_IDEA_FILTER);
   const [openIdeaId, setOpenIdeaId] = useState(null);
   const [ideaFocus, setIdeaFocus] = useState(0);
 
   function createIdea() {
     const created = app.ideaInboxService.addIdea('');
     if (!created) return null;
-    if (ideaFilter === 'done') setIdeaFilter('open');
     setOpenIdeaId(created.id);
     return created;
   }
@@ -144,7 +140,8 @@ function Shell() {
   useEffect(() => {
     if (page !== 'ideas' || !ideaFocus || ensuredFocus.current === ideaFocus) return;
     ensuredFocus.current = ideaFocus;
-    if (openIdeaId && app.ideaInboxService.find(openIdeaId)) return;
+    const open = openIdeaId ? app.ideaInboxService.find(openIdeaId) : null;
+    if (open && !open.archived) return;
     createIdea();
   }, [page, ideaFocus]);
 
@@ -215,8 +212,6 @@ function Shell() {
           onToggle={toggleSidebar}
           toggleRef={toggleRef}
           onCreateIdea={createIdea}
-          ideaFilter={ideaFilter}
-          onIdeaFilter={setIdeaFilter}
         />
         {sidebarHidden ? null : (
           <Sidebar
@@ -231,7 +226,6 @@ function Shell() {
           {page === 'tasks' ? <TasksPage /> : null}
           {page === 'ideas' ? (
             <IdeasPage
-              filter={ideaFilter}
               openIdeaId={openIdeaId}
               onOpenIdea={setOpenIdeaId}
             />

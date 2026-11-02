@@ -63,7 +63,7 @@ export function normalizeWriteArgs(name, raw) {
     const next = {
       text: String(args.text || args.title || '').trim(),
       note: String(args.note ?? args.body ?? ''),
-      completed: args.completed === true
+      archived: args.archived === true || args.completed === true
     };
     if (name === 'update_idea') next.ideaId = String(args.ideaId || '').trim();
     return next;
@@ -230,7 +230,7 @@ export function completeWriteArgs(name, raw, world) {
     if (idea) {
       if (!raw || (raw.text == null && raw.title == null) || !args.text) args.text = ideaTitle(idea) || idea.title || idea.text || '';
       if (!raw || (raw.note == null && raw.body == null)) args.note = bodyAfterTitle(idea.body || idea.note || '');
-      if (!raw || raw.completed == null) args.completed = !!idea.completed;
+      if (!raw || (raw.archived == null && raw.completed == null)) args.archived = !!idea.archived;
     }
   }
   if (name === 'copy_open_task') {
@@ -336,7 +336,7 @@ export function rowFromCall(call) {
     removing: call.name === 'remove_task',
     writableDates: call.writableDates || [],
     idea,
-    completed: idea ? !!call.args.completed : false
+    archived: idea ? !!call.args.archived : false
   };
 }
 
@@ -359,7 +359,7 @@ export function editStaged(staged, id, patch) {
       );
     }
     if (patch.date != null) args.date = String(patch.date);
-    if (patch.completed != null) args.completed = !!patch.completed;
+    if (patch.archived != null) args.archived = !!patch.archived;
     return { ...call, args };
   });
 }

@@ -1,7 +1,7 @@
 import { AgentSession } from './agent-session.js';
 import { Events } from './event-bus.js';
 import { CHOICE_CLOSED_MESSAGE, formatChoiceAnswers } from '../domain/agent/choices.js';
-import { parseIndex, replayTranscript, stripSkillToken, threadTitle } from '../domain/agent/transcript.js';
+import { conversationWindow, parseIndex, replayTranscript, stripSkillToken, threadTitle } from '../domain/agent/transcript.js';
 
 function createThreadId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -9,8 +9,8 @@ function createThreadId() {
 }
 
 /**
- * 多段对话。底部对话框和完整页读同一段。
- * 发出第一句才写入磁盘。
+ * 只有一段对话。底部对话框和完整页读这一段。
+ * 发出第一句才写入磁盘。页面和模型都只看最近 20 轮。
  */
 export class AgentThreads {
   /**
@@ -113,14 +113,13 @@ export class AgentThreads {
       titleLocked: this.meta.titleLocked,
       model: this.meta.model || this.defaultModel(),
       permission: this.meta.permission || 'default',
-      messages: this.session.messages,
+      messages: conversationWindow(this.session.messages),
       rows: this.busy ? [] : this.session.rows(),
       busy: this.busy,
       arranging: this.busy && this.session.phase !== 'text' && this.session.phase !== 'choose',
       phase: this.session.phase,
       pendingChoice: this.session.pendingChoice,
-      persisted: this.meta.persisted,
-      threads: this.sorted()
+      persisted: this.meta.persisted
     };
   }
 
@@ -167,34 +166,6 @@ export class AgentThreads {
     this.session.model = this.meta.model;
     this.index.currentId = this.meta.id;
     await this.store.writeIndex(JSON.stringify(this.index));
-    this.emitUpdate();
-    return { ok: true };
-  }
-
-  beginNew() {
-    if (this.busy) return { ok: false, error: '还在回复' };
-    this.resetDraft();
-    this.emitUpdate();
-    return { ok: true };
-  }
-
-  /** @param {string} id */
-  async remove(id) {
-    if (this.busy) return { ok: false, error: '还在回复' };
-    this.index.threads = this.index.threads.filter((item) => item.id !== id);
-    await this.store.deleteSession(id);
-    const removingCurrent = this.meta.id === id;
-    if (!removingCurrent) {
-      if (this.index.currentId === id) this.index.currentId = this.meta.id;
-      await this.store.writeIndex(JSON.stringify(this.index));
-      this.emitUpdate();
-      return { ok: true };
-    }
-    const next = this.sorted()[0];
-    this.index.currentId = next ? next.id : '';
-    await this.store.writeIndex(JSON.stringify(this.index));
-    if (next) return this.open(next.id);
-    this.resetDraft();
     this.emitUpdate();
     return { ok: true };
   }

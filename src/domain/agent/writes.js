@@ -2,6 +2,7 @@ import { bodyAfterTitle, ideaTitle } from '../ideas/idea-document.js';
 import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
 import { coalesceBreakdownSubtasks, mergeBreakdownSubtasks, noteTitle, AI_TASK_TITLE, HUMAN_TASK_TITLE } from '../schedule/task-breakdown.js';
 import { WRITE_NAMES } from './catalog.js';
+import { inferTagIdFromText, resolveTagId } from './tag-intent.js';
 
 /**
  * @param {Record<string, any>} schedule
@@ -194,6 +195,8 @@ export function validateProposal(calls, world) {
   return { ok: true };
 }
 
+const TAGGED_WRITES = new Set(['create_task', 'update_task', 'pickup_idea', 'copy_open_task']);
+
 /**
  * 把模型参数补成方案里的完整一行。
  * @param {string} name
@@ -248,10 +251,15 @@ export function completeWriteArgs(name, raw, world) {
       args.subtasks = storedNotes(found.task);
     }
   }
+  if (TAGGED_WRITES.has(name)) {
+    args.tagId = resolveTagId(args.tagId, world?.tags || []);
+    if (!args.tagId && (name === 'create_task' || name === 'pickup_idea')) {
+      const blob = [args.text, args.note, ...(args.subtasks || [])].filter(Boolean).join('\n');
+      args.tagId = inferTagIdFromText(blob, world?.tags || []);
+    }
+  }
   return args;
 }
-
-const TAGGED_WRITES = new Set(['create_task', 'update_task', 'pickup_idea', 'copy_open_task']);
 
 /**
  * 没写日期且只允许一天时填上那一天。标签按这句话改写。

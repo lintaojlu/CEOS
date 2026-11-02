@@ -27,7 +27,7 @@ export class TaskTransferService {
     }
 
     if (from === 'ideas' && (to === 'required' || to === 'optional')) {
-      return { ok: false, error: '请在灵感里列入今日' };
+      return { ok: false, error: '请在灵感里拆解' };
     }
 
     if ((from === 'required' || from === 'optional') && (to === 'required' || to === 'optional')) {

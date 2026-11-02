@@ -5,6 +5,9 @@
 
 export const AGENT_SKILLS = [{ id: 'schedule', name: '日程' }];
 
+/** 一段对话发给模型、以及页面上保留的轮数。一轮是一句用户的话和它后面的回复。 */
+export const CONVERSATION_TURN_LIMIT = 20;
+
 export const PERMISSIONS = [
   { id: 'default', label: '默认' },
   { id: 'read', label: '只读' },
@@ -28,9 +31,30 @@ export function threadTitle(text) {
  */
 export function stripSkillToken(text) {
   return String(text || '')
-    .replace(/(^|\s)\/日程(?=\s|$)/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/(^|[ \t])\/日程(?=[ \t]|$)/gm, '$1')
+    .split('\n')
+    .map((line) => line.replace(/^([ \t]*)(.*)$/, (_, indent, rest) => `${indent}${rest.replace(/[ \t]{2,}/g, ' ')}`))
+    .join('\n')
     .trim();
+}
+
+/**
+ * 只留最近若干轮。系统提示始终保留，被截掉的那一轮里的函数调用也一起去掉。
+ * @param {any[]} messages
+ * @param {number} [turns]
+ * @returns {any[]}
+ */
+export function conversationWindow(messages, turns = CONVERSATION_TURN_LIMIT) {
+  const list = Array.isArray(messages) ? messages : [];
+  const limit = Math.max(1, turns);
+  const system = list.filter((item) => item && item.role === 'system');
+  const rest = list.filter((item) => item && item.role !== 'system');
+  const userAt = [];
+  rest.forEach((item, index) => {
+    if (item.role === 'user') userAt.push(index);
+  });
+  const body = userAt.length <= limit ? rest : rest.slice(userAt[userAt.length - limit]);
+  return [...system, ...body];
 }
 
 /**
@@ -185,7 +209,8 @@ export function replayTranscript(raw) {
       messages.push({
         role: 'user',
         text: event.text || '',
-        mentions: Array.isArray(event.mentions) ? event.mentions : []
+        mentions: Array.isArray(event.mentions) ? event.mentions : [],
+        time: event.time || ''
       });
     } else if (event.type === 'reasoning') {
       openBubble().events.push({ kind: 'reasoning', text: event.text || '' });

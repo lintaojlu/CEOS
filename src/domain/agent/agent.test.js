@@ -6,7 +6,7 @@ import { applyProposal } from './apply.js';
 import { applyTurnOverrides, completeWriteArgs, stageWrite, validateProposal } from './writes.js';
 import { AGENT_CONTEXT_TEMPLATE } from './prompt.js';
 import { buildAgentContext } from './context.js';
-import { tagDirective } from './tag-intent.js';
+import { inferTagIdFromText, resolveTagId, tagDirective } from './tag-intent.js';
 
 const today = '2026-10-09';
 const viewed = '2026-10-08';
@@ -25,6 +25,7 @@ function gate(extra = {}) {
 function world() {
   return {
     tagIds: ['tag-work'],
+    tags: [{ id: 'tag-work', name: '工作' }, { id: 'mine', name: '知识挖掘' }],
     ideas: [{ id: 'idea-1', text: '写引言', note: '', completed: false, dependsOn: [] }],
     readyIds: ['idea-1'],
     schedule: {
@@ -109,6 +110,7 @@ describe('context and tag rewrite', () => {
 
     const base = world();
     base.tagIds = ['climb', 'work'];
+    base.tags = [climb, work];
     const cleared = applyTurnOverrides('update_task', {
       date: viewed, taskId: 'keep', text: '已有必做', note: '', list: 'required', tagId: 'climb', subtasks: []
     }, base, { writableDates: [viewed], tagDirective: { mode: 'clear' } });
@@ -127,6 +129,27 @@ describe('context and tag rewrite', () => {
     }, base, { writableDates: [today, '2026-10-10'], tagDirective: { mode: 'keep' } });
     expect(missing.ok).toBe(false);
     expect(missing.error).toMatch(/允许写入/);
+  });
+
+  it('resolves a tag name to id and infers from create_task title', () => {
+    const tags = [{ id: 'mine', name: '知识挖掘' }, { id: 'work', name: '工作' }];
+    expect(resolveTagId('知识挖掘', tags)).toBe('mine');
+    expect(resolveTagId('mine', tags)).toBe('mine');
+    expect(inferTagIdFromText('优化垂搜知识挖掘的成簇', tags)).toBe('mine');
+    expect(inferTagIdFromText('买菜做饭', tags)).toBe('');
+
+    const base = world();
+    base.tagIds = ['mine', 'tag-work'];
+    base.tags = tags;
+    const named = completeWriteArgs('create_task', {
+      date: today, list: 'required', text: '优化成簇', note: '', tagId: '知识挖掘', subtasks: []
+    }, base);
+    expect(named.tagId).toBe('mine');
+
+    const inferred = completeWriteArgs('create_task', {
+      date: today, list: 'required', text: '先跑医疗领域数据，检查知识挖掘结果', note: '', tagId: '', subtasks: []
+    }, base);
+    expect(inferred.tagId).toBe('mine');
   });
 });
 

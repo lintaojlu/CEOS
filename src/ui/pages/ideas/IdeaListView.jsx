@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../app/context.jsx';
 import { ideaTitle } from '../../../domain/ideas/idea-document.js';
+import { Icon } from '../../library/symbols.jsx';
 import { ideaListDate } from './idea-list-date.js';
 
 export function IdeaListView({ onSelect, selectedId, filter }) {
@@ -12,7 +13,8 @@ export function IdeaListView({ onSelect, selectedId, filter }) {
     .sort(byCreated);
 
   function renderIdea(idea) {
-    const title = ideaTitle(idea) || '未命名';
+    const title = ideaTitle(idea) || app.ideaInboxService.boardLabel(idea.id) || '未命名';
+    const marked = app.ideaInboxService.hasBoard(idea.id);
     const selected = idea.id === selectedId;
     return (
       <button
@@ -24,6 +26,7 @@ export function IdeaListView({ onSelect, selectedId, filter }) {
         onClick={() => onSelect(idea.id)}
       >
         <span className="idea-row-title">{title}</span>
+        {marked ? <span className="idea-row-mark"><Icon name="pen" size={14} /></span> : null}
         <span className="idea-row-date">{ideaListDate(idea.createdAt)}</span>
       </button>
     );

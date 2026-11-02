@@ -26,7 +26,7 @@ export function AgentDock({ page }) {
   const fadeRef = useRef(null);
   const sheetRef = useRef(null);
   const panelRef = useRef(null);
-  const dockHidden = phase !== 'idle' || page === 'ideas';
+  const dockHidden = phase !== 'idle';
   const onAgentPage = page === 'agent';
   const hasWindow = view.messages.length > 0 || view.rows.length > 0 || view.busy || !!view.pendingChoice || !!error;
   const expanded = panelOpen && hasWindow && !onAgentPage;
@@ -77,7 +77,9 @@ export function AgentDock({ page }) {
     function onPointerDown(event) {
       const target = event.target;
       if (!(target instanceof Node)) return;
-      if (panelRef.current?.contains(target) || sheetRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      const bar = sheetRef.current?.querySelector('[data-agent-composer="bar"]');
+      if (bar instanceof Node && bar.contains(target)) return;
       setPanelOpen(false);
     }
     document.addEventListener('pointerdown', onPointerDown);

@@ -79,7 +79,7 @@ function TopBar({ page, sidebarHidden, onToggle, toggleRef, onCreateIdea, ideaFi
               ) : null}
             </div>
           ) : null}
-          <div className="topbar-actions">
+          <div className="topbar-actions" data-tauri-drag-region="false">
             {page === 'tasks' ? <TasksTopBar /> : null}
           </div>
         </>

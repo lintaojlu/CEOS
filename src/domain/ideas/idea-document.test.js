@@ -11,8 +11,6 @@ import {
   referencedImageIds,
   toIdeaFile
 } from './idea-document.js';
-import { IdeaPickupParseError, parseIdeaPickup } from './idea-pickup.js';
-
 describe('idea documents', () => {
   it('stores title, markdown body, and images without a data url prefix', () => {
     const doc = createIdeaDocument({
@@ -88,21 +86,5 @@ describe('idea documents', () => {
     expect(firstLineTitle('# 标题\n\n第二行')).toBe('标题');
     expect(firstLineTitle('![](idea-image:pic1)\n\n后面')).toBe('后面');
     expect(firstLineTitle('![](idea-image:pic1)')).toBe('');
-  });
-});
-
-describe('parseIdeaPickup', () => {
-  it('accepts one to eight tasks from an array or a tasks object', () => {
-    expect(parseIdeaPickup('[{"title":"写提纲","note":"三节"}]')).toEqual([{ title: '写提纲', note: '三节' }]);
-    expect(parseIdeaPickup('```json\n{"tasks":[{"title":"甲","note":""}]}\n```')).toEqual([{ title: '甲', note: '' }]);
-  });
-
-  it('fails on empty, too many, and unreadable replies', () => {
-    expect(() => parseIdeaPickup('[]')).toThrow(IdeaPickupParseError);
-    const nine = JSON.stringify(Array.from({ length: 9 }, (_, index) => ({ title: `t${index}`, note: '' })));
-    expect(() => parseIdeaPickup(nine)).toThrow(IdeaPickupParseError);
-    expect(() => parseIdeaPickup('不是 json')).toThrow(IdeaPickupParseError);
-    expect(() => parseIdeaPickup('[{"title":"","note":"x"}]')).toThrow(IdeaPickupParseError);
-    expect(() => parseIdeaPickup('[{"title":"甲"}]')).toThrow(IdeaPickupParseError);
   });
 });

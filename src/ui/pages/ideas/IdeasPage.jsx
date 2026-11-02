@@ -13,16 +13,19 @@ function clampIdeaListWidth(value) {
 export function IdeasPage({ filter, openIdeaId, onOpenIdea }) {
   const app = useApp();
   useShell();
-  const [pickupId, setPickupId] = useState(null);
+  const [boardWide, setBoardWide] = useState(false);
   const preferredWidth = useRef(normalizeIdeaListWidth(app.uiPrefs.get().ideasListWidth));
   const [listWidth, setListWidth] = useState(() => clampIdeaListWidth(preferredWidth.current));
   const selected = openIdeaId ? app.ideaInboxService.find(openIdeaId) : null;
 
   useLayoutEffect(() => {
     const shell = document.querySelector('.app-shell');
-    shell?.style.setProperty('--ideas-list-width', `${listWidth}px`);
-    return () => shell?.style.removeProperty('--ideas-list-width');
-  }, [listWidth]);
+    shell?.style.setProperty('--ideas-list-width', `${boardWide ? 0 : listWidth}px`);
+  }, [listWidth, boardWide]);
+
+  useLayoutEffect(() => () => {
+    document.querySelector('.app-shell')?.style.removeProperty('--ideas-list-width');
+  }, []);
 
   useEffect(() => {
     function onResize() {
@@ -63,7 +66,10 @@ export function IdeasPage({ filter, openIdeaId, onOpenIdea }) {
   }
 
   useEffect(() => {
-    if (!selected?.id) return;
+    if (!selected?.id) {
+      setBoardWide(false);
+      return;
+    }
     document.getElementById(`idea-row-${selected.id}`)?.scrollIntoView({ block: 'nearest' });
   }, [selected?.id]);
 
@@ -76,7 +82,7 @@ export function IdeasPage({ filter, openIdeaId, onOpenIdea }) {
   else if (visible === 0) blank = '当前筛选下没有灵感。';
 
   return (
-    <div className="ideas-split">
+    <div className={boardWide ? 'ideas-split is-board-wide' : 'ideas-split'}>
       <aside className="ideas-list" aria-label="灵感列表">
         <div className="ideas-list-scroll">
           <IdeaListView filter={filter} selectedId={selected ? selected.id : null} onSelect={onOpenIdea} />
@@ -94,14 +100,17 @@ export function IdeasPage({ filter, openIdeaId, onOpenIdea }) {
       </aside>
       <section className="ideas-pane" aria-label="灵感正文">
         {selected ? (
-          <IdeaEditor ideaId={selected.id} onPickup={setPickupId} />
+          <IdeaEditor
+            ideaId={selected.id}
+            wide={boardWide}
+            onWide={setBoardWide}
+          />
         ) : (
           <div className="ideas-blank">
             <p className="empty">{blank}</p>
           </div>
         )}
       </section>
-      {pickupId ? <IdeaPickupModal ideaId={pickupId} onClose={() => setPickupId(null)} /> : null}
     </div>
   );
 }

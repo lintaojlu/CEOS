@@ -1,7 +1,7 @@
 const SAFE_ID = /^[A-Za-z0-9-]{1,80}$/;
 const IMAGE_MIMES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 const IMAGE_REF = /!\[[^\]]*\]\(<?idea-image:([A-Za-z0-9-]{1,80})>?\)/g;
-const MAX_IMAGE_CHARS = 12 * 1024 * 1024;
+export const MAX_IMAGE_CHARS = 12 * 1024 * 1024;
 
 /** @param {string} id */
 export function isSafeIdeaId(id) {

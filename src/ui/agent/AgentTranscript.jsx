@@ -5,6 +5,7 @@ import { activityStatus, toolHint, toolSteps, toolTitle } from './activity.js';
 import { AgentChoiceCard } from './AgentChoiceCard.jsx';
 import { AgentContextPill } from './AgentContextPill.jsx';
 import { repairStreamingMarkdown } from './stream-markdown.js';
+import { messageClock, parseUserMessage } from './user-message-doc.js';
 
 function tagName(tags, id) {
   if (!id) return '不挂标签';
@@ -205,14 +206,55 @@ function Identity() {
   );
 }
 
+function MessageCopy({ text }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="agent-user-copy"
+      aria-label="复制"
+      onClick={() => {
+        navigator.clipboard?.writeText(text).then(() => {
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1200);
+        }).catch(() => {});
+      }}
+    >
+      <Symbol name={copied ? 'check' : 'copy'} size={14} />
+    </button>
+  );
+}
+
 function UserTurn({ message, layout }) {
   const page = layout === 'page';
   const [open, setOpen] = useState(false);
   const parts = splitAgentUserMessage(message.text || '');
+  const lines = parseUserMessage(parts.body);
+  const clock = messageClock(message.time);
   const body = (
     <div className={page ? 'agent-bubble agent-bubble-user' : 'agent-line agent-line-user'}>
       <AgentContextPill text={parts.context} open={open} onOpenChange={setOpen} />
-      {parts.body ? <span className="agent-user-body">{parts.body}</span> : null}
+      {parts.body ? (
+        <div className="agent-user-doc">
+          {lines.map((line, index) => {
+            const offset = { marginLeft: line.depth ? line.depth * 8 : undefined };
+            if (line.kind === 'gap') return <div key={index} className="agent-user-gap" />;
+            if (line.kind === 'check') {
+              return (
+                <div key={index} className="agent-user-check" style={offset}>
+                  <span className="agent-user-mark">{line.mark}</span>
+                  <span>{line.text}</span>
+                </div>
+              );
+            }
+            return (
+              <div key={index} className={line.kind === 'heading' ? 'agent-user-heading' : 'agent-user-line'} style={offset}>
+                {line.text}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
   return (
@@ -225,6 +267,12 @@ function UserTurn({ message, layout }) {
         </div>
       ) : null}
       {body}
+      {page && parts.body ? (
+        <div className="agent-user-foot">
+          {clock ? <span className="agent-user-time">{clock}</span> : null}
+          <MessageCopy text={parts.body} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -251,6 +299,11 @@ function AssistantTurn({ message, layout, pending, streaming, phase, choice, onA
       ) : null}
       {live ? <LiveStatus phase={phase} events={events} text={message.text} showElapsed={false} /> : null}
       {body}
+      {page && message.text && !live ? (
+        <div className="agent-user-foot is-assistant">
+          <MessageCopy text={message.text} />
+        </div>
+      ) : null}
       {choice ? (
         <AgentChoiceCard
           questions={choice.questions}

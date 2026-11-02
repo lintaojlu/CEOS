@@ -51,10 +51,9 @@ export function Symbol({ name, size = 18 }) {
   if (name === 'compose') {
     return (
       <svg {...common}>
-        <rect x="4" y="4" width="16" height="16" rx="3.2" />
-        <path d="M8.6 15.6 13.4 10.8" />
-        <path d="M12.2 9.6 14.6 12" />
-        <path d="M14.4 8.4 18.4 4.4" />
+        <path d="M15.2 3.8 20.2 8.8 9 19.4 4.2 19.8 4.6 15z" />
+        <path d="M13.4 5.6 18.4 10.6" />
+        <path d="M6.2 16.6 8.6 19" />
       </svg>
     );
   }
@@ -144,6 +143,14 @@ export function Symbol({ name, size = 18 }) {
         <path d="M12 4a8 8 0 1 1-6.4 3.2" />
         <path d="M5.1 4v4h4" />
         <path d="M12 8.6v3.7l2.5 1.8" />
+      </svg>
+    );
+  }
+  if (name === 'pen') {
+    return (
+      <svg {...common}>
+        <path d="M4.5 19.5h3.2L18.2 9a1.8 1.8 0 0 0-2.6-2.6L5 16.8v2.7z" />
+        <path d="M13.8 7.8l2.4 2.4" />
       </svg>
     );
   }

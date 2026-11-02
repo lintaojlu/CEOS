@@ -12,6 +12,7 @@
     "package:mac": "bash scripts/package-mac.sh"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.1",
     "@tauri-apps/api": "^2.12.2",
     "@tiptap/extension-image": "^3.32.0",
     "@tiptap/extension-link": "^3.32.0",

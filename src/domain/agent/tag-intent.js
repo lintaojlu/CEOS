@@ -1,6 +1,36 @@
 const UNTAG = /摘掉|去掉|不挂|取消标签/;
 
 /**
+ * 把模型传来的 tagId（可能是 id，也可能是标签名）收成真实 id。
+ * 对不上时原样返回，交给校验报错。
+ * @param {string} raw
+ * @param {Array<{ id: string, name: string }>} tags
+ * @returns {string}
+ */
+export function resolveTagId(raw, tags) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  const list = tags || [];
+  if (list.some((tag) => tag && tag.id === value)) return value;
+  const exact = list.find((tag) => tag && tag.name === value);
+  if (exact) return exact.id;
+  const mentioned = tagsMentioned(value, list);
+  if (mentioned.length === 1) return mentioned[0].id;
+  return value;
+}
+
+/**
+ * 标题/说明里只对上一个已有标签名时，用它的 id；对不上或多个则空。
+ * @param {string} text
+ * @param {Array<{ id: string, name: string }>} tags
+ * @returns {string}
+ */
+export function inferTagIdFromText(text, tags) {
+  const mentioned = tagsMentioned(text, tags);
+  return mentioned.length === 1 ? mentioned[0].id : '';
+}
+
+/**
  * 较长的名字先对上，避免「攀岩」再命中已经被「攀岩项目」盖住的那段。
  * 名字被包含也算：话里的「攀岩」对得上「攀岩项目」。
  * @param {string} text

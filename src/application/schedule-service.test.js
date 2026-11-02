@@ -297,4 +297,23 @@ describe('moveTaskToDate', () => {
     expect(service.data[targetKey].optional[0].notes.map((note) => note.text)).toEqual(['留着']);
     expect(service.data[targetKey].required).toEqual([]);
   });
+
+  it('clears only the viewed day tasks', () => {
+    const service = createService();
+    service.addTask('required', '今天必做');
+    service.addTask('optional', '今天选做');
+    service.setReflection('留下反思');
+    const origin = service.currentDate;
+    const originKey = getDateKey(origin);
+    service.setCurrentDate(addDays(origin, 1));
+    service.addTask('required', '明天必做');
+    service.setCurrentDate(origin);
+
+    service.clearDayTasks();
+
+    expect(service.data[originKey].required).toEqual([]);
+    expect(service.data[originKey].optional).toEqual([]);
+    expect(service.data[originKey].reflection).toBe('留下反思');
+    expect(service.data[getDateKey(addDays(origin, 1))].required.map((task) => task.text)).toEqual(['明天必做']);
+  });
 });

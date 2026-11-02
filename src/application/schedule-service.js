@@ -589,7 +589,8 @@ export class ScheduleService {
     return this.syncTasksFrom(getDateKey(addDays(this.currentDate, -1)));
   }
 
-  clearTodayTasks() {
+  /** Clears required and optional on the viewed day. Reflection and other days stay. */
+  clearDayTasks() {
     const data = this.getCurrentData();
     data.required = [];
     data.optional = [];

@@ -15,12 +15,12 @@ import { applyProjectTagRepair } from '../infrastructure/migration/project-tag-r
 import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
-import { IdeaPickupService } from './idea-pickup-service.js';
 import { createIdeaStore } from '../infrastructure/storage/idea-file-store.js';
 import { ExportService } from './export-service.js';
 import { LlmService } from './llm-service.js';
 import { StatsService } from './stats-service.js';
 import { InsightService } from './insight-service.js';
+import { IdeaBreakdownService } from './idea-breakdown-service.js';
 import { TaskBreakdownService } from './task-breakdown-service.js';
 import { TaskTagService } from './task-tag-service.js';
 import { TaskStandardizeService } from './task-standardize-service.js';
@@ -79,10 +79,8 @@ export class ScheduleApp {
       scheduleService: this.scheduleService
     });
 
-    this.ideaPickupService = new IdeaPickupService({
-      ideaInboxService: this.ideaInboxService,
-      scheduleService: this.scheduleService,
-      llmService: this.llmService
+    this.ideaBreakdownService = new IdeaBreakdownService({
+      ideaInboxService: this.ideaInboxService
     });
 
     this.taskTagService = new TaskTagService({

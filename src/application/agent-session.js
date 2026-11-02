@@ -3,7 +3,7 @@ import { CHOICE_NAMES, READ_NAMES, WRITE_NAMES, toolsForTurn } from '../domain/a
 import { normalizeAskChoices } from '../domain/agent/choices.js';
 import { classifyTurn } from '../domain/agent/turn.js';
 import { tagDirective } from '../domain/agent/tag-intent.js';
-import { formatMentions } from '../domain/agent/transcript.js';
+import { conversationWindow, formatMentions } from '../domain/agent/transcript.js';
 import { redact } from '../domain/agent/redact.js';
 import { AgentRuntime, dropStaged, editStaged, moveStaged, rowFromCall } from './agent-runtime.js';
 
@@ -283,7 +283,7 @@ export class AgentSession {
     turn.tagDirective = tagDirective(raw, world.tags);
     this.detailDates = [];
     this.pendingChoice = null;
-    this.messages.push({ role: 'user', text: raw, mentions });
+    this.messages.push({ role: 'user', text: raw, mentions, time: new Date().toISOString() });
     this.transcript.push({ role: 'user', text: raw });
     await this.record('user_message', { text: raw, turn });
     const proposalNote = this.staged.length ? `\n\n当前方案：\n${JSON.stringify(this.rows())}` : '';
@@ -302,16 +302,17 @@ export class AgentSession {
       if (this.isAbort()) return this.halt();
       this.phase = 'wait';
       this.live();
+      const messages = conversationWindow(this.modelMessages);
       await this.record('model_request', {
         round,
-        messages: this.modelMessages,
+        messages,
         tools: tools.map((item) => item.function.name)
       });
       let streamed = '';
       let response;
       try {
         response = await this.complete({
-          messages: this.modelMessages,
+          messages,
           tools,
           model: this.model || undefined,
           signal: this.abort?.signal,

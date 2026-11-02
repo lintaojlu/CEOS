@@ -68,36 +68,17 @@ describe('agent threads', () => {
     expect(threads.view().titleLocked).toBe(true);
   });
 
-  it('falls back to the newest remaining thread after delete', async () => {
+  it('stays on one session and shows only the last 20 turns', async () => {
     const { threads } = setup();
-    await threads.submit('第一段');
-    threads.beginNew();
-    await threads.submit('第二段');
-    expect(threads.view().id).toBe('thread-2');
-    await threads.remove('thread-2');
-    expect(threads.view().id).toBe('thread-1');
-    expect(threads.view().title).toBe('第一段');
-  });
-
-  it('refuses to switch while a reply is in progress', async () => {
-    const { threads } = setup();
-    /** @type {(value: any) => void} */
-    let release = () => {};
-    let started = () => {};
-    const untilModel = new Promise((resolve) => {
-      started = resolve;
-    });
-    threads.complete = () => new Promise((resolve) => {
-      release = resolve;
-      started();
-    });
-    const pending = threads.submit('你好');
-    await untilModel;
-    expect(threads.busy).toBe(true);
-    expect(threads.beginNew().ok).toBe(false);
-    release({ content: '好。', toolCalls: [] });
-    await pending;
-    expect(threads.beginNew().ok).toBe(true);
+    await threads.submit('第一句');
+    const id = threads.view().id;
+    for (let index = 0; index < 20; index += 1) {
+      await threads.submit(`后续${index}`);
+    }
+    const view = threads.view();
+    expect(view.id).toBe(id);
+    expect(view.messages.filter((item) => item.role === 'user')).toHaveLength(20);
+    expect(view.messages.find((item) => item.role === 'user').text).toBe('后续0');
   });
 
   it('hides the proposal until the reply finishes, and stop drops it', async () => {

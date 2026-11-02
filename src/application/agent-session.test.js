@@ -284,4 +284,22 @@ describe('agent session', () => {
     expect(session.messages.at(-1)?.text).toBe('先看。');
     expect(session.rows()).toEqual([]);
   });
+
+  it('sends only the last 20 turns to the model', async () => {
+    const { runtime } = setup();
+    /** @type {number[]} */
+    const sent = [];
+    const session = new AgentSession({
+      runtime,
+      complete: async ({ messages }) => {
+        sent.push(messages.filter((item) => item.role === 'user').length);
+        return { content: '好。', toolCalls: [] };
+      }
+    });
+    for (let index = 0; index < 21; index += 1) {
+      await session.submit(`第${index}句`);
+    }
+    expect(sent.at(-1)).toBe(20);
+    expect(session.modelMessages.filter((item) => item.role === 'user')).toHaveLength(21);
+  });
 });

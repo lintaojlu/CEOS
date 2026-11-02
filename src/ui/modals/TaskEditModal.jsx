@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { commitNoteDraft, createNote, normalizeNotes } from '../../domain/schedule/daily-task.js';
+import { locateTask } from '../../domain/schedule/task-group.js';
 import { tagPillStyle } from '../../domain/schedule/fixed-tags.js';
 import { getDateKey, parseDateKey } from '../../domain/shared/date-key.js';
 import { useApp } from '../app/context.jsx';
@@ -8,7 +9,7 @@ import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../keyboard
 
 function readTask(app, type, id) {
   const day = app.scheduleService.getCurrentData();
-  return (day[type] || []).find((task) => task.id === id) || null;
+  return locateTask(day[type] || [], id)?.task || null;
 }
 
 export function TaskEditModal({ type, id, onClose }) {

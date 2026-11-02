@@ -152,6 +152,50 @@ describe('syncPrevDay', () => {
     expect(current.ideas).toBeUndefined();
     expect(current.projects).toBeUndefined();
   });
+
+  it('copies an unfinished box with only its unfinished children', () => {
+    const prev = {
+      ...createEmptyScheduleDay(),
+      required: [{
+        id: 'box',
+        text: '买菜、做饭',
+        completed: false,
+        children: [
+          { id: 'a', text: '买菜', completed: false, notes: [{ id: 'n1', text: '清单' }] },
+          { id: 'b', text: '做饭', completed: true },
+          { id: 'c', text: '洗碗', completed: false }
+        ]
+      }]
+    };
+    const current = createEmptyScheduleDay();
+    syncPrevDayTasks(prev, current);
+    expect(current.required).toHaveLength(1);
+    expect(current.required[0].id).toBe('box');
+    expect(current.required[0].children.map((child) => child.id)).toEqual(['a', 'c']);
+    expect(current.required[0].children[0].notes[0]).not.toBe(prev.required[0].children[0].notes[0]);
+  });
+
+  it('does not copy a box whose id is already on the day', () => {
+    const prev = {
+      ...createEmptyScheduleDay(),
+      required: [{
+        id: 'box',
+        text: '买菜、做饭',
+        completed: false,
+        children: [
+          { id: 'a', text: '买菜', completed: false },
+          { id: 'c', text: '洗碗', completed: false }
+        ]
+      }]
+    };
+    const current = {
+      ...createEmptyScheduleDay(),
+      required: [{ id: 'box', text: '已有', completed: false }]
+    };
+    syncPrevDayTasks(prev, current);
+    expect(current.required.map((task) => task.id)).toEqual(['box']);
+    expect(current.required[0].text).toBe('已有');
+  });
 });
 
 describe('normalizeScheduleDay', () => {
@@ -176,5 +220,25 @@ describe('normalizeScheduleDay', () => {
     });
     expect(day.required[0].tagIds).toEqual(['p-old']);
     expect(day.required[0].tagId).toBeUndefined();
+  });
+
+  it('keeps one level of children and dissolves a box with a single child', () => {
+    const day = normalizeScheduleDay({
+      required: [
+        {
+          id: 'box',
+          text: '买菜、做饭',
+          children: [
+            { id: 'a', text: '买菜', children: [{ id: 'deep', text: '更深' }] },
+            { id: 'b', text: '做饭' }
+          ]
+        },
+        { id: 'solo', text: '单独', children: [{ id: 'only', text: '只剩一条' }] }
+      ]
+    });
+    expect(day.required[0].id).toBe('box');
+    expect(day.required[0].children.map((child) => child.id)).toEqual(['a', 'b']);
+    expect(day.required[0].children[0].children).toBeUndefined();
+    expect(day.required[1]).toMatchObject({ id: 'only', text: '只剩一条' });
   });
 });

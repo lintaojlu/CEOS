@@ -8,6 +8,20 @@
 import { cloneDailyTask, normalizeTagIds } from './daily-task.js';
 
 /**
+ * @param {any[] | null | undefined} list
+ */
+function indexTaskIds(list) {
+  const existing = new Map();
+  (list || []).forEach((task) => {
+    if (task?.id && !existing.has(task.id)) existing.set(task.id, task);
+    (task?.children || []).forEach((child) => {
+      if (child?.id && !existing.has(child.id)) existing.set(child.id, child);
+    });
+  });
+  return existing;
+}
+
+/**
  * Copy unfinished required/optional from prev into current.
  * Keeps the original task id and tagIds. Completed tasks stay on prev.
  * @param {ScheduleDay|null|undefined} prev
@@ -19,14 +33,33 @@ export function syncPrevDayTasks(prev, current) {
   ['required', 'optional'].forEach((type) => {
     const prevList = prev[type] || [];
     if (!current[type]) current[type] = [];
-    const existing = new Map();
-    current[type].forEach((task) => {
-      if (task?.id && !existing.has(task.id)) existing.set(task.id, task);
-    });
+    const existing = indexTaskIds(current[type]);
     const seen = new Set();
     prevList.forEach((task) => {
-      if (!task?.id || task.completed || seen.has(task.id)) return;
+      if (!task?.id || seen.has(task.id)) return;
       seen.add(task.id);
+      const kids = Array.isArray(task.children) ? task.children.filter((child) => child && child.id) : null;
+      if (kids && kids.length) {
+        if (existing.has(task.id)) return;
+        const pending = kids.filter((child) => !child.completed && !existing.has(child.id) && !seen.has(child.id));
+        pending.forEach((child) => seen.add(child.id));
+        if (pending.length >= 2) {
+          const copy = cloneDailyTask(task);
+          copy.children = pending.map((child) => cloneDailyTask(child));
+          copy.completed = copy.children.every((child) => child.completed);
+          copy.tagIds = [];
+          copy.notes = [];
+          current[type].push(copy);
+          existing.set(copy.id, copy);
+          copy.children.forEach((child) => existing.set(child.id, child));
+        } else if (pending.length === 1) {
+          const copy = cloneDailyTask(pending[0]);
+          current[type].push(copy);
+          existing.set(copy.id, copy);
+        }
+        return;
+      }
+      if (task.completed) return;
       const tags = normalizeTagIds(task);
       const found = existing.get(task.id);
       if (found) {

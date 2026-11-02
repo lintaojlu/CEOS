@@ -3,6 +3,19 @@ import { getDateKey, addDays, todayKey } from '../domain/shared/date-key.js';
 import { createDailyTask, createNote, sortTasks, parseTime, normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 import { nextTagColor } from '../domain/schedule/tag-palette.js';
 import { syncPrevDay } from '../domain/schedule/schedule-day.js';
+import {
+  adoptTask as adoptIntoList,
+  completeInList,
+  deleteFromList,
+  insertTask as insertIntoList,
+  leafTasks,
+  locateTask,
+  nestTasks as nestTaskPair,
+  renameGroupIfFallback as renameGroupTitle,
+  reorderChild,
+  takeTask as takeFromList,
+  toggleInList
+} from '../domain/schedule/task-group.js';
 import { Events } from './event-bus.js';
 
 export class ScheduleService {
@@ -196,7 +209,7 @@ export class ScheduleService {
     const trimmed = String(name || '').trim();
     if (!trimmed) return null;
     const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const task = (day[type] || []).find((item) => item.id === taskId);
+    const task = locateTask(day[type] || [], taskId)?.task || null;
     if (!task) return null;
     let tag = (this.workspace.tags || []).find((item) => item.name === trimmed) || null;
     if (!tag) {
@@ -219,8 +232,7 @@ export class ScheduleService {
    * @param {string|string[]} tagIds
    */
   setTaskTag(type, id, tagIds) {
-    const data = this.getCurrentData();
-    const task = (data[type] || []).find((item) => item.id === id);
+    const task = this._findTask(type, id);
     if (!task) return null;
     task.tagIds = this._knownTagIds(tagIds);
     delete task.tagId;
@@ -234,20 +246,7 @@ export class ScheduleService {
    * @param {string} id
    */
   toggleTask(type, id) {
-    const data = this.getCurrentData();
-    const task = data[type].find((t) => t.id === id);
-    if (!task) return null;
-    task.completed = !task.completed;
-    this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
-    if (task.completed) {
-      this.eventBus.emit(Events.TASK_COMPLETED, {
-        dateKey: this.getDateKey(),
-        type,
-        id
-      });
-    }
-    return task;
+    return this._toggleOn(this.getDateKey(), type, id);
   }
 
   /**
@@ -258,16 +257,25 @@ export class ScheduleService {
    */
   toggleTaskOnDate(dateKey, type, id) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
+    return this._toggleOn(dateKey, type, id);
+  }
+
+  /**
+   * @param {string} dateKey
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   */
+  _toggleOn(dateKey, type, id) {
     const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const task = (day[type] || []).find((item) => item.id === id);
-    if (!task) return null;
-    task.completed = !task.completed;
+    const toggled = toggleInList(day[type] || [], id);
+    if (!toggled) return null;
+    day[type] = toggled.tasks;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
-    if (task.completed) {
-      this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id });
-    }
-    return task;
+    toggled.completedIds.forEach((completedId) => {
+      this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId });
+    });
+    return locateTask(toggled.tasks, id)?.task || null;
   }
 
   /**
@@ -279,35 +287,39 @@ export class ScheduleService {
   completeTaskOnDate(dateKey, type, id) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
     const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const task = (day[type] || []).find((item) => item.id === id);
-    if (!task || task.completed) return task || null;
-    task.completed = true;
+    const completed = completeInList(day[type] || [], id);
+    if (!completed) return null;
+    if (!completed.completedIds.length) return completed.task;
+    day[type] = completed.tasks;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
-    this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id });
-    return task;
+    completed.completedIds.forEach((completedId) => {
+      this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId });
+    });
+    return completed.task;
   }
 
   pinTask(type, id) {
     const data = this.getCurrentData();
-    const task = data[type].find((t) => t.id === id);
-    if (!task) return;
-    task.pinned = !task.pinned;
-    sortTasks(data[type]);
+    const found = locateTask(data[type] || [], id);
+    if (!found) return;
+    found.task.pinned = !found.task.pinned;
+    if (!found.parent) sortTasks(data[type]);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
   }
 
   deleteTask(type, id) {
     const data = this.getCurrentData();
-    data[type] = data[type].filter((t) => t.id !== id);
+    const next = deleteFromList(data[type] || [], id);
+    if (!next) return;
+    data[type] = next;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
   }
 
   updateTask(type, id, patch) {
-    const data = this.getCurrentData();
-    const task = data[type].find((t) => t.id === id);
+    const task = this._findTask(type, id);
     if (!task) return null;
     this._applyTaskPatch(task, patch);
     this.persist();
@@ -331,21 +343,19 @@ export class ScheduleService {
       return this.updateTask(type, id, patch);
     }
     const list = this.getCurrentData()[type] || [];
-    const index = list.findIndex((task) => task.id === id);
-    if (index === -1) return null;
+    const taken = takeFromList(list, id);
+    if (!taken) return null;
     const existing = this.data[dateKey];
-    const occupied = ['required', 'optional'].some((bucket) => (
-      (existing?.[bucket] || []).some((task) => task && task.id === id)
-    ));
+    const occupied = ['required', 'optional'].some((bucket) => !!locateTask(existing?.[bucket] || [], id));
     if (occupied) return { occupied: true };
-    const [task] = list.splice(index, 1);
-    this._applyTaskPatch(task, patch);
+    this.getCurrentData()[type] = taken.tasks;
+    this._applyTaskPatch(taken.task, patch);
     const target = this.scheduleRepo.ensureDay(this.data, dateKey);
-    target[type].push(task);
+    target[type].push(taken.task);
     sortTasks(target[type]);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
-    return task;
+    return taken.task;
   }
 
   /**
@@ -382,7 +392,7 @@ export class ScheduleService {
    */
   _findTask(type, taskId) {
     const data = this.getCurrentData();
-    const task = (data[type] || []).find((t) => t.id === taskId);
+    const task = locateTask(data[type] || [], taskId)?.task || null;
     if (!task) return null;
     if (!Array.isArray(task.notes)) {
       task.notes = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
@@ -444,7 +454,7 @@ export class ScheduleService {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
     if (type !== 'required' && type !== 'optional') return null;
     const day = this.data[dateKey];
-    const task = (day?.[type] || []).find((item) => item && item.id === taskId);
+    const task = locateTask(day?.[type] || [], taskId)?.task || null;
     if (!task) return null;
     if (patch.text != null) task.text = String(patch.text).trim();
     if (patch.notes != null) {
@@ -467,27 +477,76 @@ export class ScheduleService {
   }
 
   /**
-   * 按当前查看日的数组顺序摆放。beforeId 为空时放到目标列末尾。
-   * @param {'required'|'optional'} fromType
-   * @param {string} id
-   * @param {'required'|'optional'} toType
-   * @param {string|null} beforeId
+   * 把同一列里的两条普通任务收成一个框。目标在前，被拖的在后。
+   * @param {'required'|'optional'} type
+   * @param {string} targetId
+   * @param {string} draggedId
    */
+  nestTasks(type, targetId, draggedId) {
+    const data = this.getCurrentData();
+    const nested = nestTaskPair(data[type] || [], targetId, draggedId);
+    if (!nested) return null;
+    data[type] = nested.tasks;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: nested.group.id });
+    return nested.group;
+  }
+
+  /**
+   * 把一条普通任务放进已有的框，标题不变。
+   * @param {'required'|'optional'} type
+   * @param {string} groupId
+   * @param {string} draggedId
+   */
+  adoptTask(type, groupId, draggedId) {
+    const data = this.getCurrentData();
+    const adopted = adoptIntoList(data[type] || [], groupId, draggedId);
+    if (!adopted) return null;
+    data[type] = adopted.tasks;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: groupId });
+    return adopted.group;
+  }
+
+  /**
+   * 只在标题仍是合并当时的截断标题时替换。
+   * @param {'required'|'optional'} type
+   * @param {string} groupId
+   * @param {string} text
+   * @param {string} fallback
+   */
+  renameGroupIfFallback(type, groupId, text, fallback) {
+    const data = this.getCurrentData();
+    const next = renameGroupTitle(data[type] || [], groupId, text, fallback);
+    if (!next) return null;
+    data[type] = next;
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: groupId });
+    return locateTask(next, groupId)?.task || null;
+  }
+
   placeTask(fromType, id, toType, beforeId) {
     const data = this.getCurrentData();
     const fromList = data[fromType];
     if (!fromList || !data[toType]) return;
-    const fromIdx = fromList.findIndex((task) => task.id === id);
-    if (fromIdx === -1) return;
     if (fromType === toType && beforeId === id) return;
-    const [task] = fromList.splice(fromIdx, 1);
-    const toList = data[toType];
-    let insertAt = toList.length;
-    if (beforeId) {
-      const beforeIdx = toList.findIndex((item) => item.id === beforeId);
-      if (beforeIdx !== -1) insertAt = beforeIdx;
+    if (fromType === toType) {
+      const fromLoc = locateTask(fromList, id);
+      const beforeLoc = beforeId ? locateTask(fromList, beforeId) : null;
+      if (fromLoc?.parent && beforeLoc?.parent && fromLoc.parent.id === beforeLoc.parent.id) {
+        if (!reorderChild(fromLoc.parent, id, beforeId)) return;
+        this.persist();
+        this.eventBus.emit(Events.TASKS_UPDATED, {});
+        return;
+      }
     }
-    toList.splice(insertAt, 0, task);
+    const taken = takeFromList(fromList, id);
+    if (!taken) return;
+    if (fromType === toType) data[fromType] = insertIntoList(taken.tasks, taken.task, beforeId);
+    else {
+      data[fromType] = taken.tasks;
+      data[toType] = insertIntoList(data[toType], taken.task, beforeId);
+    }
     this.persist();
     if (fromType !== toType) this.eventBus.emit(Events.TASK_MOVED, { fromType, toType, id });
     this.eventBus.emit(Events.TASKS_UPDATED, {});
@@ -500,12 +559,12 @@ export class ScheduleService {
    */
   takeTask(type, id) {
     const data = this.getCurrentData();
-    const idx = data[type].findIndex((t) => t.id === id);
-    if (idx === -1) return null;
-    const [task] = data[type].splice(idx, 1);
+    const taken = takeFromList(data[type] || [], id);
+    if (!taken) return null;
+    data[type] = taken.tasks;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
-    return task;
+    return taken.task;
   }
 
   /**
@@ -525,7 +584,7 @@ export class ScheduleService {
    */
   insertTaskOnDate(dateKey, type, task) {
     const data = this.scheduleRepo.ensureDay(this.data, dateKey);
-    if (data[type].some((item) => item.id === task.id)) return;
+    if (locateTask(data[type], task.id)) return;
     const next = {
       ...task,
       tagIds: this._knownTagIds(normalizeTagIds(task)),
@@ -548,7 +607,7 @@ export class ScheduleService {
   countOpenTasks(dateKey) {
     const day = this.data[dateKey];
     if (!day) return 0;
-    const open = (list) => (Array.isArray(list) ? list.filter((t) => t && !t.completed).length : 0);
+    const open = (list) => leafTasks(list).filter((task) => task && !task.completed).length;
     return open(day.required) + open(day.optional);
   }
 
@@ -618,9 +677,9 @@ export class ScheduleService {
 
   getProgress() {
     const data = this.getCurrentData();
-    const allTasks = data.required || [];
-    const total = allTasks.length;
-    const completed = allTasks.filter((t) => t.completed).length;
+    const leaves = leafTasks(data.required || []);
+    const total = leaves.length;
+    const completed = leaves.filter((task) => task.completed).length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, percentage };
   }
@@ -644,7 +703,7 @@ export class ScheduleService {
     /** @type {Array<{ list: 'required'|'optional', task: any }>} */
     const out = [];
     ['required', 'optional'].forEach((list) => {
-      (day[list] || []).forEach((task) => {
+      leafTasks(day[list] || []).forEach((task) => {
         if (!task.completed) out.push({ list: /** @type {any} */ (list), task });
       });
     });
@@ -659,7 +718,7 @@ export class ScheduleService {
    */
   findTaskOnDate(dateKey, list, taskId) {
     const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    return (day[list] || []).find((t) => t.id === taskId) || null;
+    return locateTask(day[list] || [], taskId)?.task || null;
   }
 
   parseTime = parseTime;

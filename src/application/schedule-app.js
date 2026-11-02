@@ -23,6 +23,7 @@ import { InsightService } from './insight-service.js';
 import { IdeaBreakdownService } from './idea-breakdown-service.js';
 import { TaskBreakdownService } from './task-breakdown-service.js';
 import { TaskTagService } from './task-tag-service.js';
+import { TaskGroupService } from './task-group-service.js';
 import { TaskStandardizeService } from './task-standardize-service.js';
 import { TaskIntakeService } from './task-intake-service.js';
 import { JevService } from './jev-service.js';
@@ -84,6 +85,11 @@ export class ScheduleApp {
     });
 
     this.taskTagService = new TaskTagService({
+      scheduleService: this.scheduleService,
+      llmService: this.llmService
+    });
+
+    this.taskGroupService = new TaskGroupService({
       scheduleService: this.scheduleService,
       llmService: this.llmService
     });

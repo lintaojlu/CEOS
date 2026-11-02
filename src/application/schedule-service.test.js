@@ -317,3 +317,33 @@ describe('moveTaskToDate', () => {
     expect(service.data[getDateKey(addDays(origin, 1))].required.map((task) => task.text)).toEqual(['明天必做']);
   });
 });
+
+describe('nested tasks', () => {
+  it('keeps both tasks, then releases them when the box is deleted', () => {
+    const service = createService();
+    const first = service.addTask('required', '买菜');
+    const second = service.addTask('required', '做饭');
+    const group = service.nestTasks('required', first.id, second.id);
+    const day = service.getCurrentData();
+    expect(day.required).toHaveLength(1);
+    expect(day.required[0].id).toBe(group.id);
+    expect(day.required[0].children.map((child) => child.text)).toEqual(['买菜', '做饭']);
+
+    service.toggleTask('required', group.id);
+    expect(service.getCurrentData().required[0].children.every((child) => child.completed)).toBe(true);
+    service.deleteTask('required', group.id);
+    expect(service.getCurrentData().required.map((task) => task.text)).toEqual(['买菜', '做饭']);
+  });
+
+  it('dissolves the box when the other child is dragged out', () => {
+    const service = createService();
+    const first = service.addTask('required', '买菜');
+    const second = service.addTask('required', '做饭');
+    const third = service.addTask('required', '散步');
+    const group = service.nestTasks('required', first.id, second.id);
+    service.placeTask('required', second.id, 'required', third.id);
+    expect(service.getCurrentData().required.map((task) => task.id)).toEqual([second.id, third.id, first.id]);
+    expect(group.children).toHaveLength(2);
+    expect(service.getCurrentData().required.some((task) => task.id === group.id)).toBe(false);
+  });
+});

@@ -75,10 +75,23 @@ function NoteCard({ note, onFocus }) {
   );
 }
 
-export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReorderStart }) {
+const NOTE_CLICK_DELAY = 250;
+
+export function TaskNoteCards({ notes, onFocus }) {
+  if (!notes.length) return null;
+  return (
+    <div className="note-cards">
+      {notes.map((note) => <NoteCard key={note.id} note={note} onFocus={onFocus} />)}
+    </div>
+  );
+}
+
+export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, held = false, bare = false, dropRow = false, onReorderStart }) {
   const app = useApp();
   const drag = useRef(false);
+  const openTimer = useRef(0);
   const rowRef = useRef(null);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [breaking, setBreaking] = useState(false);
   const [breakError, setBreakError] = useState('');
   const [tagState, setTagState] = useState('');
@@ -134,9 +147,23 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
   }
 
   const canFocus = viewingToday && !task.completed;
+  const showStatus = !!(breakError || tagState || standardState);
+
+  useEffect(() => () => window.clearTimeout(openTimer.current), []);
+
+  function revealNotes(event) {
+    if (drag.current || !notes.length) return;
+    if (event.target.closest('button, input, textarea, a, label, select')) return;
+    window.clearTimeout(openTimer.current);
+    openTimer.current = window.setTimeout(() => setNotesOpen((open) => !open), NOTE_CLICK_DELAY);
+  }
 
   return (
-    <div className={`task-block${edge}${dragging ? ' is-dragging' : ''}`}>
+    <div
+      className={`task-block${edge}${dragging ? ' is-dragging' : ''}${held ? ' is-held' : ''}`}
+      data-task-id={task.id}
+      {...(dropRow ? { 'data-drop-row': '' } : {})}
+    >
       <div
         ref={rowRef}
         className="task-row is-reorderable"
@@ -159,7 +186,9 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
           window.addEventListener('pointerup', up);
           onReorderStart?.(event, type, task.id);
         }}
+        onClick={revealNotes}
         onDoubleClick={(event) => {
+          window.clearTimeout(openTimer.current);
           if (drag.current) return;
           if (event.target.closest('button, input, textarea, a, label, select')) return;
           onEdit(type, task.id);
@@ -169,7 +198,7 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
           setMenu({ x: event.clientX, y: event.clientY });
         }}
       >
-        <Checkbox checked={task.completed} onChange={() => app.scheduleService.toggleTask(type, task.id)} />
+        {bare ? null : <Checkbox checked={task.completed} onChange={() => app.scheduleService.toggleTask(type, task.id)} />}
         <div className="task-main" title="双击编辑">
           <div className="task-line">
             {tags.map((tag) => <span key={tag.id} className="tag-dot" style={{ background: displayTagColor(tag) }} />)}
@@ -202,20 +231,16 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, onReor
           ]}
         />
       ) : null}
-      {notes.length || breakError || tagState || standardState ? (
+      {!showStatus && !(notesOpen && notes.length) ? null : (
         <div className="note-stack">
           {standardState === 'pending' ? <p className="task-tag-status" role="status">正在标准化…</p> : null}
           {standardState && standardState !== 'pending' ? <p className="task-break-error">{standardState}</p> : null}
           {tagState === 'pending' ? <p className="task-tag-status" role="status">正在分类…</p> : null}
           {tagState && tagState !== 'pending' ? <p className="task-break-error">{tagState}</p> : null}
           {breakError ? <p className="task-break-error">{breakError}</p> : null}
-          {notes.length ? (
-            <div className="note-cards">
-              {notes.map((note) => <NoteCard key={note.id} note={note} onFocus={canFocus ? focus : null} />)}
-            </div>
-          ) : null}
+          {notesOpen ? <TaskNoteCards notes={notes} onFocus={canFocus ? focus : null} /> : null}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

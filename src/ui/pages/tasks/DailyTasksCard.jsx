@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { normalizeTagIds } from '../../../domain/schedule/daily-task.js';
+import { isGroup, locateTask } from '../../../domain/schedule/task-group.js';
 import { useApp } from '../../app/context.jsx';
 import { Card } from '../../library/index.js';
 import { TASK_LIST_HEIGHT, normalizeTaskListHeight } from '../../../infrastructure/storage/ui-prefs-repository.js';
 import { holdImeEnter, imeCompositionProps, useImeEnterGuard } from '../../keyboard/ime-enter.js';
+import { TaskGroup } from './TaskGroup.jsx';
 import { TaskRow } from './TaskRow.jsx';
 
 function RequiredProgress() {
@@ -37,6 +39,8 @@ export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
   const data = app.scheduleService.getCurrentData();
   const [over, setOver] = useState('');
   const [draggingId, setDraggingId] = useState('');
+  const nestRef = useRef(null);
+  const [nest, setNest] = useState(null);
   const preferredHeight = useRef(normalizeTaskListHeight(app.uiPrefs.get().taskListHeight));
   const [listHeight, setListHeight] = useState(() => clampTaskListHeight(preferredHeight.current));
 
@@ -78,10 +82,20 @@ export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
     window.addEventListener('pointercancel', up);
   }
 
+  function assignNest(value) {
+    nestRef.current = value;
+    setNest(value);
+  }
+
   function beginReorder(event, fromType, fromId) {
     const startX = event.clientX;
     const startY = event.clientY;
     let active = false;
+    let dwellTimer = 0;
+    let dwellKey = '';
+    const fromLoc = locateTask(data[fromType] || [], fromId);
+    const fromIsGroup = !!(fromLoc && !fromLoc.parent && isGroup(fromLoc.task));
+    const fromIsChild = !!fromLoc?.parent;
 
     function markerAt(clientX, clientY) {
       const zone = [...document.querySelectorAll('[data-drop-type]')].find((node) => {
@@ -90,26 +104,69 @@ export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
       });
       if (!zone) return null;
       const type = zone.getAttribute('data-drop-type');
-      const blocks = [...zone.querySelectorAll(':scope > .task-block')];
-      if (!blocks.length) return { kind: 'zone', type };
-      let index = blocks.length;
-      for (let i = 0; i < blocks.length; i += 1) {
-        const rect = blocks[i].getBoundingClientRect();
-        if (clientY < rect.top + rect.height / 2) {
-          index = i;
-          break;
+      const rows = [...zone.querySelectorAll(':scope > [data-drop-row]')];
+      const rowId = (row) => row?.getAttribute('data-task-id') || row?.querySelector('[data-task-id]')?.getAttribute('data-task-id') || '';
+      if (!rows.length) return { kind: 'zone', type };
+      const hit = rows.find((row) => {
+        const rect = row.getBoundingClientRect();
+        return clientY >= rect.top && clientY <= rect.bottom;
+      });
+      if (!hit) {
+        let index = rows.length;
+        for (let i = 0; i < rows.length; i += 1) {
+          const rect = rows[i].getBoundingClientRect();
+          if (clientY < rect.top + rect.height / 2) {
+            index = i;
+            break;
+          }
         }
+        const row = rows[Math.min(index, rows.length - 1)];
+        return {
+          kind: 'seam',
+          type,
+          id: rowId(row),
+          edge: index >= rows.length ? 'after' : 'before'
+        };
       }
-      if (index >= blocks.length) {
-        const last = blocks[blocks.length - 1].querySelector('[data-task-id]');
-        return { kind: 'row', edge: 'after', type, id: last.getAttribute('data-task-id') };
+      const rect = hit.getBoundingClientRect();
+      const id = rowId(hit);
+      const band = Math.min(14, Math.max(6, rect.height * 0.25));
+      const onEdge = clientY - rect.top <= band || rect.bottom - clientY <= band;
+      const canNest = type === fromType && !fromIsGroup && !fromIsChild && id && id !== fromId;
+      if (hit.hasAttribute('data-task-group') && !onEdge) {
+        const child = [...hit.querySelectorAll(':scope .task-block')].find((block) => {
+          const childRect = block.getBoundingClientRect();
+          return clientY >= childRect.top && clientY <= childRect.bottom;
+        });
+        if (child) {
+          const childRect = child.getBoundingClientRect();
+          const childBand = Math.min(14, Math.max(6, childRect.height * 0.25));
+          const childEdge = clientY - childRect.top <= childBand || childRect.bottom - clientY <= childBand;
+          if (childEdge || !canNest) {
+            const childId = child.getAttribute('data-task-id') || child.querySelector('[data-task-id]')?.getAttribute('data-task-id') || id;
+            return {
+              kind: 'seam',
+              type,
+              id: childId,
+              edge: clientY < childRect.top + childRect.height / 2 ? 'before' : 'after'
+            };
+          }
+        }
+        if (canNest) return { kind: 'nest', type, id, adopt: true };
       }
-      const row = blocks[index].querySelector('[data-task-id]');
-      return { kind: 'row', edge: 'before', type, id: row.getAttribute('data-task-id') };
+      if (onEdge || !canNest) {
+        return {
+          kind: 'seam',
+          type,
+          id,
+          edge: clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+        };
+      }
+      return { kind: 'nest', type, id, adopt: false };
     }
 
     function show(marker) {
-      if (!marker) {
+      if (!marker || marker.kind === 'nest') {
         setOver('');
         return;
       }
@@ -129,26 +186,86 @@ export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
         setDraggingId(fromId);
       }
       moveEvent.preventDefault();
-      show(markerAt(moveEvent.clientX, moveEvent.clientY));
+      const marker = markerAt(moveEvent.clientX, moveEvent.clientY);
+      if (marker?.kind === 'nest') {
+        const key = `${marker.type}:${marker.id}`;
+        if (key !== dwellKey) {
+          dwellKey = key;
+          window.clearTimeout(dwellTimer);
+          assignNest(null);
+          dwellTimer = window.setTimeout(() => {
+            assignNest({ type: marker.type, targetId: marker.id, adopt: marker.adopt, draggedId: fromId });
+          }, 200);
+        }
+        setOver('');
+        return;
+      }
+      dwellKey = '';
+      window.clearTimeout(dwellTimer);
+      assignNest(null);
+      show(marker);
     }
 
     function up(upEvent) {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      window.clearTimeout(dwellTimer);
       document.body.classList.remove('is-task-dragging');
+      const preview = nestRef.current;
+      assignNest(null);
       setDraggingId('');
       setOver('');
       if (!active) return;
+      if (preview && preview.type === fromType) {
+        const box = [...document.querySelectorAll('[data-drop-row]')].find((row) => {
+          const id = row.getAttribute('data-task-id') || row.querySelector('[data-task-id]')?.getAttribute('data-task-id');
+          return id === preview.targetId;
+        });
+        const rect = box?.getBoundingClientRect();
+        const inside = !!rect
+          && upEvent.clientX >= rect.left && upEvent.clientX <= rect.right
+          && upEvent.clientY >= rect.top && upEvent.clientY <= rect.bottom;
+        if (inside) {
+          if (preview.adopt) {
+            app.scheduleService.adoptTask(preview.type, preview.targetId, fromId);
+            return;
+          }
+          const group = app.scheduleService.nestTasks(preview.type, preview.targetId, fromId);
+          if (!group) return;
+          const titles = (group.children || []).map((child) => child.text || '');
+          void app.taskGroupService.name(preview.type, group.id, group.text, titles);
+          return;
+        }
+      }
       const marker = markerAt(upEvent.clientX, upEvent.clientY);
       if (!marker) return;
+      if (marker.kind === 'nest') {
+        if (!preview || preview.targetId !== marker.id || preview.type !== marker.type) return;
+        if (marker.adopt) {
+          app.scheduleService.adoptTask(marker.type, marker.id, fromId);
+          return;
+        }
+        const group = app.scheduleService.nestTasks(marker.type, marker.id, fromId);
+        if (!group) return;
+        const titles = (group.children || []).map((child) => child.text || '');
+        void app.taskGroupService.name(marker.type, group.id, group.text, titles);
+        return;
+      }
       if (marker.kind === 'zone') {
         app.scheduleService.placeTask(fromType, fromId, marker.type, null);
         return;
       }
       const list = app.scheduleService.getCurrentData()[marker.type] || [];
-      const index = list.findIndex((task) => task.id === marker.id);
-      const beforeId = marker.edge === 'after' ? (list[index + 1]?.id ?? null) : marker.id;
+      const loc = locateTask(list, marker.id);
+      let beforeId = marker.id;
+      if (marker.edge === 'after') {
+        if (loc?.parent) {
+          const nextChild = loc.parent.children[loc.childIndex + 1];
+          beforeId = nextChild ? nextChild.id : (list[loc.index + 1]?.id ?? null);
+        } else if (loc) beforeId = list[loc.index + 1]?.id ?? null;
+        else beforeId = null;
+      }
       app.scheduleService.placeTask(fromType, fromId, marker.type, beforeId);
     }
 
@@ -176,7 +293,10 @@ export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
     });
     if (selectedTagIds.length === 0) return tasks;
     const selected = new Set(selectedTagIds);
-    return tasks.filter((task) => normalizeTagIds(task).some((id) => selected.has(id)));
+    return tasks.filter((task) => {
+      const rows = isGroup(task) ? task.children : [task];
+      return rows.some((row) => normalizeTagIds(row).some((id) => selected.has(id)));
+    });
   }
 
   return (
@@ -196,17 +316,54 @@ export function DailyTasksCard({ onEdit, selectedTagIds = [] }) {
               data-drop-type={type}
               style={{ height: listHeight }}
             >
-              {(visibleTasks(type)).map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  type={type}
-                  onEdit={onEdit}
-                  dragging={draggingId === task.id}
-                  dropEdge={over === `before:${type}:${task.id}` ? 'before' : over === `after:${type}:${task.id}` ? 'after' : ''}
-                  onReorderStart={beginReorder}
-                />
-              ))}
+              {(visibleTasks(type)).map((task) => {
+                const preview = nest && nest.type === type && nest.targetId === task.id ? nest : null;
+                const held = !!(nest && nest.type === type && nest.draggedId === task.id);
+                const extra = preview ? locateTask(data[type] || [], preview.draggedId)?.task || null : null;
+                const edge = over === `before:${type}:${task.id}` ? 'before' : over === `after:${type}:${task.id}` ? 'after' : '';
+                if (preview && !preview.adopt && !isGroup(task)) {
+                  return (
+                    <TaskGroup
+                      key={task.id}
+                      task={task}
+                      type={type}
+                      untitled
+                      extraChild={extra}
+                      onEdit={onEdit}
+                      onReorderStart={beginReorder}
+                    />
+                  );
+                }
+                if (isGroup(task)) {
+                  return (
+                    <TaskGroup
+                      key={task.id}
+                      task={task}
+                      type={type}
+                      onEdit={onEdit}
+                      dragging={draggingId === task.id}
+                      held={held}
+                      dropEdge={edge}
+                      extraChild={preview?.adopt ? extra : null}
+                      onReorderStart={beginReorder}
+                      childEdge={(id) => (over === `before:${type}:${id}` ? 'before' : over === `after:${type}:${id}` ? 'after' : '')}
+                    />
+                  );
+                }
+                return (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    type={type}
+                    onEdit={onEdit}
+                    dropRow
+                    dragging={draggingId === task.id}
+                    held={held}
+                    dropEdge={edge}
+                    onReorderStart={beginReorder}
+                  />
+                );
+              })}
               {(data[type] || []).length === 0 ? <p className="empty">这一列是空的。</p> : visibleTasks(type).length === 0 ? <p className="empty">没有符合的任务。</p> : null}
             </div>
           </div>

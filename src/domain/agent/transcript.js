@@ -114,8 +114,12 @@ export function mentionCatalog(world) {
       for (const task of day?.[list] || []) {
         if (!task?.id) continue;
         days.add(date);
-        const title = task.text || '';
-        items.push({ kind: 'task', id: task.id, title, date, label: `${date} ${title}`.trim() });
+        const rows = Array.isArray(task.children) && task.children.length >= 2 ? [task, ...task.children] : [task];
+        rows.forEach((row) => {
+          if (!row?.id) return;
+          const title = row.text || '';
+          items.push({ kind: 'task', id: row.id, title, date, label: `${date} ${title}`.trim() });
+        });
       }
     }
   }

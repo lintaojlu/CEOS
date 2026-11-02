@@ -440,6 +440,26 @@ input[type="date"], input[type="time"] { color-scheme: light; }
 .drop-zone.is-over { outline: 1px dashed var(--accent); background: var(--accent-soft); }
 
 .task-block { position: relative; border-bottom: 1px solid var(--line); }
+.task-block.is-held {
+  height: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  pointer-events: none;
+}
+.task-group {
+  margin: 6px 0;
+  padding: 4px 4px 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: rgba(20, 23, 26, 0.03);
+}
+.task-group.is-preview { background: rgba(20, 23, 26, 0.05); }
+.task-group > .task-block,
+.task-group .task-group-children > .task-block { border-bottom-color: transparent; }
+.task-group-title { padding-bottom: 2px; }
 .task-block.is-drop-before::before,
 .task-block.is-drop-after::before {
   content: '';

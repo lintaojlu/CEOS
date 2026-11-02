@@ -1,5 +1,6 @@
 import { partitionIdeas } from '../ideas/readiness.js';
 import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
+import { isGroup } from '../schedule/task-group.js';
 
 /**
  * @param {any} task
@@ -27,9 +28,17 @@ export function taskView(task) {
  */
 function dayLists(schedule, date) {
   const day = schedule?.[date];
+  const listed = (tasks) => {
+    const out = [];
+    (Array.isArray(tasks) ? tasks : []).forEach((task) => {
+      if (isGroup(task)) out.push(...task.children);
+      else if (task) out.push(task);
+    });
+    return out;
+  };
   return {
-    required: Array.isArray(day?.required) ? day.required : [],
-    optional: Array.isArray(day?.optional) ? day.optional : []
+    required: listed(day?.required),
+    optional: listed(day?.optional)
   };
 }
 

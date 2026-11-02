@@ -14,6 +14,7 @@
  * @property {string} recurrence
  * @property {string[]} tagIds
  * @property {TaskNote[]} notes
+ * @property {DailyTask[]} [children]
  */
 
 /** 任务正文里出现的时间。先匹配更长的写法，避免「3点半」被收成「3点」。 */
@@ -202,6 +203,7 @@ export function createDailyTask(text, baseDate, overrides = {}) {
     tagId: _tagId,
     ...rest
   } = overrides;
+  if (!rest.id) delete rest.id;
   return {
     id: rest.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     text,
@@ -231,6 +233,10 @@ export function cloneDailyTask(task) {
   delete copy.pomodoros;
   delete copy.note;
   delete copy.subtasks;
+  delete copy.children;
+  if (Array.isArray(task?.children) && task.children.length) {
+    copy.children = task.children.map((child) => cloneDailyTask(child));
+  }
   return copy;
 }
 

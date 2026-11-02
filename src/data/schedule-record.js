@@ -21,6 +21,7 @@ import { normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.j
  * @property {string} recurrence
  * @property {string[]} tagIds
  * @property {TaskNoteRecord[]} notes
+ * @property {DailyTaskRecord[]} [children]
  */
 
 /**
@@ -55,26 +56,56 @@ export function createEmptyScheduleDay() {
  * @param {any} raw
  * @returns {DailyTaskRecord[]}
  */
+/**
+ * @param {any} raw
+ * @param {Set<string>} seen
+ * @param {boolean} allowChildren
+ * @returns {DailyTaskRecord | null}
+ */
+function normalizeOne(raw, seen, allowChildren) {
+  if (!raw || !raw.id) return null;
+  const id = String(raw.id);
+  if (seen.has(id)) return null;
+  /** @type {DailyTaskRecord} */
+  const task = {
+    id,
+    text: raw.text || '',
+    completed: !!raw.completed,
+    time: typeof raw.time === 'number' ? raw.time : Date.now(),
+    pinned: !!raw.pinned,
+    recurrence: raw.recurrence || '',
+    tagIds: normalizeTagIds(raw),
+    notes: normalizeNotes(raw.notes, { note: raw.note, subtasks: raw.subtasks })
+  };
+  if (!allowChildren || !Array.isArray(raw.children)) {
+    seen.add(id);
+    return task;
+  }
+  /** @type {DailyTaskRecord[]} */
+  const children = [];
+  seen.add(id);
+  raw.children.forEach((child) => {
+    const next = normalizeOne(child, seen, false);
+    if (next) children.push(next);
+  });
+  if (children.length >= 2) {
+    task.children = children;
+    return task;
+  }
+  if (children.length === 1) return children[0];
+  return null;
+}
+
 function normalizeTasks(raw) {
   if (!Array.isArray(raw)) return [];
   const seen = new Set();
-  return raw
-    .filter((t) => t && t.id)
-    .map((t) => ({
-      id: String(t.id),
-      text: t.text || '',
-      completed: !!t.completed,
-      time: typeof t.time === 'number' ? t.time : Date.now(),
-      pinned: !!t.pinned,
-      recurrence: t.recurrence || '',
-      tagIds: normalizeTagIds(t),
-      notes: normalizeNotes(t.notes, { note: t.note, subtasks: t.subtasks })
-    }))
-    .filter((task) => {
-      if (seen.has(task.id)) return false;
-      seen.add(task.id);
-      return true;
-    });
+  /** @type {DailyTaskRecord[]} */
+  const tasks = [];
+  raw.forEach((item) => {
+    const task = normalizeOne(item, seen, true);
+    if (task) tasks.push(task);
+  });
+  return tasks;
 }
 
 /**

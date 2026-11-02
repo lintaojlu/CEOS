@@ -24,13 +24,16 @@ export function tasksForTag(schedule, tagId) {
     const day = schedule[date];
     ['required', 'optional'].forEach((list) => {
       (day?.[list] || []).forEach((task) => {
-        if (!task || !normalizeTagIds(task).includes(tagId)) return;
-        const title = String(task.text || '').trim();
-        if (!title) return;
-        const id = String(task.id || `${date}:${title}`);
-        const notes = normalizeNotes(task.notes, task).map((note) => note.text).filter(Boolean);
-        const prev = byId.get(id);
-        if (!prev || prev.date <= date) byId.set(id, { date, title, notes });
+        const rows = Array.isArray(task?.children) && task.children.length >= 2 ? task.children : [task];
+        rows.forEach((row) => {
+          if (!row || !normalizeTagIds(row).includes(tagId)) return;
+          const title = String(row.text || '').trim();
+          if (!title) return;
+          const id = String(row.id || `${date}:${title}`);
+          const notes = normalizeNotes(row.notes, row).map((note) => note.text).filter(Boolean);
+          const prev = byId.get(id);
+          if (!prev || prev.date <= date) byId.set(id, { date, title, notes });
+        });
       });
     });
   });

@@ -12,6 +12,7 @@ import { HomePage } from '../pages/home/HomePage.jsx';
 import { TasksPage } from '../pages/tasks/TasksPage.jsx';
 import { TasksTopBar } from '../pages/tasks/TasksTopBar.jsx';
 import { IdeasPage } from '../pages/ideas/IdeasPage.jsx';
+import { BoardPage } from '../pages/board/BoardPage.jsx';
 import { msUntilNextHour, quoteForHour } from '../../domain/quotes/quote-library.js';
 import { SIDEBAR_WIDTH, normalizeSidebarWidth } from '../../infrastructure/storage/ui-prefs-repository.js';
 
@@ -20,7 +21,7 @@ function clampSidebarWidth(value) {
   return Math.min(max, Math.max(SIDEBAR_WIDTH.min, normalizeSidebarWidth(value)));
 }
 
-const PAGE_TITLE = { tasks: '任务', ideas: '灵感', agent: 'Agent' };
+const PAGE_TITLE = { tasks: '任务', ideas: '灵感', board: '画板', agent: 'Agent' };
 
 function QuoteTitle() {
   const [quote, setQuote] = useState(() => quoteForHour());
@@ -230,6 +231,7 @@ function Shell() {
               onOpenIdea={setOpenIdeaId}
             />
           ) : null}
+          {page === 'board' ? <BoardPage /> : null}
           {page === 'agent' ? <AgentPage /> : null}
         </main>
         <SettingsModal />

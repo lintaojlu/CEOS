@@ -1,8 +1,4 @@
 import {
-  parseBoardFile,
-  topmostBoardText
-} from '../domain/ideas/board-scene.js';
-import {
   createIdeaDocument,
   foldStoredTitle,
   hydrateIdea,
@@ -34,27 +30,16 @@ export class IdeaInboxService {
     this.store = store;
     /** @type {any[]} */
     this._nodes = [];
-    /** @type {Map<string, string>} */
-    this._boards = new Map();
   }
 
   async load() {
-    let metas = [];
-    if (this.store.listBoardMeta) {
-      try {
-        metas = await this.store.listBoardMeta();
-      } catch {
-        metas = [];
-      }
-    }
-    this._boards = new Map((metas || []).map((item) => [item.id, String(item.label || '')]));
     const listed = await this.store.list();
     /** @type {Map<string, any>} */
     const byId = new Map();
     for (const raw of listed) {
       const doc = hydrateIdea(raw);
       if (!doc) continue;
-      if (!ideaTitle(doc) && !this._boards.has(doc.id)) {
+      if (!ideaTitle(doc)) {
         await this.store.remove(doc.id);
         continue;
       }
@@ -72,21 +57,14 @@ export class IdeaInboxService {
       this.scheduleService.workspace.ideas = [];
       this.scheduleService.persist();
     }
-    for (const [id] of this._boards) {
-      if (byId.has(id)) continue;
-      const doc = hydrateIdea({ id, body: '', createdAt: Date.now() });
-      if (!doc) continue;
-      await this.store.write(doc);
-      byId.set(id, doc);
-    }
     this._nodes = [...byId.values()];
     this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'load' });
   }
 
-  /** 没有标题、也没有画板的灵感只留在内存里。已经写过的文件删掉。 */
+  /** 没有标题的灵感只留在内存里。已经写过的文件删掉。 */
   commit(node) {
     if (!node) return;
-    if (!ideaTitle(node) && !this.hasBoard(node.id)) {
+    if (!ideaTitle(node)) {
       void this.store.remove(node.id);
       return;
     }
@@ -108,8 +86,6 @@ export class IdeaInboxService {
     for (const prev of this._nodes) {
       if (nextIds.has(prev.id)) continue;
       void this.store.remove(prev.id);
-      void this.store.removeBoard(prev.id);
-      this._boards.delete(prev.id);
     }
     this._nodes = next;
     for (const node of next) this.commit(node);
@@ -179,63 +155,8 @@ export class IdeaInboxService {
   /** @param {string} id */
   delete(id) {
     this._nodes = this._nodes.filter((node) => node.id !== id);
-    this._boards.delete(id);
     void this.store.remove(id);
-    void this.store.removeBoard(id);
     this.eventBus.emit(Events.IDEAS_UPDATED, {});
-  }
-
-  /** @param {string} id */
-  hasBoard(id) {
-    return this._boards.has(id);
-  }
-
-  /** @param {string} id */
-  boardLabel(id) {
-    return this._boards.get(id) || '';
-  }
-
-  /** @param {string} id */
-  readBoard(id) {
-    return this.store.readBoard(id);
-  }
-
-  /**
-   * 空画布不留文件。有内容时连同灵感文件一起留下，即使正文还是空的。
-   * @param {string} id
-   * @param {string} json
-   */
-  async saveBoard(id, json) {
-    const parsed = parseBoardFile(json);
-    if (!parsed.ok || !parsed.scene) throw new Error('这块画打不开');
-    if (parsed.empty) {
-      await this.clearBoard(id);
-      return;
-    }
-    const label = topmostBoardText(parsed.scene);
-    await this.store.writeBoard(id, json, label);
-    this._boards.set(id, label);
-    const idea = this.find(id);
-    if (idea) this.commit(idea);
-    this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'board' });
-  }
-
-  /** @param {string} id */
-  async clearBoard(id) {
-    this._boards.delete(id);
-    await this.store.removeBoard(id);
-    const idea = this.find(id);
-    if (idea) this.commit(idea);
-    this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'board' });
-  }
-
-  /** @param {string} id */
-  async quarantineBoard(id) {
-    await this.store.quarantineBoard(id);
-    this._boards.delete(id);
-    const idea = this.find(id);
-    if (idea) this.commit(idea);
-    this.eventBus.emit(Events.IDEAS_UPDATED, { reason: 'board' });
   }
 
   /**

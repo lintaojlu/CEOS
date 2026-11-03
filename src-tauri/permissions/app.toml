@@ -20,8 +20,13 @@ commands.allow = ["llm_http", "llm_http_stream", "llm_http_cancel"]
 
 [[permission]]
 identifier = "allow-idea-store"
-description = "Read and write one JSON file per idea, plus its drawing"
-commands.allow = ["read_idea_file", "write_idea_file", "list_idea_files", "delete_idea_file", "read_idea_board", "write_idea_board", "delete_idea_board", "quarantine_idea_board", "list_idea_board_meta"]
+description = "Read and write one JSON file per idea"
+commands.allow = ["read_idea_file", "write_idea_file", "list_idea_files", "delete_idea_file"]
+
+[[permission]]
+identifier = "allow-board-store"
+description = "Read and write the drawing board"
+commands.allow = ["read_board", "write_board", "delete_board", "quarantine_board"]
 
 [[permission]]
 identifier = "allow-user-records"

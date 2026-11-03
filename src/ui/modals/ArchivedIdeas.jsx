@@ -34,7 +34,7 @@ export function ArchivedIdeas() {
   return (
     <div className="settings-card settings-list">
       {archived.map((idea) => {
-        const title = ideaTitle(idea) || app.ideaInboxService.boardLabel(idea.id) || '未命名';
+        const title = ideaTitle(idea) || '未命名';
         const waiting = armed === idea.id;
         return (
           <div key={idea.id} className="settings-list-row">
@@ -47,7 +47,7 @@ export function ArchivedIdeas() {
                 type="button"
                 className={waiting ? 'settings-icon-btn is-danger' : 'settings-icon-btn'}
                 aria-label={waiting ? `确认删除 ${title}` : `删除 ${title}`}
-                title={waiting ? '再点一次删除，正文和画板都会删掉' : '删除'}
+                title={waiting ? '再点一次删除' : '删除'}
                 onClick={() => {
                   if (!waiting) {
                     setArmed(idea.id);

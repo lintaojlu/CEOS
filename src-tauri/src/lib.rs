@@ -375,15 +375,11 @@ fn delete_idea_file(app: tauri::AppHandle, id: String) -> Result<(), String> {
   }
 }
 
-fn idea_side_path(app: &tauri::AppHandle, id: &str, suffix: &str) -> Result<PathBuf, String> {
-  safe_idea_id(id)?;
-  let root = ideas_root(app)?;
-  let path = root.join(format!("{id}{suffix}"));
-  let parent = path.parent().ok_or_else(|| "灵感编号无效".to_string())?;
-  if parent != root.as_path() {
-    return Err("灵感编号无效".into());
-  }
-  Ok(path)
+fn app_data_file(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, String> {
+  let mut dir = app.path().app_data_dir().map_err(|err| err.to_string())?;
+  create_dir_all(&dir).map_err(|err| err.to_string())?;
+  dir.push(name);
+  Ok(dir)
 }
 
 fn remove_if_exists(path: &PathBuf) -> Result<(), String> {
@@ -394,15 +390,9 @@ fn remove_if_exists(path: &PathBuf) -> Result<(), String> {
   }
 }
 
-fn clamp_board_label(label: &str) -> String {
-  let line = label.lines().next().unwrap_or("").trim();
-  line.chars().take(80).collect()
-}
-
 #[tauri::command]
-fn read_idea_board(app: tauri::AppHandle, id: String) -> Result<String, String> {
-  let path = idea_side_path(&app, &id, ".board.json")?;
-  match fs::read_to_string(path) {
+fn read_board(app: tauri::AppHandle) -> Result<String, String> {
+  match fs::read_to_string(app_data_file(&app, "board.json")?) {
     Ok(text) => Ok(text),
     Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
     Err(err) => Err(err.to_string()),
@@ -410,7 +400,7 @@ fn read_idea_board(app: tauri::AppHandle, id: String) -> Result<String, String> 
 }
 
 #[tauri::command]
-fn write_idea_board(app: tauri::AppHandle, id: String, body: String, label: String) -> Result<(), String> {
+fn write_board(app: tauri::AppHandle, body: String) -> Result<(), String> {
   if body.len() > IDEA_FILE_LIMIT {
     return Err("这张图放不下".into());
   }
@@ -418,55 +408,23 @@ fn write_idea_board(app: tauri::AppHandle, id: String, body: String, label: Stri
   if !value.is_object() {
     return Err("这块画打不开".into());
   }
-  let path = idea_side_path(&app, &id, ".board.json")?;
-  fs::write(path, body).map_err(|err| err.to_string())?;
-  let meta = idea_side_path(&app, &id, ".board.meta.json")?;
-  let payload = serde_json::json!({ "label": clamp_board_label(&label) });
-  fs::write(meta, payload.to_string()).map_err(|err| err.to_string())
+  fs::write(app_data_file(&app, "board.json")?, body).map_err(|err| err.to_string())
 }
 
 #[tauri::command]
-fn delete_idea_board(app: tauri::AppHandle, id: String) -> Result<(), String> {
-  remove_if_exists(&idea_side_path(&app, &id, ".board.json")?)?;
-  remove_if_exists(&idea_side_path(&app, &id, ".board.meta.json")?)?;
-  remove_if_exists(&idea_side_path(&app, &id, ".board.json.bak")?)?;
-  Ok(())
+fn delete_board(app: tauri::AppHandle) -> Result<(), String> {
+  remove_if_exists(&app_data_file(&app, "board.json")?)
 }
 
 #[tauri::command]
-fn quarantine_idea_board(app: tauri::AppHandle, id: String) -> Result<(), String> {
-  let board = idea_side_path(&app, &id, ".board.json")?;
-  let bak = idea_side_path(&app, &id, ".board.json.bak")?;
+fn quarantine_board(app: tauri::AppHandle) -> Result<(), String> {
+  let board = app_data_file(&app, "board.json")?;
+  let bak = app_data_file(&app, "board.json.bak")?;
   if board.exists() {
     remove_if_exists(&bak)?;
     fs::rename(&board, &bak).map_err(|err| err.to_string())?;
   }
-  remove_if_exists(&idea_side_path(&app, &id, ".board.meta.json")?)?;
   Ok(())
-}
-
-#[tauri::command]
-fn list_idea_board_meta(app: tauri::AppHandle) -> Result<String, String> {
-  let root = ideas_root(&app)?;
-  let mut rows = Vec::new();
-  let entries = fs::read_dir(&root).map_err(|err| err.to_string())?;
-  for entry in entries {
-    let entry = entry.map_err(|err| err.to_string())?;
-    let name = entry.file_name();
-    let name = name.to_string_lossy();
-    let Some(id) = name.strip_suffix(".board.meta.json") else { continue };
-    if safe_idea_id(id).is_err() { continue };
-    let text = match fs::read_to_string(entry.path()) {
-      Ok(text) => text,
-      Err(_) => continue,
-    };
-    let label = serde_json::from_str::<serde_json::Value>(&text)
-      .ok()
-      .and_then(|value| value.get("label").and_then(|item| item.as_str()).map(|item| item.to_string()))
-      .unwrap_or_default();
-    rows.push(serde_json::json!({ "id": id, "label": clamp_board_label(&label) }));
-  }
-  serde_json::to_string(&rows).map_err(|err| err.to_string())
 }
 
 const USER_RECORD_LIMIT: usize = 32 * 1024 * 1024;
@@ -612,11 +570,10 @@ pub fn run() {
       write_idea_file,
       list_idea_files,
       delete_idea_file,
-      read_idea_board,
-      write_idea_board,
-      delete_idea_board,
-      quarantine_idea_board,
-      list_idea_board_meta,
+      read_board,
+      write_board,
+      delete_board,
+      quarantine_board,
       read_user_records,
       write_user_record
     ])

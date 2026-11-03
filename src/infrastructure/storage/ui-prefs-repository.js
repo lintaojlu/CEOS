@@ -5,11 +5,11 @@
 
 const KEY = 'ceoUiPrefs';
 
-export const UI_PAGES = ['agent', 'tasks', 'ideas', 'home'];
+export const UI_PAGES = ['agent', 'tasks', 'ideas', 'board', 'home'];
 
 /**
  * @typedef {Object} UiPrefs
- * @property {'agent'|'home'|'tasks'|'ideas'} page
+ * @property {'agent'|'home'|'tasks'|'ideas'|'board'} page
  * @property {boolean} sidebarHidden
  * @property {number} sidebarWidth
  * @property {number} taskListHeight

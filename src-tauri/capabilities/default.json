@@ -13,6 +13,7 @@
     "allow-agent-store",
     "allow-llm-http",
     "allow-idea-store",
+    "allow-board-store",
     "allow-user-records"
   ]
 }

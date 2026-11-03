@@ -16,22 +16,6 @@ export function sceneHasElements(scene) {
   return liveElements(scene).length > 0;
 }
 
-/** 最靠上的一段文字，给没有正文的灵感当列表标题。 */
-export function topmostBoardText(scene) {
-  const texts = liveElements(scene).filter((element) => (
-    element.type === 'text' && String(element.text || '').trim()
-  ));
-  texts.sort((a, b) => {
-    const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
-    if (dy) return dy;
-    return (Number(a.x) || 0) - (Number(b.x) || 0);
-  });
-  const first = texts[0];
-  if (!first) return '';
-  const line = String(first.text).trim().split(/\r?\n/).find((item) => item.trim()) || '';
-  return line.trim().slice(0, 80);
-}
-
 /**
  * @param {string} text
  * @returns {{ ok: true, empty: boolean, scene: any } | { ok: false, empty: false, scene: null }}

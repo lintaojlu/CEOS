@@ -144,41 +144,6 @@ describe('idea file migration', () => {
     expect(await store.listIds()).toEqual(['named']);
   });
 
-  it('keeps a drawing when the idea has no text yet', async () => {
-    const { service, store } = setup([]);
-    await service.load();
-    const node = service.addIdea('');
-    await service.saveBoard(node.id, JSON.stringify({
-      type: 'excalidraw',
-      elements: [{ id: 't', type: 'text', text: '草图', x: 4, y: 8, isDeleted: false, version: 1 }],
-      files: {}
-    }));
-    expect(service.hasBoard(node.id)).toBe(true);
-    expect(service.boardLabel(node.id)).toBe('草图');
-    expect(JSON.parse(await store.read(node.id)).body).toBe('');
-    await service.load();
-    expect(service.find(node.id)?.body).toBe('');
-    expect(service.boardLabel(node.id)).toBe('草图');
-    await service.clearBoard(node.id);
-    expect(service.hasBoard(node.id)).toBe(false);
-    expect(await store.read(node.id)).toBe('');
-    expect(service.find(node.id)).toBeTruthy();
-  });
-
-  it('deletes the drawing together with the idea', async () => {
-    const { service, store } = setup([]);
-    await service.load();
-    const node = service.addIdea('有字');
-    await service.saveBoard(node.id, JSON.stringify({
-      type: 'excalidraw',
-      elements: [{ id: 'r', type: 'rectangle', isDeleted: false, version: 1 }],
-      files: {}
-    }));
-    service.delete(node.id);
-    expect(await store.readBoard(node.id)).toBe('');
-    expect(await store.listBoardMeta()).toEqual([]);
-  });
-
   it('archives and restores an idea with a timestamp', async () => {
     const { service, store } = setup([]);
     await service.load();

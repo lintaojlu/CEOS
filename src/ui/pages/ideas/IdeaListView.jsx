@@ -4,7 +4,6 @@ import { ideaPreview, ideaTitle } from '../../../domain/ideas/idea-document.js';
 import { useApp } from '../../app/context.jsx';
 import { flyTextToComposer } from '../../agent/fly-to-composer.js';
 import { ContextMenu } from '../../library/index.js';
-import { Icon } from '../../library/symbols.jsx';
 import { ideaListDate } from './idea-list-date.js';
 
 export function IdeaListView({ onSelect, selectedId }) {
@@ -33,9 +32,8 @@ export function IdeaListView({ onSelect, selectedId }) {
   }
 
   function renderIdea(idea) {
-    const title = ideaTitle(idea) || app.ideaInboxService.boardLabel(idea.id) || '未命名';
+    const title = ideaTitle(idea) || '未命名';
     const preview = ideaPreview(idea.body);
-    const marked = app.ideaInboxService.hasBoard(idea.id);
     const selected = idea.id === selectedId;
     const breaking = breakingId === idea.id;
     return (
@@ -54,7 +52,6 @@ export function IdeaListView({ onSelect, selectedId }) {
           <span className="idea-row-head">
             <span className="idea-row-title">{title}</span>
             {breaking ? <span className="task-break-spin" role="status" aria-label="正在拆解" /> : null}
-            {marked ? <span className="idea-row-mark"><Icon name="pen" size={14} /></span> : null}
           </span>
           <span className="idea-row-meta">
             <span className="idea-row-date">{ideaListDate(idea.createdAt)}</span>

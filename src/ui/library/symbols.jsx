@@ -31,6 +31,14 @@ export function Symbol({ name, size = 18 }) {
       </svg>
     );
   }
+  if (name === 'board') {
+    return (
+      <svg {...common}>
+        <path d="M4.2 16.6 15.2 5.6a1.8 1.8 0 0 1 2.5 2.5L6.7 19.1l-3.2.7z" />
+        <path d="M13.4 7.4 16.6 10.6" />
+      </svg>
+    );
+  }
   if (name === 'agent') {
     return <svg {...common}><path d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /></svg>;
   }
@@ -143,14 +151,6 @@ export function Symbol({ name, size = 18 }) {
         <path d="M12 4a8 8 0 1 1-6.4 3.2" />
         <path d="M5.1 4v4h4" />
         <path d="M12 8.6v3.7l2.5 1.8" />
-      </svg>
-    );
-  }
-  if (name === 'pen') {
-    return (
-      <svg {...common}>
-        <path d="M4.5 19.5h3.2L18.2 9a1.8 1.8 0 0 0-2.6-2.6L5 16.8v2.7z" />
-        <path d="M13.8 7.8l2.4 2.4" />
       </svg>
     );
   }

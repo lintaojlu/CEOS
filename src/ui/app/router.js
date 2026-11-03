@@ -4,16 +4,17 @@ export const PAGES = [
   { id: 'agent', label: 'Agent' },
   { id: 'tasks', label: '任务' },
   { id: 'ideas', label: '灵感' },
+  { id: 'board', label: '画板' },
   { id: 'home', label: '统计' }
 ];
 
-/** @param {string} hash @returns {'home'|'tasks'|'ideas'|'agent'|null} */
+/** @param {string} hash @returns {'home'|'tasks'|'ideas'|'board'|'agent'|null} */
 export function pageFromHash(hash) {
   const name = String(hash || '').replace(/^#\/?/, '').split(/[?#]/)[0];
   return PAGES.some((page) => page.id === name) ? name : null;
 }
 
-/** @param {'home'|'tasks'|'ideas'|'agent'} page */
+/** @param {'home'|'tasks'|'ideas'|'board'|'agent'} page */
 export function navigate(page) {
   const next = `#/${page}`;
   if (window.location.hash !== next) window.location.hash = next;

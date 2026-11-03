@@ -13,7 +13,6 @@ function clampIdeaListWidth(value) {
 export function IdeasPage({ openIdeaId, onOpenIdea }) {
   const app = useApp();
   useShell();
-  const [boardWide, setBoardWide] = useState(false);
   const preferredWidth = useRef(normalizeIdeaListWidth(app.uiPrefs.get().ideasListWidth));
   const [listWidth, setListWidth] = useState(() => clampIdeaListWidth(preferredWidth.current));
   const found = openIdeaId ? app.ideaInboxService.find(openIdeaId) : null;
@@ -21,8 +20,8 @@ export function IdeasPage({ openIdeaId, onOpenIdea }) {
 
   useLayoutEffect(() => {
     const shell = document.querySelector('.app-shell');
-    shell?.style.setProperty('--ideas-list-width', `${boardWide ? 0 : listWidth}px`);
-  }, [listWidth, boardWide]);
+    shell?.style.setProperty('--ideas-list-width', `${listWidth}px`);
+  }, [listWidth]);
 
   useLayoutEffect(() => () => {
     document.querySelector('.app-shell')?.style.removeProperty('--ideas-list-width');
@@ -67,10 +66,7 @@ export function IdeasPage({ openIdeaId, onOpenIdea }) {
   }
 
   useEffect(() => {
-    if (!selected?.id) {
-      setBoardWide(false);
-      return;
-    }
+    if (!selected?.id) return;
     document.getElementById(`idea-row-${selected.id}`)?.scrollIntoView({ block: 'nearest' });
   }, [selected?.id]);
 
@@ -78,7 +74,7 @@ export function IdeasPage({ openIdeaId, onOpenIdea }) {
   const blank = ready.length + waiting.length === 0 ? '还没有灵感。' : '从左边选择一条灵感。';
 
   return (
-    <div className={boardWide ? 'ideas-split is-board-wide' : 'ideas-split'}>
+    <div className="ideas-split">
       <aside className="ideas-list" aria-label="灵感列表">
         <div className="ideas-list-scroll">
           <IdeaListView selectedId={selected ? selected.id : null} onSelect={onOpenIdea} />
@@ -96,11 +92,7 @@ export function IdeasPage({ openIdeaId, onOpenIdea }) {
       </aside>
       <section className="ideas-pane" aria-label="灵感正文">
         {selected ? (
-          <IdeaEditor
-            ideaId={selected.id}
-            wide={boardWide}
-            onWide={setBoardWide}
-          />
+          <IdeaEditor ideaId={selected.id} />
         ) : (
           <div className="ideas-blank">
             <p className="empty">{blank}</p>

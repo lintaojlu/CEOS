@@ -16,6 +16,7 @@ import { EventBus, Events } from './event-bus.js';
 import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
 import { createIdeaStore } from '../infrastructure/storage/idea-file-store.js';
+import { createBoardStore } from '../infrastructure/storage/board-store.js';
 import { ExportService } from './export-service.js';
 import { LlmService } from './llm-service.js';
 import { StatsService } from './stats-service.js';
@@ -48,6 +49,8 @@ export class ScheduleApp {
       workspaceRepo: this.workspaceRepo,
       eventBus: this.eventBus
     });
+
+    this.boardStore = createBoardStore();
 
     this.ideaInboxService = new IdeaInboxService({
       scheduleService: this.scheduleService,

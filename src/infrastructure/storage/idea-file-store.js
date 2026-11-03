@@ -1,4 +1,3 @@
-import { BOARD_BYTE_LIMIT, boardByteLength } from '../../domain/ideas/board-scene.js';
 import { isSafeIdeaId, toIdeaFile } from '../../domain/ideas/idea-document.js';
 
 /**
@@ -7,12 +6,6 @@ import { isSafeIdeaId, toIdeaFile } from '../../domain/ideas/idea-document.js';
 export function createMemoryIdeaStore() {
   /** @type {Map<string, string>} */
   const files = new Map();
-  /** @type {Map<string, string>} */
-  const boards = new Map();
-  /** @type {Map<string, string>} */
-  const boardMeta = new Map();
-  /** @type {Map<string, string>} */
-  const boardBaks = new Map();
   return {
     async list() {
       return [...files.values()].map((text) => JSON.parse(text));
@@ -33,37 +26,6 @@ export function createMemoryIdeaStore() {
     /** @param {string} id */
     async remove(id) {
       files.delete(id);
-    },
-    /** @param {string} id */
-    async readBoard(id) {
-      return boards.get(id) || '';
-    },
-    /**
-     * @param {string} id
-     * @param {string} body
-     * @param {string} label
-     */
-    async writeBoard(id, body, label) {
-      if (!isSafeIdeaId(id)) throw new Error('灵感编号无效');
-      if (boardByteLength(body) > BOARD_BYTE_LIMIT) throw new Error('这张图放不下');
-      boards.set(id, body);
-      boardMeta.set(id, String(label || '').split(/\r?\n/)[0].trim().slice(0, 80));
-    },
-    /** @param {string} id */
-    async removeBoard(id) {
-      boards.delete(id);
-      boardMeta.delete(id);
-      boardBaks.delete(id);
-    },
-    /** @param {string} id */
-    async quarantineBoard(id) {
-      const body = boards.get(id);
-      if (body) boardBaks.set(id, body);
-      boards.delete(id);
-      boardMeta.delete(id);
-    },
-    async listBoardMeta() {
-      return [...boardMeta.entries()].map(([id, label]) => ({ id, label }));
     }
   };
 }
@@ -99,40 +61,6 @@ export function createIdeaStore() {
       if (!isSafeIdeaId(id)) return;
       const { invoke } = await import('@tauri-apps/api/core');
       await invoke('delete_idea_file', { id });
-    },
-    /** @param {string} id */
-    async readBoard(id) {
-      if (!isSafeIdeaId(id)) return '';
-      const { invoke } = await import('@tauri-apps/api/core');
-      return invoke('read_idea_board', { id });
-    },
-    /**
-     * @param {string} id
-     * @param {string} body
-     * @param {string} label
-     */
-    async writeBoard(id, body, label) {
-      if (!isSafeIdeaId(id)) throw new Error('灵感编号无效');
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('write_idea_board', { id, body, label: label || '' });
-    },
-    /** @param {string} id */
-    async removeBoard(id) {
-      if (!isSafeIdeaId(id)) return;
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('delete_idea_board', { id });
-    },
-    /** @param {string} id */
-    async quarantineBoard(id) {
-      if (!isSafeIdeaId(id)) return;
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('quarantine_idea_board', { id });
-    },
-    async listBoardMeta() {
-      const { invoke } = await import('@tauri-apps/api/core');
-      const text = await invoke('list_idea_board_meta');
-      const parsed = text ? JSON.parse(String(text)) : [];
-      return Array.isArray(parsed) ? parsed : [];
     }
   };
 }

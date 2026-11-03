@@ -1,21 +1,28 @@
 import { createEmptyWorkspace } from '../data/workspace-record.js';
-import { getDateKey, addDays, todayKey } from '../domain/shared/date-key.js';
-import { createDailyTask, createNote, sortTasks, parseTime, normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
+import { getDateKey, addDays, todayKey, shiftDateKey } from '../domain/shared/date-key.js';
+import { createNote, parseTime, normalizeNotes, normalizeTagIds } from '../domain/schedule/daily-task.js';
 import { nextTagColor } from '../domain/schedule/tag-palette.js';
-import { syncPrevDay } from '../domain/schedule/schedule-day.js';
+import { fallbackGroupTitle } from '../domain/schedule/task-group.js';
 import {
-  adoptTask as adoptIntoList,
-  completeInList,
-  deleteFromList,
-  insertTask as insertIntoList,
-  leafTasks,
-  locateTask,
-  nestTasks as nestTaskPair,
-  renameGroupIfFallback as renameGroupTitle,
-  reorderChild,
-  takeTask as takeFromList,
-  toggleInList
-} from '../domain/schedule/task-group.js';
+  adoptScheduleTask,
+  clearScheduleDay,
+  covers,
+  dissolveGroup,
+  earliestStart,
+  extendScheduleRange,
+  findScheduleGroup,
+  findScheduleTask,
+  insertScheduleTask,
+  nestScheduleTasks,
+  newScheduleId,
+  placeScheduleTask,
+  projectDay,
+  removeScheduleTask,
+  renameScheduleGroup,
+  setScheduleCompleted,
+  syncScheduleRange,
+  toggleSchedulePin
+} from '../domain/schedule/schedule-document.js';
 import { Events } from './event-bus.js';
 
 export class ScheduleService {
@@ -29,8 +36,8 @@ export class ScheduleService {
     this.scheduleRepo = scheduleRepo;
     this.workspaceRepo = workspaceRepo;
     this.eventBus = eventBus;
-    /** @type {Record<string, any>} */
-    this.data = {};
+    /** @type {import('../domain/schedule/schedule-document.js').ScheduleDocument} */
+    this.data = { tasks: [], groups: [], order: { required: [], optional: [] } };
     /** @type {import('../data/workspace-record.js').WorkspaceRecord} */
     this.workspace = createEmptyWorkspace();
     this.currentDate = new Date();
@@ -50,9 +57,14 @@ export class ScheduleService {
     return getDateKey(date);
   }
 
+  /** 当前查看日上看得到的必做和选做。分组画成带 children 的框。 */
   getCurrentData() {
-    const key = this.getDateKey();
-    return this.scheduleRepo.ensureDay(this.data, key);
+    return projectDay(this.data, this.getDateKey());
+  }
+
+  /** @param {string} dateKey */
+  day(dateKey) {
+    return projectDay(this.data, dateKey);
   }
 
   setCurrentDate(date) {
@@ -73,24 +85,37 @@ export class ScheduleService {
   }
 
   /**
-   * 新建任务放在该列最上方。
+   * 新建任务放在该列最上方，开始日和截止日都是当前查看日。
    * @param {'required'|'optional'} type
    * @param {string} text
    * @param {string|string[]} [tagIds]
    */
   addTask(type, text, tagIds = []) {
     const title = String(text || '').trim();
-    if (!title) return null;
-    const data = this.getCurrentData();
-    const task = createDailyTask(title, this.currentDate, { tagIds: this._knownTagIds(tagIds) });
-    data[type].unshift(task);
+    if (!title || (type !== 'required' && type !== 'optional')) return null;
+    const now = new Date();
+    const task = {
+      id: newScheduleId(),
+      text: title,
+      completed: false,
+      pinned: false,
+      recurrence: '',
+      tagIds: this._knownTagIds(tagIds),
+      notes: [],
+      list: type,
+      start: this.getDateKey(),
+      due: this.getDateKey(),
+      minutes: now.getHours() * 60 + now.getMinutes(),
+      groupId: ''
+    };
+    insertScheduleTask(this.data, task);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type });
     return task;
   }
 
   /**
-   * @param {import('../domain/schedule/daily-task.js').DailyTask|null|undefined} task
+   * @param {any} task
    * @returns {string}
    */
   taskTitle(task) {
@@ -107,7 +132,6 @@ export class ScheduleService {
   }
 
   /**
-   * Keep only ids that exist in the catalog, in the order given.
    * @param {string|string[]} raw
    * @returns {string[]}
    */
@@ -122,7 +146,7 @@ export class ScheduleService {
 
   /**
    * @param {string} name
-   * @param {string} [description] 什么情况下任务属于这个标签
+   * @param {string} [description]
    */
   addTag(name, description = '') {
     const trimmed = String(name || '').trim();
@@ -145,7 +169,7 @@ export class ScheduleService {
   /**
    * @param {string} id
    * @param {string} name
-   * @param {string} [description] 传入时一并改描述；不传则只改名字
+   * @param {string} [description]
    */
   renameTag(id, name, description) {
     const trimmed = String(name || '').trim();
@@ -161,22 +185,14 @@ export class ScheduleService {
   }
 
   /**
-   * Drop the tag everywhere. Tasks stay, only the mark is cleared.
    * @param {string} id
    */
   deleteTag(id) {
     const tag = this._findTag(id);
     if (!tag) return false;
-    this.workspace.tags = (this.workspace.tags || []).filter((tag) => tag.id !== id);
-    Object.keys(this.data || {}).forEach((dateKey) => {
-      const day = this.data[dateKey];
-      ['required', 'optional'].forEach((type) => {
-        (day?.[type] || []).forEach((task) => {
-          if (!task) return;
-          task.tagIds = normalizeTagIds(task).filter((item) => item !== id);
-          delete task.tagId;
-        });
-      });
+    this.workspace.tags = (this.workspace.tags || []).filter((item) => item.id !== id);
+    this.data.tasks.forEach((task) => {
+      task.tagIds = normalizeTagIds(task).filter((item) => item !== id);
     });
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { reason: 'tag:delete' });
@@ -184,7 +200,6 @@ export class ScheduleService {
   }
 
   /**
-   * Pin is stored on the tag itself. It stays across days.
    * @param {string} id
    */
   toggleTagPin(id) {
@@ -197,8 +212,6 @@ export class ScheduleService {
   }
 
   /**
-   * Attach a tag by name on one day's copy. Reuse a same-named tag.
-   * description 只在新建时写入，已有同名标签的描述保持原样。
    * @param {'required'|'optional'} type
    * @param {string} taskId
    * @param {string} name
@@ -208,9 +221,8 @@ export class ScheduleService {
   attachTagNamed(type, taskId, name, dateKey = this.getDateKey(), description = '') {
     const trimmed = String(name || '').trim();
     if (!trimmed) return null;
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const task = locateTask(day[type] || [], taskId)?.task || null;
-    if (!task) return null;
+    const task = findScheduleTask(this.data, taskId);
+    if (!task || task.list !== type) return null;
     let tag = (this.workspace.tags || []).find((item) => item.name === trimmed) || null;
     if (!tag) {
       tag = this.addTag(trimmed, description);
@@ -219,14 +231,12 @@ export class ScheduleService {
     const ids = normalizeTagIds(task);
     if (!ids.includes(tag.id)) ids.push(tag.id);
     task.tagIds = this._knownTagIds(ids);
-    delete task.tagId;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId });
     return task;
   }
 
   /**
-   * Replace the tags on the viewed day's copy only.
    * @param {'required'|'optional'} type
    * @param {string} id
    * @param {string|string[]} tagIds
@@ -235,7 +245,6 @@ export class ScheduleService {
     const task = this._findTask(type, id);
     if (!task) return null;
     task.tagIds = this._knownTagIds(tagIds);
-    delete task.tagId;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
     return task;
@@ -250,7 +259,6 @@ export class ScheduleService {
   }
 
   /**
-   * Toggle a task on one stored day. Other days stay as they are.
    * @param {string} dateKey
    * @param {'required'|'optional'} type
    * @param {string} id
@@ -266,58 +274,81 @@ export class ScheduleService {
    * @param {string} id
    */
   _toggleOn(dateKey, type, id) {
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const toggled = toggleInList(day[type] || [], id);
-    if (!toggled) return null;
-    day[type] = toggled.tasks;
+    const group = findScheduleGroup(this.data, id);
+    const task = findScheduleTask(this.data, id);
+    if (group) {
+      if (group.list !== type) return null;
+      const visible = group.childIds
+        .map((childId) => findScheduleTask(this.data, childId))
+        .filter((child) => child && covers(child, dateKey));
+      if (!visible.length) return null;
+      const completed = setScheduleCompleted(this.data, id, dateKey, visible.some((child) => !child.completed));
+      this.persist();
+      this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
+      completed.forEach((completedId) => this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId }));
+      return projectDay(this.data, dateKey)[type].find((row) => row.id === id) || null;
+    }
+    if (!task || task.list !== type || !covers(task, dateKey)) return null;
+    const completed = setScheduleCompleted(this.data, id, dateKey, !task.completed);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
-    toggled.completedIds.forEach((completedId) => {
-      this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId });
-    });
-    return locateTask(toggled.tasks, id)?.task || null;
+    completed.forEach((completedId) => this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId }));
+    return task;
   }
 
   /**
-   * 把某一天的任务标成完成。已经完成的保持原样。
    * @param {string} dateKey
    * @param {'required'|'optional'} type
    * @param {string} id
    */
   completeTaskOnDate(dateKey, type, id) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    const completed = completeInList(day[type] || [], id);
-    if (!completed) return null;
-    if (!completed.completedIds.length) return completed.task;
-    day[type] = completed.tasks;
+    const task = findScheduleTask(this.data, id);
+    if (!task || task.list !== type || !covers(task, dateKey)) return null;
+    if (task.completed) return task;
+    const completed = setScheduleCompleted(this.data, id, dateKey, true);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
-    completed.completedIds.forEach((completedId) => {
-      this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId });
-    });
-    return completed.task;
+    completed.forEach((completedId) => this.eventBus.emit(Events.TASK_COMPLETED, { dateKey, type, id: completedId }));
+    return task;
   }
 
+  /**
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   */
   pinTask(type, id) {
-    const data = this.getCurrentData();
-    const found = locateTask(data[type] || [], id);
-    if (!found) return;
-    found.task.pinned = !found.task.pinned;
-    if (!found.parent) sortTasks(data[type]);
+    const task = findScheduleTask(this.data, id);
+    if (!task || task.list !== type) return;
+    toggleSchedulePin(this.data, id);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
   }
 
+  /**
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   */
   deleteTask(type, id) {
-    const data = this.getCurrentData();
-    const next = deleteFromList(data[type] || [], id);
-    if (!next) return;
-    data[type] = next;
+    const group = findScheduleGroup(this.data, id);
+    if (group && group.list === type) {
+      dissolveGroup(this.data, id);
+      this.persist();
+      this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
+      return;
+    }
+    const task = findScheduleTask(this.data, id);
+    if (!task || task.list !== type) return;
+    removeScheduleTask(this.data, id);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
   }
 
+  /**
+   * @param {'required'|'optional'} type
+   * @param {string} id
+   * @param {object} patch
+   */
   updateTask(type, id, patch) {
     const task = this._findTask(type, id);
     if (!task) return null;
@@ -328,38 +359,25 @@ export class ScheduleService {
   }
 
   /**
-   * 把当前查看日的这条任务改到指定日期。日期不变时只更新当天这一份。
-   * 目标日的必做或选做里已经有同一条 id 时不写入。
+   * 把任务收成只出现在指定那一天，并套上其余修改。
    * @param {'required'|'optional'} type
    * @param {string} id
    * @param {string} dateKey
    * @param {object} patch
-   * @returns {any|null|{ occupied: true }}
    */
   moveTaskToDate(type, id, dateKey, patch) {
     if (type !== 'required' && type !== 'optional') return null;
-    const currentKey = this.getDateKey();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '') || dateKey === currentKey) {
-      return this.updateTask(type, id, patch);
-    }
-    const list = this.getCurrentData()[type] || [];
-    const taken = takeFromList(list, id);
-    if (!taken) return null;
-    const existing = this.data[dateKey];
-    const occupied = ['required', 'optional'].some((bucket) => !!locateTask(existing?.[bucket] || [], id));
-    if (occupied) return { occupied: true };
-    this.getCurrentData()[type] = taken.tasks;
-    this._applyTaskPatch(taken.task, patch);
-    const target = this.scheduleRepo.ensureDay(this.data, dateKey);
-    target[type].push(taken.task);
-    sortTasks(target[type]);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
+    const task = this._findTask(type, id);
+    if (!task) return null;
+    this._applyTaskPatch(task, { ...(patch || {}), start: dateKey, due: dateKey });
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
-    return taken.task;
+    return task;
   }
 
   /**
-   * @param {any} task
+   * @param {import('../domain/schedule/schedule-document.js').ScheduleTask} task
    * @param {object} patch
    */
   _applyTaskPatch(task, patch) {
@@ -370,35 +388,51 @@ export class ScheduleService {
       delete next.subtasks;
     }
     if (next.text != null) {
-      next = { ...next, text: String(next.text).trim() };
+      const text = String(next.text).trim();
+      if (text) next = { ...next, text };
+      else delete next.text;
     }
     if (next.tagIds != null || next.tagId != null) {
-      const ids = this._knownTagIds(next.tagIds != null ? next.tagIds : next.tagId);
-      next = { ...next, tagIds: ids };
+      next = { ...next, tagIds: this._knownTagIds(next.tagIds != null ? next.tagIds : next.tagId) };
       delete next.tagId;
     }
+    if (next.start != null || next.due !== undefined) {
+      const start = /^\d{4}-\d{2}-\d{2}$/.test(next.start || '') ? next.start : task.start;
+      const due = next.due === '' || next.due == null
+        ? (next.due === '' ? '' : task.due)
+        : (/^\d{4}-\d{2}-\d{2}$/.test(next.due) ? next.due : task.due);
+      if (!due || start <= due) {
+        task.start = start;
+        task.due = due;
+      }
+      delete next.start;
+      delete next.due;
+    }
+    if (next.minutes != null) {
+      const minutes = Number(next.minutes);
+      if (Number.isInteger(minutes)) task.minutes = Math.min(1439, Math.max(0, minutes));
+      delete next.minutes;
+    }
+    if (next.recurrence != null) task.recurrence = String(next.recurrence || '');
+    delete next.recurrence;
     Object.assign(task, next);
     delete task.tagId;
     delete task.note;
     delete task.subtasks;
+    delete task.children;
     if (!Array.isArray(task.notes)) task.notes = [];
+    if (!String(task.text || '').trim()) task.text = task.text;
     return task;
   }
 
   /**
    * @param {'required'|'optional'} type
    * @param {string} taskId
-   * @returns {any|null}
    */
   _findTask(type, taskId) {
-    const data = this.getCurrentData();
-    const task = locateTask(data[type] || [], taskId)?.task || null;
-    if (!task) return null;
-    if (!Array.isArray(task.notes)) {
-      task.notes = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
-      delete task.note;
-      delete task.subtasks;
-    }
+    const task = findScheduleTask(this.data, taskId);
+    if (!task || task.list !== type) return null;
+    if (!Array.isArray(task.notes)) task.notes = normalizeNotes(task.notes, task);
     return task;
   }
 
@@ -433,7 +467,6 @@ export class ScheduleService {
   }
 
   /**
-   * 替换某一天某条任务的全部说明。查看日如果已经翻走，仍然写回这一天。
    * @param {string} dateKey
    * @param {'required'|'optional'} type
    * @param {string} taskId
@@ -444,24 +477,16 @@ export class ScheduleService {
   }
 
   /**
-   * 改某一天某条任务的标题和说明。查看日如果已经翻走，仍然写回这一天。
    * @param {string} dateKey
    * @param {'required'|'optional'} type
    * @param {string} taskId
-   * @param {{ text?: string, notes?: Array<{ id?: string, text?: string }> }} patch
+   * @param {object} patch
    */
   updateTaskOnDate(dateKey, type, taskId, patch) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
-    if (type !== 'required' && type !== 'optional') return null;
-    const day = this.data[dateKey];
-    const task = locateTask(day?.[type] || [], taskId)?.task || null;
-    if (!task) return null;
-    if (patch.text != null) task.text = String(patch.text).trim();
-    if (patch.notes != null) {
-      task.notes = normalizeNotes(patch.notes);
-      delete task.note;
-      delete task.subtasks;
-    }
+    const task = this._findTask(type, taskId);
+    if (!task || !covers(task, dateKey)) return null;
+    this._applyTaskPatch(task, patch);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: taskId, dateKey });
     return task;
@@ -477,250 +502,230 @@ export class ScheduleService {
   }
 
   /**
-   * 把同一列里的两条普通任务收成一个框。目标在前，被拖的在后。
    * @param {'required'|'optional'} type
    * @param {string} targetId
    * @param {string} draggedId
    */
   nestTasks(type, targetId, draggedId) {
-    const data = this.getCurrentData();
-    const nested = nestTaskPair(data[type] || [], targetId, draggedId);
+    const nested = nestScheduleTasks(this.data, type, targetId, draggedId);
     if (!nested) return null;
-    data[type] = nested.tasks;
     this.persist();
-    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: nested.group.id });
-    return nested.group;
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: nested.id });
+    return { ...nested, text: nested.title, children: nested.childIds.map((id) => findScheduleTask(this.data, id)) };
   }
 
   /**
-   * 把一条普通任务放进已有的框，标题不变。
    * @param {'required'|'optional'} type
    * @param {string} groupId
    * @param {string} draggedId
    */
   adoptTask(type, groupId, draggedId) {
-    const data = this.getCurrentData();
-    const adopted = adoptIntoList(data[type] || [], groupId, draggedId);
+    const group = findScheduleGroup(this.data, groupId);
+    if (!group || group.list !== type) return null;
+    const adopted = adoptScheduleTask(this.data, groupId, draggedId);
     if (!adopted) return null;
-    data[type] = adopted.tasks;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: groupId });
-    return adopted.group;
+    return adopted;
   }
 
   /**
-   * 只在标题仍是合并当时的截断标题时替换。
    * @param {'required'|'optional'} type
    * @param {string} groupId
    * @param {string} text
    * @param {string} fallback
    */
   renameGroupIfFallback(type, groupId, text, fallback) {
-    const data = this.getCurrentData();
-    const next = renameGroupTitle(data[type] || [], groupId, text, fallback);
-    if (!next) return null;
-    data[type] = next;
+    const group = findScheduleGroup(this.data, groupId);
+    if (!group || group.list !== type || group.title !== fallback) return null;
+    const renamed = renameScheduleGroup(this.data, groupId, text);
+    if (!renamed) return null;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id: groupId });
-    return locateTask(next, groupId)?.task || null;
+    return renamed;
   }
 
+  /**
+   * @param {'required'|'optional'} type
+   * @param {string} groupId
+   * @param {string} title
+   */
+  renameGroup(type, groupId, title) {
+    const group = findScheduleGroup(this.data, groupId);
+    if (!group || group.list !== type) return null;
+    const previous = group.title;
+    const renamed = renameScheduleGroup(this.data, groupId, title);
+    if (!renamed || !String(title || '').trim()) {
+      group.title = previous;
+      return group;
+    }
+    this.persist();
+    this.eventBus.emit(Events.TASKS_UPDATED, { type, id: groupId });
+    return renamed;
+  }
+
+  /**
+   * @param {'required'|'optional'} fromType
+   * @param {string} id
+   * @param {'required'|'optional'} toType
+   * @param {string|null} beforeId
+   */
   placeTask(fromType, id, toType, beforeId) {
-    const data = this.getCurrentData();
-    const fromList = data[fromType];
-    if (!fromList || !data[toType]) return;
     if (fromType === toType && beforeId === id) return;
-    if (fromType === toType) {
-      const fromLoc = locateTask(fromList, id);
-      const beforeLoc = beforeId ? locateTask(fromList, beforeId) : null;
-      if (fromLoc?.parent && beforeLoc?.parent && fromLoc.parent.id === beforeLoc.parent.id) {
-        if (!reorderChild(fromLoc.parent, id, beforeId)) return;
-        this.persist();
-        this.eventBus.emit(Events.TASKS_UPDATED, {});
-        return;
-      }
-    }
-    const taken = takeFromList(fromList, id);
-    if (!taken) return;
-    if (fromType === toType) data[fromType] = insertIntoList(taken.tasks, taken.task, beforeId);
-    else {
-      data[fromType] = taken.tasks;
-      data[toType] = insertIntoList(data[toType], taken.task, beforeId);
-    }
+    const ok = placeScheduleTask(this.data, fromType, id, toType, beforeId, this.getDateKey());
+    if (!ok) return;
     this.persist();
     if (fromType !== toType) this.eventBus.emit(Events.TASK_MOVED, { fromType, toType, id });
     this.eventBus.emit(Events.TASKS_UPDATED, {});
   }
 
   /**
-   * Remove daily task and return it (for defer to ideas).
    * @param {'required'|'optional'} type
    * @param {string} id
    */
   takeTask(type, id) {
-    const data = this.getCurrentData();
-    const taken = takeFromList(data[type] || [], id);
-    if (!taken) return null;
-    data[type] = taken.tasks;
+    const task = findScheduleTask(this.data, id);
+    if (!task || task.list !== type) return null;
+    const copy = { ...task, notes: task.notes.map((note) => ({ ...note })), tagIds: [...task.tagIds] };
+    removeScheduleTask(this.data, id);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
-    return taken.task;
+    return copy;
   }
 
   /**
-   * Insert a task into today's list (e.g. pick up from ideas).
    * @param {'required'|'optional'} type
-   * @param {import('../domain/schedule/daily-task.js').DailyTask} task
+   * @param {any} task
    */
   insertTask(type, task) {
     return this.insertTaskOnDate(this.getDateKey(), type, task);
   }
 
   /**
-   * 写入指定日期，不改当前正在看的那一天。
    * @param {string} dateKey
    * @param {'required'|'optional'} type
-   * @param {import('../domain/schedule/daily-task.js').DailyTask} task
+   * @param {any} task
    */
   insertTaskOnDate(dateKey, type, task) {
-    const data = this.scheduleRepo.ensureDay(this.data, dateKey);
-    if (locateTask(data[type], task.id)) return;
-    const next = {
-      ...task,
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return;
+    if (type !== 'required' && type !== 'optional') return;
+    if (findScheduleTask(this.data, task?.id)) return;
+    const clock = typeof task?.time === 'number' ? new Date(task.time) : new Date();
+    const stored = {
+      id: task?.id || newScheduleId(),
+      text: String(task?.text || ''),
+      completed: !!task?.completed,
+      pinned: !!task?.pinned,
+      recurrence: task?.recurrence || '',
       tagIds: this._knownTagIds(normalizeTagIds(task)),
-      notes: normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks })
+      notes: normalizeNotes(task?.notes, { note: task?.note, subtasks: task?.subtasks }),
+      list: type,
+      start: dateKey,
+      due: dateKey,
+      minutes: Number.isInteger(task?.minutes) ? task.minutes : clock.getHours() * 60 + clock.getMinutes(),
+      groupId: ''
     };
-    delete next.tagId;
-    delete next.projectId;
-    delete next.note;
-    delete next.subtasks;
-    data[type].push(next);
+    insertScheduleTask(this.data, stored);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, dateKey });
   }
 
   /**
-   * Unfinished required/optional on a stored day.
    * @param {string} dateKey
    * @returns {number}
    */
   countOpenTasks(dateKey) {
-    const day = this.data[dateKey];
-    if (!day) return 0;
-    const open = (list) => leafTasks(list).filter((task) => task && !task.completed).length;
-    return open(day.required) + open(day.optional);
+    return this.data.tasks.filter((task) => !task.completed && covers(task, dateKey)).length;
   }
 
-  /**
-   * Days other than the viewed day that still have unfinished required/optional.
-   * Newest first.
-   * @returns {{ dateKey: string, openCount: number }[]}
-   */
+  /** @returns {{ dateKey: string, openCount: number }[]} */
   listSyncSources() {
     const currentKey = this.getDateKey();
-    return Object.keys(this.data)
-      .filter((dateKey) => /^\d{4}-\d{2}-\d{2}$/.test(dateKey) && dateKey !== currentKey)
-      .map((dateKey) => ({ dateKey, openCount: this.countOpenTasks(dateKey) }))
-      .filter((row) => row.openCount > 0)
-      .sort((a, b) => (a.dateKey < b.dateKey ? 1 : a.dateKey > b.dateKey ? -1 : 0));
+    /** @type {Map<string, number>} */
+    const counts = new Map();
+    this.data.tasks.forEach((task) => {
+      if (task.completed) return;
+      const end = task.due || task.start;
+      let cursor = task.start;
+      let guard = 0;
+      while (cursor && cursor <= end && guard < 4000) {
+        if (cursor !== currentKey) counts.set(cursor, (counts.get(cursor) || 0) + 1);
+        cursor = shiftDateKey(cursor, 1);
+        guard += 1;
+      }
+    });
+    return [...counts.entries()]
+      .map(([dateKey, openCount]) => ({ dateKey, openCount }))
+      .sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
   }
 
   /**
-   * Copy unfinished required/optional from a chosen day onto the viewed day.
-   * Same task id. The tag on the task is copied with it. Completed tasks stay on the source day.
+   * 把来源日上未完成、而且今天还看不到的任务，把区间扩到盖住今天。
    * @param {string} sourceKey
-   * @returns {boolean}
    */
   syncTasksFrom(sourceKey) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(sourceKey || '')) return false;
-    if (sourceKey === this.getDateKey()) return false;
-    const source = this.data[sourceKey];
-    if (!source) return false;
-    const data = this.getCurrentData();
-    syncPrevDay(source, data);
+    const target = this.getDateKey();
+    if (sourceKey === target) return false;
+    const changed = syncScheduleRange(this.data, sourceKey, target);
+    if (!changed) return false;
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, {});
     return true;
   }
 
-  /** Manual only: unfinished required/optional from the day before the viewed day. */
   syncPrevDayTasks() {
     return this.syncTasksFrom(getDateKey(addDays(this.currentDate, -1)));
   }
 
-  /** Clears required and optional on the viewed day. Reflection and other days stay. */
   clearDayTasks() {
-    const data = this.getCurrentData();
-    data.required = [];
-    data.optional = [];
+    clearScheduleDay(this.data, this.getDateKey());
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, {});
   }
 
-  setReflection(text) {
-    const data = this.getCurrentData();
-    data.reflection = text;
-    this.persist();
-    this.eventBus.emit(Events.REFLECTION_UPDATED, {});
-  }
-
-  toggleReflectionTag(tag) {
-    const data = this.getCurrentData();
-    const tags = data.reflectionTags || [];
-    const idx = tags.indexOf(tag);
-    if (idx >= 0) tags.splice(idx, 1);
-    else tags.push(tag);
-    data.reflectionTags = tags;
-    this.persist();
-    this.eventBus.emit(Events.REFLECTION_UPDATED, {});
-  }
-
   getProgress() {
-    const data = this.getCurrentData();
-    const leaves = leafTasks(data.required || []);
+    const key = this.getDateKey();
+    const leaves = this.data.tasks.filter((task) => task.list === 'required' && covers(task, key));
     const total = leaves.length;
     const completed = leaves.filter((task) => task.completed).length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, percentage };
   }
 
-  /**
-   * Incomplete required/optional on the currently viewed day only.
-   * @returns {Array<{ dateKey: string, list: 'required'|'optional', task: any }>}
-   */
   listIncompleteDailyTasks() {
     const dateKey = this.getDateKey();
     return this.listIncompleteOnDate(dateKey).map(({ list, task }) => ({ dateKey, list, task }));
   }
 
   /**
-   * Incomplete required/optional on a specific date (e.g. real today for pomodoro).
    * @param {string} dateKey
    * @returns {Array<{ list: 'required'|'optional', task: any }>}
    */
   listIncompleteOnDate(dateKey) {
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    /** @type {Array<{ list: 'required'|'optional', task: any }>} */
-    const out = [];
-    ['required', 'optional'].forEach((list) => {
-      leafTasks(day[list] || []).forEach((task) => {
-        if (!task.completed) out.push({ list: /** @type {any} */ (list), task });
-      });
-    });
-    return out;
+    return this.data.tasks
+      .filter((task) => !task.completed && covers(task, dateKey))
+      .map((task) => ({ list: task.list, task }));
   }
 
   /**
    * @param {string} dateKey
    * @param {'required'|'optional'} list
    * @param {string} taskId
-   * @returns {any|null}
    */
   findTaskOnDate(dateKey, list, taskId) {
-    const day = this.scheduleRepo.ensureDay(this.data, dateKey);
-    return locateTask(day[list] || [], taskId)?.task || null;
+    const task = findScheduleTask(this.data, taskId);
+    if (!task || task.list !== list || !covers(task, dateKey)) return null;
+    return task;
+  }
+
+  /** 分组标题仍是两条任务名截出来的那句时，才换成模型给出的标题。 */
+  fallbackGroupTitle(texts) {
+    return fallbackGroupTitle(texts);
   }
 
   parseTime = parseTime;
   todayKey = todayKey;
+  earliestStart = () => earliestStart(this.data);
+  extendRange = extendScheduleRange;
 }

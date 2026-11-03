@@ -4,6 +4,7 @@
  */
 
 import { createNote, normalizeTagIds } from './daily-task.js';
+import { isScheduleDocument } from './schedule-document.js';
 
 export const HUMAN_TASK_TITLE = '人类任务';
 export const AI_TASK_TITLE = 'AI任务';
@@ -235,12 +236,23 @@ export function selectRelatedTasks({ days, taskId, tagIds, limit = RELATED_TASK_
   const wanted = [...new Set((tagIds || []).filter(Boolean))];
   if (!wanted.length) return [];
 
-  const dates = Object.keys(days || {}).filter((key) => DATE_KEY.test(key)).sort().reverse();
+  /** @type {Record<string, { required?: any[], optional?: any[] }>} */
+  let source = days || {};
+  if (isScheduleDocument(days)) {
+    source = {};
+    days.tasks.forEach((task) => {
+      const dateKey = task.due || task.start;
+      if (!source[dateKey]) source[dateKey] = { required: [], optional: [] };
+      source[dateKey][task.list === 'optional' ? 'optional' : 'required'].push(task);
+    });
+  }
+
+  const dates = Object.keys(source).filter((key) => DATE_KEY.test(key)).sort().reverse();
   const seen = new Set();
   /** @type {Array<{ id: string, dateKey: string, text: string, completed: boolean, tagIds: string[] }>} */
   const latest = [];
   dates.forEach((dateKey) => {
-    const day = days[dateKey] || {};
+    const day = source[dateKey] || {};
     ['required', 'optional'].forEach((list) => {
       (day[list] || []).forEach((task) => {
         if (!task?.id || seen.has(task.id)) return;

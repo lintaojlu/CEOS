@@ -17,6 +17,7 @@ export function ContextMenu({ x, y, onClose, items }) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (!el.matches(':popover-open')) el.showPopover();
     const rect = el.getBoundingClientRect();
     const left = Math.max(8, Math.min(x, window.innerWidth - rect.width - 8));
     const top = Math.max(8, Math.min(y, window.innerHeight - rect.height - 8));
@@ -36,6 +37,7 @@ export function ContextMenu({ x, y, onClose, items }) {
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('pointerdown', onPointer);
+      if (ref.current?.matches(':popover-open')) ref.current.hidePopover();
     };
   }, [onClose]);
 
@@ -44,6 +46,7 @@ export function ContextMenu({ x, y, onClose, items }) {
       ref={ref}
       className="context-menu"
       role="menu"
+      popover="manual"
       style={{ left: pos.left, top: pos.top }}
       onContextMenu={(event) => event.preventDefault()}
     >

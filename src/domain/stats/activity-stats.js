@@ -3,7 +3,8 @@
  * 活跃日：当天至少完成 1 条必做或选做。无任务的日子不算活跃，也不打断之外的空档由日历连续计算。
  */
 
-import { addDays, diffDays, getDateKey, parseDateKey, startOfWeek } from '../shared/date-key.js';
+import { addDays, diffDays, getDateKey, parseDateKey, shiftDateKey, startOfWeek } from '../shared/date-key.js';
+import { dayView, earliestStart, isScheduleDocument } from '../schedule/schedule-document.js';
 import { activityRateLevel, dayCompletion, requiredCompletion } from './day-completion.js';
 
 const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -45,11 +46,26 @@ export function heatColumnGap(contentWidth, count) {
  * @param {string} todayKey
  * @returns {Set<string>}
  */
+function visitScheduleDates(schedule, todayKey, visit) {
+  if (!isScheduleDocument(schedule)) {
+    Object.keys(schedule || {}).forEach((dateKey) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey) && dateKey <= todayKey) visit(dateKey);
+    });
+    return;
+  }
+  let cursor = earliestStart(schedule);
+  let guard = 0;
+  while (cursor && cursor <= todayKey && guard < 20000) {
+    visit(cursor);
+    cursor = shiftDateKey(cursor, 1);
+    guard += 1;
+  }
+}
+
 function activeDateSet(schedule, todayKey) {
   const active = new Set();
-  Object.keys(schedule || {}).forEach((dateKey) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || dateKey > todayKey) return;
-    const stat = dayCompletion(schedule[dateKey]);
+  visitScheduleDates(schedule, todayKey, (dateKey) => {
+    const stat = dayCompletion(dayView(schedule, dateKey));
     if (stat && stat.completed > 0) active.add(dateKey);
   });
   return active;
@@ -125,7 +141,7 @@ export function heatmapSpan(today, schedule) {
   const todayDate = parseDateKey(today) || new Date();
   const lastWeek = startOfWeek(todayDate);
   let first = addDays(lastWeek, -(HEATMAP_HISTORY_WEEKS - 1) * 7);
-  const keys = Object.keys(schedule || {})
+  const keys = (isScheduleDocument(schedule) ? [earliestStart(schedule)] : Object.keys(schedule || {}))
     .filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key) && key <= today)
     .sort();
   if (keys.length > 0) {
@@ -158,7 +174,7 @@ export function buildHeatmapWeeks(schedule, { weeks, today }) {
       const date = addDays(first, week * 7 + dow);
       const dateKey = getDateKey(date);
       const future = dateKey > today;
-      const stat = future ? null : requiredCompletion(schedule[dateKey]);
+      const stat = future ? null : requiredCompletion(dayView(schedule, dateKey));
       if (date.getDate() === 1) monthLabel = MONTHS[date.getMonth()];
       days.push({
         dateKey,

@@ -98,9 +98,8 @@ describe('TaskTagService', () => {
     expect(schedule.workspace.tags.map((tag) => tag.name)).toEqual(['生活', '日程 代理']);
     expect(schedule.workspace.tags[1].description).toBe('和日程代理的对话、工具有关');
     expect(schedule.workspace.tags[1].color).toBe(TAG_PALETTE[1]);
-    expect(schedule.data[originKey].required[0].tagIds).toEqual([schedule.workspace.tags[1].id]);
-    schedule.setCurrentDate(addDays(origin, 1));
-    expect(schedule.getCurrentData().required[0].tagIds).toEqual([]);
+    schedule.setCurrentDate(origin);
+    expect(schedule.getCurrentData().required[0].tagIds).toEqual([schedule.workspace.tags[1].id]);
   });
 
   it('reuses an existing tag with the same name', async () => {
@@ -181,10 +180,11 @@ describe('TaskTagService', () => {
     const schedule = createSchedule();
     const tag = schedule.addTag('ceos', '旧描述');
     const task = schedule.addTask('required', '旧标题');
-    schedule.updateTask('required', task.id, { tagIds: [tag.id], notes: [{ id: 'n1', text: '旧说明' }] });
+    schedule.updateTask('required', task.id, { notes: [{ id: 'n1', text: '旧说明' }] });
     const origin = schedule.currentDate;
     schedule.setCurrentDate(addDays(origin, 1));
-    schedule.insertTask('required', { ...schedule.data[getDateKey(origin)].required[0], text: '写菜单', notes: [{ id: 'n1', text: '先画菜单' }] });
+    const later = schedule.addTask('required', '写菜单');
+    schedule.updateTask('required', later.id, { tagIds: [tag.id], notes: [{ id: 'n1', text: '先画菜单' }] });
     let seen = null;
     const service = new TaskTagService({
       scheduleService: schedule,

@@ -1,6 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Events } from '../../../application/event-bus.js';
-import { normalizeNotes } from '../../../domain/schedule/daily-task.js';
 import { displayTagColor } from '../../../domain/schedule/fixed-tags.js';
 import { AI_TASK_TITLE, HUMAN_TASK_TITLE, noteBody, noteTitle } from '../../../domain/schedule/task-breakdown.js';
 import { todayKey } from '../../../domain/shared/date-key.js';
@@ -75,8 +74,6 @@ function NoteCard({ note, onFocus }) {
   );
 }
 
-const NOTE_CLICK_DELAY = 250;
-
 export function TaskNoteCards({ notes, onFocus }) {
   if (!notes.length) return null;
   return (
@@ -89,15 +86,12 @@ export function TaskNoteCards({ notes, onFocus }) {
 export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, held = false, bare = false, dropRow = false, onReorderStart }) {
   const app = useApp();
   const drag = useRef(false);
-  const openTimer = useRef(0);
   const rowRef = useRef(null);
-  const [notesOpen, setNotesOpen] = useState(false);
   const [breaking, setBreaking] = useState(false);
   const [breakError, setBreakError] = useState('');
   const [tagState, setTagState] = useState('');
   const [standardState, setStandardState] = useState('');
   const [menu, setMenu] = useState(null);
-  const notes = normalizeNotes(task.notes, { note: task.note, subtasks: task.subtasks });
   const recurrence = task.recurrence === 'daily' ? '每日' : task.recurrence === 'weekdays' ? '工作日' : '';
   const edge = dropEdge === 'before' ? ' is-drop-before' : dropEdge === 'after' ? ' is-drop-after' : '';
   const viewingToday = app.scheduleService.getDateKey() === todayKey();
@@ -149,13 +143,10 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, held =
   const canFocus = viewingToday && !task.completed;
   const showStatus = !!(breakError || tagState || standardState);
 
-  useEffect(() => () => window.clearTimeout(openTimer.current), []);
-
-  function revealNotes(event) {
-    if (drag.current || !notes.length) return;
+  function openDrawer(event) {
+    if (drag.current) return;
     if (event.target.closest('button, input, textarea, a, label, select')) return;
-    window.clearTimeout(openTimer.current);
-    openTimer.current = window.setTimeout(() => setNotesOpen((open) => !open), NOTE_CLICK_DELAY);
+    onEdit(type, task.id);
   }
 
   return (
@@ -186,20 +177,14 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, held =
           window.addEventListener('pointerup', up);
           onReorderStart?.(event, type, task.id);
         }}
-        onClick={revealNotes}
-        onDoubleClick={(event) => {
-          window.clearTimeout(openTimer.current);
-          if (drag.current) return;
-          if (event.target.closest('button, input, textarea, a, label, select')) return;
-          onEdit(type, task.id);
-        }}
+        onClick={openDrawer}
         onContextMenu={(event) => {
           event.preventDefault();
           setMenu({ x: event.clientX, y: event.clientY });
         }}
       >
         {bare ? null : <Checkbox checked={task.completed} onChange={() => app.scheduleService.toggleTask(type, task.id)} />}
-        <div className="task-main" title="双击编辑">
+        <div className="task-main">
           <div className="task-line">
             {tags.map((tag) => <span key={tag.id} className="tag-dot" style={{ background: displayTagColor(tag) }} />)}
             <TaskText text={task.text || ''} done={task.completed} />
@@ -231,14 +216,13 @@ export function TaskRow({ task, type, onEdit, dropEdge, dragging = false, held =
           ]}
         />
       ) : null}
-      {!showStatus && !(notesOpen && notes.length) ? null : (
+      {!showStatus ? null : (
         <div className="note-stack">
           {standardState === 'pending' ? <p className="task-tag-status" role="status">正在标准化…</p> : null}
           {standardState && standardState !== 'pending' ? <p className="task-break-error">{standardState}</p> : null}
           {tagState === 'pending' ? <p className="task-tag-status" role="status">正在分类…</p> : null}
           {tagState && tagState !== 'pending' ? <p className="task-break-error">{tagState}</p> : null}
           {breakError ? <p className="task-break-error">{breakError}</p> : null}
-          {notesOpen ? <TaskNoteCards notes={notes} onFocus={canFocus ? focus : null} /> : null}
         </div>
       )}
     </div>

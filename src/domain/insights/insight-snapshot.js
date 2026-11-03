@@ -6,6 +6,7 @@ import { normalizeTagIds } from '../schedule/daily-task.js';
 import { partitionIdeas } from '../ideas/readiness.js';
 import { addDays, diffDays, getDateKey, parseDateKey } from '../shared/date-key.js';
 import { summarizeActivity } from '../stats/activity-stats.js';
+import { dayView } from '../schedule/schedule-document.js';
 import { dayCompletion } from '../stats/day-completion.js';
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -33,7 +34,7 @@ function aggregate(schedule, keys) {
   let completed = 0;
   let total = 0;
   keys.forEach((key) => {
-    const stat = dayCompletion(schedule[key]);
+    const stat = dayCompletion(dayView(schedule, key));
     if (!stat) return;
     completed += stat.completed;
     total += stat.total;
@@ -49,7 +50,7 @@ function weakestWeekday(schedule, todayKey) {
   const buckets = Array.from({ length: 7 }, () => ({ completed: 0, total: 0 }));
   Object.keys(schedule || {}).forEach((dateKey) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || dateKey > todayKey) return;
-    const stat = dayCompletion(schedule[dateKey]);
+    const stat = dayCompletion(dayView(schedule, dateKey));
     if (!stat) return;
     const date = parseDateKey(dateKey);
     if (!date) return;

@@ -1,22 +1,16 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { IconButton } from './IconButton.jsx';
+import { Overlay } from './Overlay.jsx';
 
-export function Modal({ title, children, onClose, wide = false }) {
+export function Modal({ title, children, onClose, wide = false, open = true }) {
+  const titleId = useId();
   return (
-    <div className="modal-backdrop" data-tauri-drag-region="false" onMouseDown={onClose} role="presentation">
-      <div
-        className={`card modal ${wide ? 'modal-wide' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="card-head">
-          <h2 className="card-title">{title}</h2>
-          <IconButton name="close" label="关闭" onClick={onClose} />
-        </div>
-        {children}
+    <Overlay open={open} wide={wide} onClose={onClose} label={title}>
+      <div className="card-head">
+        <h2 id={titleId} className="card-title">{title}</h2>
+        <IconButton name="close" label="关闭" onClick={onClose} />
       </div>
-    </div>
+      {children}
+    </Overlay>
   );
 }

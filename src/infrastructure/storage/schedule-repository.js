@@ -1,4 +1,4 @@
-import { normalizeScheduleDay, createEmptyScheduleDay } from '../../data/schedule-record.js';
+import { normalizeScheduleDocument, emptyScheduleDocument } from '../../domain/schedule/schedule-document.js';
 
 const KEY = 'ceoSchedule';
 
@@ -8,34 +8,14 @@ export class ScheduleRepository {
     this.adapter = adapter;
   }
 
-  /** @returns {Record<string, import('../../domain/schedule/schedule-day.js').ScheduleDay>} */
+  /** @returns {import('../../domain/schedule/schedule-document.js').ScheduleDocument} */
   load() {
-    const raw = this.adapter.getJson(KEY, {});
-    const out = {};
-    Object.keys(raw || {}).forEach((dateKey) => {
-      out[dateKey] = normalizeScheduleDay(raw[dateKey]);
-    });
-    return out;
+    return normalizeScheduleDocument(this.adapter.getJson(KEY, {}));
   }
 
-  /** @param {Record<string, any>} data */
+  /** @param {import('../../domain/schedule/schedule-document.js').ScheduleDocument} data */
   save(data) {
-    const cleaned = {};
-    Object.keys(data || {}).forEach((dateKey) => {
-      cleaned[dateKey] = normalizeScheduleDay(data[dateKey]);
-    });
-    this.adapter.setJson(KEY, cleaned);
-  }
-
-  /**
-   * @param {Record<string, any>} data
-   * @param {string} dateKey
-   */
-  ensureDay(data, dateKey) {
-    if (!data[dateKey] || !Array.isArray(data[dateKey].required) || !Array.isArray(data[dateKey].optional)) {
-      data[dateKey] = normalizeScheduleDay(data[dateKey] || {});
-    }
-    return data[dateKey];
+    this.adapter.setJson(KEY, normalizeScheduleDocument(data || emptyScheduleDocument()));
   }
 }
 

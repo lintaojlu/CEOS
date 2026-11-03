@@ -1,5 +1,7 @@
 import { partitionIdeas } from '../ideas/readiness.js';
 import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
+import { dayView, earliestStart, isScheduleDocument } from '../schedule/schedule-document.js';
+import { shiftDateKey } from '../shared/date-key.js';
 import { isGroup } from '../schedule/task-group.js';
 
 /**
@@ -27,7 +29,7 @@ export function taskView(task) {
  * @param {string} date
  */
 function dayLists(schedule, date) {
-  const day = schedule?.[date];
+  const day = dayView(schedule, date);
   const listed = (tasks) => {
     const out = [];
     (Array.isArray(tasks) ? tasks : []).forEach((task) => {
@@ -68,9 +70,26 @@ export function readListDay(schedule, date) {
  * @param {Record<string, any>} schedule
  * @param {string} excludeDate
  */
+function scheduleDateKeys(schedule) {
+  if (!isScheduleDocument(schedule)) {
+    return Object.keys(schedule || {}).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date));
+  }
+  const keys = [];
+  let cursor = earliestStart(schedule);
+  const ends = (schedule.tasks || []).map((task) => task.due || task.start).filter(Boolean).sort();
+  const end = ends[ends.length - 1] || cursor;
+  let guard = 0;
+  while (cursor && end && cursor <= end && guard < 20000) {
+    keys.push(cursor);
+    cursor = shiftDateKey(cursor, 1);
+    guard += 1;
+  }
+  return keys;
+}
+
 export function readOpenDays(schedule, excludeDate) {
-  return Object.keys(schedule || {})
-    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date !== excludeDate)
+  return scheduleDateKeys(schedule)
+    .filter((date) => date !== excludeDate)
     .map((date) => {
       const open = [...dayLists(schedule, date).required, ...dayLists(schedule, date).optional].filter(
         (task) => task && task.text && !task.completed

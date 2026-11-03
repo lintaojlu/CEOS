@@ -49,7 +49,7 @@ describe('TaskStandardizeService', () => {
     const origin = schedule.currentDate;
     const originKey = getDateKey(origin);
     schedule.setCurrentDate(addDays(origin, 1));
-    schedule.insertTask('required', { ...task, text: '另一天的原文', notes: [] });
+    schedule.addTask('required', '另一天的原文');
     schedule.setCurrentDate(origin);
     let seen = null;
     const service = new TaskStandardizeService({
@@ -66,7 +66,7 @@ describe('TaskStandardizeService', () => {
     expect(seen.model).toBe('short');
     expect(seen.user).toContain('任务标题：\n下午跟张三对一下标签菜单，确认说明会不会丢');
     expect(seen.user).toContain('已有说明：\n已有说明');
-    const saved = schedule.data[originKey].required[0];
+    const saved = schedule.data.tasks.find((item) => item.id === task.id);
     expect(saved.text).toBe('对一下标签菜单');
     expect(saved.completed).toBe(true);
     expect(saved.notes.map((note) => note.text)).toEqual([
@@ -76,8 +76,8 @@ describe('TaskStandardizeService', () => {
     ]);
     expect(saved.notes[1].id).toBe('n1');
     schedule.setCurrentDate(addDays(origin, 1));
-    expect(schedule.getCurrentData().required[0].text).toBe('另一天的原文');
-    expect(schedule.getCurrentData().required[0].notes).toEqual([]);
+    expect(schedule.getCurrentData().required.map((item) => item.text)).toContain('另一天的原文');
+    expect(schedule.getCurrentData().required.find((item) => item.text === '另一天的原文').notes).toEqual([]);
   });
 
   it('uses the default model when the standardize model is empty', async () => {

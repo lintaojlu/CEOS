@@ -107,6 +107,19 @@ export function mentionCatalog(world) {
   /** @type {Set<string>} */
   const days = new Set();
   if (/^\d{4}-\d{2}-\d{2}$/.test(today)) days.add(today);
+  if (Array.isArray(schedule.tasks)) {
+    (schedule.groups || []).forEach((group) => {
+      if (!group?.id) return;
+      items.push({ kind: 'task', id: group.id, title: group.title || '', date: '', label: group.title || group.id });
+    });
+    (schedule.tasks || []).forEach((task) => {
+      if (!task?.id) return;
+      const date = task.start || '';
+      if (date) days.add(date);
+      if (task.due) days.add(task.due);
+      items.push({ kind: 'task', id: task.id, title: task.text || '', date, label: `${date} ${task.text || ''}`.trim() });
+    });
+  }
   for (const date of Object.keys(schedule)) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     const day = schedule[date];

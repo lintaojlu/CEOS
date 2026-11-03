@@ -28,15 +28,13 @@ export function TasksTopBar() {
         </div>
       </div>
       <SyncTasksModal open={syncOpen} onClose={() => setSyncOpen(false)} />
-      {clearOpen ? (
-        <Modal title="清空当日任务" onClose={() => setClearOpen(false)}>
-          <p>清空当前日期的必做和选做？灵感不受影响。</p>
-          <div className="form-actions">
-            <button type="button" className="btn btn-primary" onClick={confirmClear}>清空</button>
-            <button type="button" className="btn" onClick={() => setClearOpen(false)}>取消</button>
-          </div>
-        </Modal>
-      ) : null}
+      <Modal title="清空当日任务" open={clearOpen} onClose={() => setClearOpen(false)}>
+        <p>清空当前日期的必做和选做？灵感不受影响。</p>
+        <div className="form-actions">
+          <button type="button" className="btn btn-primary" onClick={confirmClear}>清空</button>
+          <button type="button" className="btn" onClick={() => setClearOpen(false)}>取消</button>
+        </div>
+      </Modal>
     </>
   );
 }

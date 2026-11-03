@@ -25,6 +25,13 @@ export function addDays(date, days) {
   return d;
 }
 
+/** @param {string} dateKey @param {number} days */
+export function shiftDateKey(dateKey, days) {
+  const date = parseDateKey(dateKey);
+  if (!date) return dateKey;
+  return getDateKey(addDays(date, days));
+}
+
 /**
  * @param {Date} date
  * @returns {string}

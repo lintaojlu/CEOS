@@ -3,6 +3,7 @@
  */
 
 import { normalizeNotes, normalizeTagIds } from './daily-task.js';
+import { isScheduleDocument } from './schedule-document.js';
 import { clipTagDescription } from './tag-name.js';
 
 export const TAG_DESCRIPTION_SYSTEM = '只输出 JSON：{"description":"<描述>"}。不解释、不询问，不返回除了 JSON 外任何内容。description 用一句话说明什么情况下任务属于该标签，不超过 80 个字。根据已有任务和现有描述来写：现有描述里还成立的范围留下，任务里看出来的范围补上或收紧。';
@@ -19,6 +20,17 @@ const NOTE_LIMIT = 80;
 export function tasksForTag(schedule, tagId) {
   /** @type {Map<string, { date: string, title: string, notes: string[] }>} */
   const byId = new Map();
+  if (isScheduleDocument(schedule)) {
+    (schedule.tasks || []).forEach((row) => {
+      if (!row || !normalizeTagIds(row).includes(tagId)) return;
+      const title = String(row.text || '').trim();
+      if (!title) return;
+      const date = row.due || row.start || '';
+      const notes = normalizeNotes(row.notes, row).map((note) => note.text).filter(Boolean);
+      byId.set(row.id, { date, title, notes });
+    });
+    return [...byId.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.title < b.title ? -1 : 1));
+  }
   const dates = Object.keys(schedule || {}).filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key)).sort();
   dates.forEach((date) => {
     const day = schedule[date];

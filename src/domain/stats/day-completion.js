@@ -6,9 +6,20 @@
  * @param {import('../../data/schedule-record.js').ScheduleDayRecord|null|undefined} day
  * @returns {{ completed: number, total: number, rate: number }|null}
  */
+function leavesOf(tasks) {
+  /** @type {any[]} */
+  const out = [];
+  (tasks || []).forEach((task) => {
+    if (!task) return;
+    if (Array.isArray(task.children) && task.children.length >= 2) out.push(...task.children.filter(Boolean));
+    else out.push(task);
+  });
+  return out;
+}
+
 export function dayCompletion(day) {
   if (!day) return null;
-  const tasks = [...(day.required || []), ...(day.optional || [])].filter(Boolean);
+  const tasks = leavesOf([...(day.required || []), ...(day.optional || [])]);
   if (tasks.length === 0) return null;
   const completed = tasks.filter((task) => task.completed).length;
   return { completed, total: tasks.length, rate: completed / tasks.length };
@@ -21,7 +32,7 @@ export function dayCompletion(day) {
  */
 export function requiredCompletion(day) {
   if (!day) return null;
-  const tasks = (day.required || []).filter(Boolean);
+  const tasks = leavesOf(day.required || []);
   if (tasks.length === 0) return null;
   const completed = tasks.filter((task) => task.completed).length;
   return { completed, total: tasks.length, rate: completed / tasks.length };

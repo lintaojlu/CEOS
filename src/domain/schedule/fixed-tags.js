@@ -11,7 +11,8 @@ export function tagsVisibleOnDay(tags, day) {
   ['required', 'optional'].forEach((type) => {
     const tasks = day && typeof day === 'object' ? day[type] : null;
     (Array.isArray(tasks) ? tasks : []).forEach((task) => {
-      normalizeTagIds(task).forEach((id) => used.add(id));
+      const rows = Array.isArray(task?.children) && task.children.length ? task.children : [task];
+      rows.forEach((row) => normalizeTagIds(row).forEach((id) => used.add(id)));
     });
   });
   return (Array.isArray(tags) ? tags : []).filter((tag) => {

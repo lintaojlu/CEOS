@@ -353,7 +353,8 @@ input[type="date"], input[type="time"] { color-scheme: light; }
 .tag-pin.is-on .pin-head { fill: currentColor; }
 .tag-pin:hover { color: var(--text); }
 .context-menu {
-  position: fixed; z-index: 50; min-width: 148px; padding: 6px;
+  position: fixed; inset: unset; margin: 0; width: auto; height: auto;
+  z-index: 50; min-width: 148px; padding: 6px;
   background: var(--card); border: 1px solid var(--line); border-radius: 10px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
 }
@@ -366,9 +367,48 @@ input[type="date"], input[type="time"] { color-scheme: light; }
 .context-menu-item:disabled { color: var(--dim); }
 .task-tag-status { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .tag-dot { width: 8px; height: 8px; border-radius: 999px; flex: none; margin-top: 6px; }
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 40; }
-.modal { width: min(480px, 100%); max-height: min(86vh, 720px); overflow: auto; box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
-.modal-wide { width: min(560px, 100%); }
+.overlay {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+.overlay:focus { outline: none; }
+.overlay::backdrop {
+  background-color: transparent;
+  transition: background-color 0.2s var(--ease), display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+}
+.overlay:open::backdrop { background-color: rgba(0, 0, 0, 0.55); }
+@starting-style {
+  .overlay:open::backdrop { background-color: transparent; }
+}
+.overlay-modal {
+  width: min(480px, calc(100vw - 48px));
+  max-height: min(90vh, 860px);
+  margin: auto;
+  overflow: auto;
+  transform: translateY(12px);
+  transition: transform 0.2s var(--ease), display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+}
+.overlay-modal:open { transform: translateY(0); }
+.overlay-wide { width: min(560px, calc(100vw - 48px)); }
+@starting-style {
+  .overlay-modal:open { transform: translateY(12px); }
+}
+.overlay-modal .overlay-panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  padding: 18px 18px 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .overlay::backdrop { transition: none; }
+}
 .form-stack { display: flex; flex-direction: column; gap: 12px; }
 .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 .settings-label { display: block; margin-bottom: 6px; color: var(--text-soft); font-size: 13px; }
@@ -1506,6 +1546,8 @@ body.is-ideas-list-resizing * { cursor: ew-resize !important; user-select: none 
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
   will-change: transform, opacity;
 }
+
+.group-rename { height: 28px; padding: 0 6px; }
 
 @media (max-width: 960px) {
   .app-shell { --sidebar-width: 72px; --page-pad-x: 14px; }

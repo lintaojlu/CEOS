@@ -7,7 +7,7 @@ import { ScheduleService } from './schedule-service.js';
 import { IdeaInboxService } from './idea-inbox-service.js';
 import { AgentRuntime } from './agent-runtime.js';
 import { AgentSession } from './agent-session.js';
-import { getDateKey, addDays } from '../domain/shared/date-key.js';
+import { getDateKey, addDays, parseDateKey } from '../domain/shared/date-key.js';
 
 function setup() {
   const store = {};
@@ -31,12 +31,7 @@ function setup() {
   ideaInboxService.addIdea('写引言');
   const viewed = scheduleService.getDateKey();
   const past = getDateKey(addDays(scheduleService.currentDate, -1));
-  scheduleService.data[past] = {
-    required: [{ id: 'past-1', text: '昨天的论文', note: '', completed: false, tagIds: [], subtasks: [], time: 1, pinned: false, recurrence: '' }],
-    optional: [],
-    reflection: '',
-    reflectionTags: []
-  };
+  scheduleService.insertTaskOnDate(past, 'required', { id: 'past-1', text: '昨天的论文', notes: [] });
   const runtime = new AgentRuntime({ scheduleService, ideaInboxService });
   const lines = [];
   return { scheduleService, ideaInboxService, runtime, viewed, past, lines };
@@ -86,7 +81,8 @@ describe('agent session', () => {
     expect(day.required.map((task) => task.text)).toEqual(['写引言', '昨天的论文']);
     expect(day.optional).toEqual([]);
     expect(ideaInboxService.getNodes()).toEqual([]);
-    expect(scheduleService.data[past].required.map((task) => task.id)).toEqual(['past-1']);
+    scheduleService.setCurrentDate(parseDateKey(past));
+    expect(scheduleService.getCurrentData().required.map((task) => task.id)).toEqual(['past-1']);
     expect(lines.some((line) => line.kind === 'commit_ok')).toBe(true);
     expect(JSON.stringify(lines)).not.toMatch(/apiKey/);
   });
@@ -165,7 +161,8 @@ describe('agent session', () => {
     session.complete = async () => second.shift();
     const result = await session.submit('明天写笔记');
     expect(result.rows.map((row) => row.id)).toEqual([kept]);
-    expect(scheduleService.data[tomorrow].optional.map((task) => task.text)).toEqual(['明天的笔记']);
+    scheduleService.setCurrentDate(parseDateKey(tomorrow));
+    expect(scheduleService.getCurrentData().optional.map((task) => task.text)).toEqual(['明天的笔记']);
     expect(scheduleService.getCurrentData().required).toEqual([]);
   });
 

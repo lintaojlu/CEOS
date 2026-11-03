@@ -55,46 +55,44 @@ describe('tags on daily tasks', () => {
     expect(service.getCurrentData().required[0].tagIds).toEqual([first.id]);
   });
 
-  it('changes the tag only on the viewed day', () => {
+  it('changes tags on the one task for every day it appears', () => {
     const service = createService();
     const tag = service.addTag('CEOS');
     const other = service.addTag('攀岩');
     const task = service.addTask('required', '写计划', tag.id);
     const today = service.currentDate;
-    const todayKey = getDateKey(today);
-
+    service.updateTask('required', task.id, { due: getDateKey(addDays(today, 1)) });
     service.setCurrentDate(addDays(today, 1));
-    service.insertTask('required', { ...task, tagId: tag.id, subtasks: [] });
     service.setTaskTag('required', task.id, other.id);
     expect(service.getCurrentData().required[0].tagIds).toEqual([other.id]);
-    expect(service.data[todayKey].required[0].tagIds).toEqual([tag.id]);
+    service.setCurrentDate(today);
+    expect(service.getCurrentData().required[0].tagIds).toEqual([other.id]);
   });
 
-  it('copies the tag when syncing, then leaves the two days independent', () => {
+  it('extends the range when syncing and keeps the same task', () => {
     const service = createService();
     const tag = service.addTag('CEOS');
     const task = service.addTask('required', '留下', tag.id);
     const originKey = getDateKey(service.currentDate);
-    service.setCurrentDate(addDays(service.currentDate, 1));
+    const origin = service.currentDate;
+    service.setCurrentDate(addDays(origin, 1));
     expect(service.syncTasksFrom(originKey)).toBe(true);
+    expect(service.getCurrentData().required.map((item) => item.id)).toEqual([task.id]);
     expect(service.getCurrentData().required[0].tagIds).toEqual([tag.id]);
     service.setTaskTag('required', task.id, '');
     expect(service.getCurrentData().required[0].tagIds).toEqual([]);
-    expect(service.data[originKey].required[0].tagIds).toEqual([tag.id]);
+    service.setCurrentDate(origin);
+    expect(service.getCurrentData().required[0].tagIds).toEqual([]);
   });
 
-  it('deletes a tag by clearing the mark on every day', () => {
+  it('clears a deleted tag from the task', () => {
     const service = createService();
     const tag = service.addTag('CEOS');
-    const task = service.addTask('required', '写计划', tag.id);
-    const todayKey = getDateKey(service.currentDate);
-    service.setCurrentDate(addDays(service.currentDate, 1));
-    service.insertTask('optional', { ...task, tagId: tag.id, subtasks: [] });
+    service.addTask('required', '写计划', tag.id);
     service.deleteTag(tag.id);
     expect(service.workspace.tags).toEqual([]);
-    expect(service.data[todayKey].required[0].text).toBe('写计划');
-    expect(service.data[todayKey].required[0].tagIds).toEqual([]);
-    expect(service.getCurrentData().optional[0].tagIds).toEqual([]);
+    expect(service.getCurrentData().required[0].text).toBe('写计划');
+    expect(service.getCurrentData().required[0].tagIds).toEqual([]);
   });
 
   it('renames a tag without rewriting task ids', () => {
@@ -114,8 +112,8 @@ describe('tags on daily tasks', () => {
     const origin = service.currentDate;
     const originKey = getDateKey(origin);
     service.addTask('required', '留下');
-    service.addTask('optional', '做完了');
-    service.getCurrentData().optional[0].completed = true;
+    const done = service.addTask('optional', '做完了');
+    service.completeTaskOnDate(originKey, 'optional', done.id);
     service.setCurrentDate(addDays(origin, 3));
     service.addTask('required', '当天的');
 
@@ -127,7 +125,7 @@ describe('tags on daily tasks', () => {
     expect(required).toContain('留下');
     expect(required).toContain('当天的');
     expect(service.getCurrentData().optional).toEqual([]);
-    expect(service.syncTasksFrom(originKey)).toBe(true);
+    expect(service.syncTasksFrom(originKey)).toBe(false);
     expect(service.getCurrentData().required.filter((t) => t.text === '留下')).toHaveLength(1);
   });
 
@@ -196,21 +194,13 @@ describe('tags on daily tasks', () => {
     expect(service.toggleTagPin(tag.id).pinned).toBe(false);
   });
 
-  it('reuses a same-named tag and only marks the viewed day', () => {
+  it('reuses a same-named tag on the task', () => {
     const service = createService();
     const existing = service.addTag('日程');
     const task = service.addTask('required', '写菜单');
-    const origin = service.currentDate;
-    const originKey = getDateKey(origin);
-    service.setCurrentDate(addDays(origin, 1));
-    service.insertTask('required', { ...task, tagIds: [] });
-    service.setCurrentDate(origin);
     const saved = service.attachTagNamed('required', task.id, '日程');
     expect(saved.tagIds).toEqual([existing.id]);
     expect(service.workspace.tags.filter((item) => item.name === '日程')).toHaveLength(1);
-    expect(service.data[originKey].required[0].tagIds).toEqual([existing.id]);
-    service.setCurrentDate(addDays(origin, 1));
-    expect(service.getCurrentData().required[0].tagIds).toEqual([]);
   });
 });
 
@@ -221,7 +211,9 @@ describe('moveTaskToDate', () => {
     const key = service.getDateKey();
     const saved = service.moveTaskToDate('optional', task.id, key, { text: '改标题' });
     expect(saved.text).toBe('改标题');
-    expect(service.data[key].optional.map((item) => item.id)).toEqual([task.id]);
+    expect(saved.start).toBe(key);
+    expect(saved.due).toBe(key);
+    expect(service.getCurrentData().optional.map((item) => item.id)).toEqual([task.id]);
     expect(service.getCurrentData().optional[0].text).toBe('改标题');
   });
 
@@ -242,21 +234,12 @@ describe('moveTaskToDate', () => {
     service.setCurrentDate(target);
     const earlier = service.addTask('required', '8:00 已有');
     service.setCurrentDate(addDays(origin, 2));
-    service.insertTask('required', {
-      ...task,
-      text: '第三天原文',
-      notes: [{ id: 'other', text: '另一份' }],
-      completed: false,
-      pinned: false,
-      recurrence: ''
-    });
+    service.addTask('required', '第三天原文');
     service.setCurrentDate(origin);
 
-    const when = parseDateKey(targetKey);
-    when.setHours(9, 30, 0, 0);
     const moved = service.moveTaskToDate('required', task.id, targetKey, {
       text: '改过的标题',
-      time: when.getTime()
+      minutes: 9 * 60 + 30
     });
 
     expect(moved.id).toBe(task.id);
@@ -266,55 +249,52 @@ describe('moveTaskToDate', () => {
     expect(moved.recurrence).toBe('daily');
     expect(moved.tagIds).toEqual([tag.id]);
     expect(moved.notes.map((note) => note.text)).toEqual(['说明']);
-    expect(getDateKey(new Date(moved.time))).toBe(targetKey);
-    expect(new Date(moved.time).getHours()).toBe(9);
-    expect(new Date(moved.time).getMinutes()).toBe(30);
-    expect(service.data[originKey].required).toEqual([]);
-    expect(service.data[targetKey].required.map((item) => item.id)).toEqual([task.id, earlier.id]);
-    expect(service.data[thirdKey].required[0].text).toBe('第三天原文');
-    expect(service.data[thirdKey].required[0].notes[0].text).toBe('另一份');
-    expect(service.data[thirdKey].required[0].completed).toBe(false);
-    expect(service.getDateKey()).toBe(originKey);
+    expect(moved.start).toBe(targetKey);
+    expect(moved.due).toBe(targetKey);
+    expect(moved.minutes).toBe(9 * 60 + 30);
+    service.setCurrentDate(origin);
+    expect(service.getCurrentData().required).toEqual([]);
+    service.setCurrentDate(target);
+    expect(service.getCurrentData().required.map((item) => item.id)).toEqual([task.id, earlier.id]);
+    service.setCurrentDate(addDays(origin, 2));
+    expect(service.getCurrentData().required[0].text).toBe('第三天原文');
+    expect(service.getDateKey()).toBe(thirdKey);
   });
 
-  it('does not write when the chosen day already has the same task id', () => {
+  it('keeps a single record when the task moves onto another day', () => {
     const service = createService();
     const task = service.addTask('required', '写计划');
     service.addNote('required', task.id, '说明');
     const origin = service.currentDate;
-    const originKey = getDateKey(origin);
     const targetKey = getDateKey(addDays(origin, 1));
-    service.setCurrentDate(addDays(origin, 1));
-    service.insertTask('optional', { ...task, text: '目标日原文', notes: [{ id: 'kept', text: '留着' }] });
+
+    const result = service.moveTaskToDate('required', task.id, targetKey, { text: '改标题' });
+
+    expect(result.id).toBe(task.id);
+    expect(result.text).toBe('改标题');
+    expect(result.notes.map((note) => note.text)).toEqual(['说明']);
+    expect(service.data.tasks.filter((item) => item.text === '写计划' || item.text === '改标题')).toHaveLength(1);
     service.setCurrentDate(origin);
-
-    const result = service.moveTaskToDate('required', task.id, targetKey, { text: '不该写上' });
-
-    expect(result).toEqual({ occupied: true });
-    expect(service.data[originKey].required.map((item) => item.text)).toEqual(['写计划']);
-    expect(service.data[originKey].required[0].notes.map((note) => note.text)).toEqual(['说明']);
-    expect(service.data[targetKey].optional.map((item) => item.text)).toEqual(['目标日原文']);
-    expect(service.data[targetKey].optional[0].notes.map((note) => note.text)).toEqual(['留着']);
-    expect(service.data[targetKey].required).toEqual([]);
+    expect(service.getCurrentData().required).toEqual([]);
+    service.setCurrentDate(addDays(origin, 1));
+    expect(service.getCurrentData().required.map((item) => item.text)).toEqual(['改标题']);
   });
 
-  it('clears only the viewed day tasks', () => {
+  it('clears only the viewed day', () => {
     const service = createService();
     service.addTask('required', '今天必做');
     service.addTask('optional', '今天选做');
-    service.setReflection('留下反思');
     const origin = service.currentDate;
-    const originKey = getDateKey(origin);
     service.setCurrentDate(addDays(origin, 1));
     service.addTask('required', '明天必做');
     service.setCurrentDate(origin);
 
     service.clearDayTasks();
 
-    expect(service.data[originKey].required).toEqual([]);
-    expect(service.data[originKey].optional).toEqual([]);
-    expect(service.data[originKey].reflection).toBe('留下反思');
-    expect(service.data[getDateKey(addDays(origin, 1))].required.map((task) => task.text)).toEqual(['明天必做']);
+    expect(service.getCurrentData().required).toEqual([]);
+    expect(service.getCurrentData().optional).toEqual([]);
+    service.setCurrentDate(addDays(origin, 1));
+    expect(service.getCurrentData().required.map((task) => task.text)).toEqual(['明天必做']);
   });
 });
 

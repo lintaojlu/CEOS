@@ -518,6 +518,15 @@ fn read_user_records(app: tauri::AppHandle) -> Result<UserRecords, String> {
   Ok(UserRecords { exists, records })
 }
 
+fn write_atomic(path: &std::path::Path, text: &str) -> Result<(), String> {
+  let tmp = path.with_extension("json.tmp");
+  fs::write(&tmp, text).map_err(|err| err.to_string())?;
+  fs::rename(&tmp, path).map_err(|err| {
+    let _ = fs::remove_file(&tmp);
+    err.to_string()
+  })
+}
+
 #[tauri::command]
 fn write_user_record(app: tauri::AppHandle, key: String, body: Option<String>) -> Result<(), String> {
   if let Some(text) = body.as_ref() {
@@ -529,7 +538,7 @@ fn write_user_record(app: tauri::AppHandle, key: String, body: Option<String>) -
   if let Some(name) = user_record_file(&key) {
     let path = dir.join(name);
     return match body {
-      Some(text) => fs::write(path, text).map_err(|err| err.to_string()),
+      Some(text) => write_atomic(&path, &text),
       None => match fs::remove_file(path) {
         Ok(()) => Ok(()),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),

@@ -1,5 +1,6 @@
 import { bodyAfterTitle, ideaTitle } from '../ideas/idea-document.js';
 import { normalizeNotes, normalizeTagIds } from '../schedule/daily-task.js';
+import { covers, findScheduleTask, isScheduleDocument } from '../schedule/schedule-document.js';
 import { coalesceBreakdownSubtasks, mergeBreakdownSubtasks, noteTitle, AI_TASK_TITLE, HUMAN_TASK_TITLE } from '../schedule/task-breakdown.js';
 import { WRITE_NAMES } from './catalog.js';
 import { inferTagIdFromText, resolveTagId } from './tag-intent.js';
@@ -10,6 +11,11 @@ import { inferTagIdFromText, resolveTagId } from './tag-intent.js';
  * @param {string} taskId
  */
 export function findTask(schedule, date, taskId) {
+  if (isScheduleDocument(schedule)) {
+    const task = findScheduleTask(schedule, taskId);
+    if (!task || !covers(task, date)) return null;
+    return { list: task.list, task };
+  }
   const day = schedule?.[date];
   for (const list of ['required', 'optional']) {
     const task = (day?.[list] || []).find((item) => item && item.id === taskId);

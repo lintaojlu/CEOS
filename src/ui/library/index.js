@@ -2,6 +2,7 @@ export { Symbol, Icon } from './symbols.jsx';
 export { ContextMenu } from './ContextMenu.jsx';
 export { IconButton, DeleteButton } from './IconButton.jsx';
 export { Card } from './Card.jsx';
+export { Overlay } from './Overlay.jsx';
 export { Modal } from './Modal.jsx';
 export { Checkbox } from './Checkbox.jsx';
 export { DateNav } from './DateNav.jsx';

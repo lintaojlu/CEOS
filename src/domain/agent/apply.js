@@ -1,5 +1,6 @@
 import { createEmptyScheduleDay } from '../../data/schedule-record.js';
 import { createDailyTask, createNote, normalizeNotes } from '../schedule/daily-task.js';
+import { covers, extendScheduleRange, findScheduleGroup, insertScheduleTask, isScheduleDocument, newScheduleId, removeScheduleTask } from '../schedule/schedule-document.js';
 import { parseDateKey } from '../shared/date-key.js';
 import { createIdeaDocument, foldStoredTitle, hydrateIdea, ideaTitle, markdownForModel, pruneImages } from '../ideas/idea-document.js';
 import { findTask } from './writes.js';
@@ -107,6 +108,13 @@ export function applyProposal(draft, calls) {
     ideas: structuredClone(draft.ideas || [])
   };
   const schedule = scratch.schedule;
+  if (isScheduleDocument(schedule)) {
+    const applied = applyDocument(schedule, scratch, calls);
+    if (!applied.ok) return applied;
+    draft.schedule = scratch.schedule;
+    draft.ideas = scratch.ideas;
+    return { ok: true };
+  }
   for (let index = 0; index < calls.length; index += 1) {
     const call = calls[index];
     const args = call.args;
@@ -207,5 +215,125 @@ export function applyProposal(draft, calls) {
   reorderProposal(schedule, calls);
   draft.schedule = scratch.schedule;
   draft.ideas = scratch.ideas;
+  return { ok: true };
+}
+
+/**
+ * @param {import('../schedule/schedule-document.js').ScheduleDocument} schedule
+ * @param {{ ideas: any[] }} scratch
+ * @param {any[]} calls
+ */
+function applyDocument(schedule, scratch, calls) {
+  for (let index = 0; index < calls.length; index += 1) {
+    const call = calls[index];
+    const args = call.args;
+    try {
+      if (call.name === 'create_task' || call.name === 'pickup_idea') {
+        let text = args.text;
+        let pinned = false;
+        if (call.name === 'pickup_idea') {
+          const idea = (scratch.ideas || []).find((item) => item.id === args.ideaId);
+          if (!idea) return { ok: false, index, error: '灵感还不能捡起' };
+          text = args.text || idea.title || idea.text;
+          pinned = !!idea.pinned;
+          scratch.ideas = (scratch.ideas || []).filter((item) => item.id !== idea.id);
+        }
+        const task = {
+          id: call.name === 'pickup_idea' ? `${args.ideaId}-pickup-${Date.now()}-${index}` : newScheduleId(),
+          text,
+          completed: false,
+          pinned,
+          recurrence: '',
+          tagIds: args.tagId ? [args.tagId] : [],
+          notes: notesFromWrite([], call.name === 'pickup_idea'
+            ? { note: args.note, subtasks: args.subtasks }
+            : args),
+          list: args.list === 'optional' ? 'optional' : 'required',
+          start: args.date,
+          due: args.date,
+          minutes: 0,
+          groupId: ''
+        };
+        insertScheduleTask(schedule, task);
+        call.appliedId = task.id;
+      } else if (call.name === 'update_task') {
+        const found = findTask(schedule, args.date, args.taskId);
+        if (!found) return { ok: false, index, error: '这一天没有这条任务' };
+        const task = found.task;
+        const list = args.list === 'optional' ? 'optional' : 'required';
+        if (task.list !== list) {
+          if (task.groupId) {
+            const group = findScheduleGroup(schedule, task.groupId);
+            if (group) group.childIds = group.childIds.filter((id) => id !== task.id);
+            task.groupId = '';
+          }
+          schedule.order[task.list] = (schedule.order[task.list] || []).filter((id) => id !== task.id);
+          task.list = list;
+          schedule.order[list].push(task.id);
+        }
+        applyFields(task, args);
+      } else if (call.name === 'remove_task') {
+        const found = findTask(schedule, args.date, args.taskId);
+        if (!found || !removeScheduleTask(schedule, args.taskId)) return { ok: false, index, error: '这一天没有这条任务' };
+      } else if (call.name === 'copy_open_task') {
+        const source = findTask(schedule, args.sourceDate, args.taskId);
+        if (!source || source.task.completed) return { ok: false, index, error: '来源日没有这条未完成任务' };
+        if (covers(source.task, args.date)) return { ok: false, index, error: '目标日已经有这条任务' };
+        extendScheduleRange(source.task, args.date);
+        const list = args.list === 'optional' ? 'optional' : args.list === 'required' ? 'required' : source.task.list;
+        if (list !== source.task.list) {
+          if (source.task.groupId) {
+            const group = findScheduleGroup(schedule, source.task.groupId);
+            if (group) group.childIds = group.childIds.filter((id) => id !== source.task.id);
+            source.task.groupId = '';
+          }
+          schedule.order[source.task.list] = (schedule.order[source.task.list] || []).filter((id) => id !== source.task.id);
+          source.task.list = list;
+          schedule.order[list].push(source.task.id);
+        }
+      } else if (call.name === 'create_idea' || call.name === 'update_idea') {
+        const ideaResult = applyIdeaCall(scratch, call, index);
+        if (!ideaResult.ok) return ideaResult;
+      } else {
+        return { ok: false, index, error: '没有这个函数' };
+      }
+    } catch (error) {
+      const message = error && error.message ? error.message : '写入失败';
+      return { ok: false, index, error: message };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * @param {{ ideas: any[] }} scratch
+ * @param {any} call
+ * @param {number} index
+ */
+function applyIdeaCall(scratch, call, index) {
+  const args = call.args;
+  if (call.name === 'create_idea') {
+    const doc = hydrateIdea(createIdeaDocument({
+      title: args.text,
+      body: markdownForModel(args.note || ''),
+      archived: !!args.archived,
+      archivedAt: args.archived ? Date.now() : null
+    }));
+    scratch.ideas.push(doc);
+    call.appliedId = doc.id;
+    return { ok: true };
+  }
+  const idea = (scratch.ideas || []).find((item) => item.id === args.ideaId);
+  if (!idea) return { ok: false, index, error: '灵感不存在' };
+  const body = foldStoredTitle(args.text, markdownForModel(args.note || ''));
+  idea.body = body;
+  idea.note = body;
+  idea.title = ideaTitle(idea);
+  idea.text = idea.title;
+  if (!!args.archived !== !!idea.archived) {
+    idea.archived = !!args.archived;
+    idea.archivedAt = idea.archived ? Date.now() : null;
+  }
+  idea.images = pruneImages(body, idea.images);
   return { ok: true };
 }

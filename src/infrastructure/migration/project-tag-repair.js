@@ -1,7 +1,9 @@
+import { normalizeScheduleDay } from '../../data/schedule-record.js';
 import { createDailyTask } from '../../domain/schedule/daily-task.js';
 import { nextTagColor } from '../../domain/schedule/tag-palette.js';
 import { getDateKey } from '../../domain/shared/date-key.js';
-import { SCHEDULE_KEY, ScheduleRepository } from '../storage/schedule-repository.js';
+import { isScheduleDocument } from '../../domain/schedule/schedule-document.js';
+import { SCHEDULE_KEY } from '../storage/schedule-repository.js';
 import { WorkspaceRepository } from '../storage/workspace-repository.js';
 
 const bundled = import.meta.glob('./project-tag-repair.data.js', { eager: true });
@@ -108,7 +110,16 @@ export function applyProjectTagRepair(adapter, payload) {
       tags: merged
     });
   }
-  if (scheduleChanged) new ScheduleRepository(adapter).save(schedule);
+  if (scheduleChanged) {
+    if (isScheduleDocument(schedule)) adapter.setJson(SCHEDULE_KEY, schedule);
+    else {
+      const days = {};
+      Object.keys(schedule).forEach((dateKey) => {
+        days[dateKey] = normalizeScheduleDay(schedule[dateKey]);
+      });
+      adapter.setJson(SCHEDULE_KEY, days);
+    }
+  }
   adapter.setItem(REPAIR_MARK, '1');
   return tagsChanged || scheduleChanged;
 }

@@ -153,12 +153,12 @@ export class ScheduleApp {
         fetchBackup: options.fetchBackup || null
       });
     }
+    applyProjectTagRepair(this.adapter);
     const runner = new MigrationRunner(this.adapter, {
       scheduleRepo: this.scheduleRepo,
       ideaRepo: this.ideaRepo
     });
     runner.run();
-    applyProjectTagRepair(this.adapter);
 
     this.scheduleService.load();
     try {

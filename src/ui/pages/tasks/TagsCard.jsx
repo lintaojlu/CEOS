@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/context.jsx';
 import { tagPillStyle } from '../../../domain/schedule/fixed-tags.js';
 import { DeleteButton, Modal, Symbol } from '../../library/index.js';
@@ -65,17 +65,23 @@ export function TagsCard({ tags = [], selectedIds, onToggle }) {
           <Symbol name="plus" size={14} />
         </button>
       </div>
-      {adding ? <TagCreateModal onClose={() => setAdding(false)} /> : null}
-      {editing ? <TagEditModal tag={editing} onClose={() => setEditingId(null)} /> : null}
+      <TagCreateModal open={adding} onClose={() => setAdding(false)} />
+      <TagEditModal tag={editing} open={!!editing} onClose={() => setEditingId(null)} />
     </section>
   );
 }
 
-function TagCreateModal({ onClose }) {
+function TagCreateModal({ open, onClose }) {
   const app = useApp();
   const ime = useImeEnterGuard();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    setName('');
+    setDescription('');
+  }, [open]);
 
   function save(event) {
     event.preventDefault();
@@ -90,7 +96,7 @@ function TagCreateModal({ onClose }) {
   }
 
   return (
-    <Modal title="新建标签" onClose={onClose}>
+    <Modal title="新建标签" open={open} onClose={onClose}>
       <form className="form-stack" {...imeCompositionProps(ime)} onKeyDown={(event) => { holdImeEnter(event, ime); }} onSubmit={save}>
         <label className="field-label">名称
           <input
@@ -119,11 +125,20 @@ function TagCreateModal({ onClose }) {
   );
 }
 
-function TagEditModal({ tag, onClose }) {
+function TagEditModal({ tag, open, onClose }) {
   const app = useApp();
   const ime = useImeEnterGuard();
-  const [name, setName] = useState(tag.name);
-  const [description, setDescription] = useState(tag.description || '');
+  const kept = useRef(tag);
+  if (tag) kept.current = tag;
+  const current = tag || kept.current;
+  const [name, setName] = useState(current?.name || '');
+  const [description, setDescription] = useState(current?.description || '');
+
+  useEffect(() => {
+    if (!tag) return;
+    setName(tag.name);
+    setDescription(tag.description || '');
+  }, [tag]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState('');
 
@@ -132,7 +147,7 @@ function TagEditModal({ tag, onClose }) {
     setGenerating(true);
     setGenerateError('');
     try {
-      const next = await app.taskTagService.generateDescription(tag.id, { name, description });
+      const next = await app.taskTagService.generateDescription(current.id, { name, description });
       setDescription(next);
     } catch (error) {
       setGenerateError(error?.message || '没有得到可用的描述');
@@ -142,7 +157,7 @@ function TagEditModal({ tag, onClose }) {
   }
 
   function save() {
-    if (!app.scheduleService.renameTag(tag.id, name, description)) {
+    if (!current || !app.scheduleService.renameTag(current.id, name, description)) {
       window.alert('名称无效，或已有同名标签');
       return;
     }
@@ -150,12 +165,12 @@ function TagEditModal({ tag, onClose }) {
   }
 
   function remove() {
-    if (!app.scheduleService.deleteTag(tag.id)) return;
+    if (!current || !app.scheduleService.deleteTag(current.id)) return;
     onClose();
   }
 
   return (
-    <Modal title="编辑标签" onClose={onClose}>
+    <Modal title="编辑标签" open={open && !!current} onClose={onClose}>
       <div className="form-stack">
         <label className="field-label">名称
           <input className="field" value={name} onChange={(event) => setName(event.target.value)} {...imeCompositionProps(ime)} onKeyDown={(event) => {

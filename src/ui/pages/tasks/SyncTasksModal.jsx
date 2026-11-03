@@ -19,8 +19,7 @@ export function SyncTasksModal({ open, onClose }) {
     if (open) setSource(getDateKey(addDays(app.scheduleService.currentDate, -1)));
   }, [open, app]);
 
-  if (!open) return null;
-  const sources = app.scheduleService.listSyncSources();
+  const sources = open ? app.scheduleService.listSyncSources() : [];
   const allowed = /^\d{4}-\d{2}-\d{2}$/.test(source) && source !== currentKey && app.scheduleService.countOpenTasks(source) > 0;
   let hint = '先选择来源日期。';
   if (source === currentKey) hint = '不能从当前查看日同步到自己。';
@@ -28,7 +27,7 @@ export function SyncTasksModal({ open, onClose }) {
   else if (allowed) hint = `把 ${labelOf(source)} 的未完成必做和选做拷到 ${labelOf(currentKey)}。`;
 
   return (
-    <Modal title="同步任务" onClose={onClose}>
+    <Modal title="同步任务" open={open} onClose={onClose}>
       <p className="card-note">只拷贝所选日期里未完成的必做和选做，任务 id 保持不变。</p>
       <label className="field-label" style={{ marginTop: 12 }}>来源日期
         <input className="field" type="date" value={source} onChange={(event) => setSource(event.target.value)} />

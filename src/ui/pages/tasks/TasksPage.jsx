@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../app/context.jsx';
-import { TaskEditModal } from '../../modals/TaskEditModal.jsx';
+import { TaskDrawer } from './TaskDrawer.jsx';
 import { DailyTasksCard } from './DailyTasksCard.jsx';
 import { tagsVisibleOnDay } from '../../../domain/schedule/fixed-tags.js';
 import { TagsCard } from './TagsCard.jsx';
@@ -34,7 +34,12 @@ export function TasksPage() {
           onToggle={toggleTag}
         />
       </div>
-      <TaskEditModal type={editing?.type} id={editing?.id} onClose={() => setEditing(null)} />
+      <TaskDrawer
+        open={!!editing}
+        type={editing?.type || ''}
+        id={editing?.id || ''}
+        onClose={() => setEditing(null)}
+      />
     </div>
   );
 }

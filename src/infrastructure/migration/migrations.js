@@ -6,6 +6,7 @@ import { normalizeIdeas, normalizeMilestones, normalizeWorkspace } from '../../d
 import { WorkspaceRepository } from '../storage/workspace-repository.js';
 import { getDateKey } from '../../domain/shared/date-key.js';
 import { createDailyTask } from '../../domain/schedule/daily-task.js';
+import { isScheduleDocument, migrateDaysToDocument } from '../../domain/schedule/schedule-document.js';
 import { TAG_PALETTE } from '../../domain/schedule/tag-palette.js';
 
 const MILESTONES_KEY = 'ceoMilestones';
@@ -419,6 +420,13 @@ export function migrateV6ToV7(adapter) {
   adapter.setSchemaVersion(7);
 }
 
+/** v7 → v8: tasks are global. A day no longer stores its own copies or reflection. */
+export function migrateV7ToV8(adapter) {
+  const schedule = adapter.getJson(SCHEDULE_KEY, {}) || {};
+  if (!isScheduleDocument(schedule)) adapter.setJson(SCHEDULE_KEY, migrateDaysToDocument(schedule));
+  adapter.setSchemaVersion(8);
+}
+
 export const MIGRATIONS = [
   { to: 1, run: migrateV0ToV1 },
   {
@@ -431,5 +439,6 @@ export const MIGRATIONS = [
   { to: 4, run: (adapter) => migrateV3ToV4(adapter) },
   { to: 5, run: (adapter) => migrateV4ToV5(adapter) },
   { to: 6, run: (adapter) => migrateV5ToV6(adapter) },
-  { to: 7, run: (adapter) => migrateV6ToV7(adapter) }
+  { to: 7, run: (adapter) => migrateV6ToV7(adapter) },
+  { to: 8, run: (adapter) => migrateV7ToV8(adapter) }
 ];

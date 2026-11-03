@@ -100,12 +100,6 @@ export class ExportService {
     md += `- 已完成: ${done}\n`;
     md += `- 完成率: ${percentage}%\n\n`;
 
-    md += `## 📝 每日感悟\n\n`;
-    const tags = data.reflectionTags && data.reflectionTags.length ? data.reflectionTags : [];
-    if (tags.length) md += `**今日标签**: ${tags.join('、')}\n\n`;
-    md += data.reflection || '> 暂无记录';
-    md += `\n`;
-
     return md;
   }
 

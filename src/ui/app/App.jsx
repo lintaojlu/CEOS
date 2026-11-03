@@ -72,7 +72,7 @@ function TopBar({ page, sidebarHidden, onToggle, toggleRef, onCreateIdea }) {
               {page === 'ideas' ? (
                 <span className="idea-heading-tools">
                   <button type="button" className="idea-compose" aria-label="新建灵感" onClick={onCreateIdea}>
-                    <Icon name="compose" />
+                    <Icon name="plus" />
                   </button>
                 </span>
               ) : null}

@@ -34,8 +34,9 @@ export function Symbol({ name, size = 18 }) {
   if (name === 'board') {
     return (
       <svg {...common}>
-        <path d="M4.2 16.6 15.2 5.6a1.8 1.8 0 0 1 2.5 2.5L6.7 19.1l-3.2.7z" />
-        <path d="M13.4 7.4 16.6 10.6" />
+        <path d="M15.2 3.8 20.2 8.8 9 19.4 4.2 19.8 4.6 15z" />
+        <path d="M13.4 5.6 18.4 10.6" />
+        <path d="M6.2 16.6 8.6 19" />
       </svg>
     );
   }
@@ -55,15 +56,6 @@ export function Symbol({ name, size = 18 }) {
   }
   if (name === 'plus') {
     return <svg {...common}><path d="M12 4v16M4 12h16" /></svg>;
-  }
-  if (name === 'compose') {
-    return (
-      <svg {...common}>
-        <path d="M15.2 3.8 20.2 8.8 9 19.4 4.2 19.8 4.6 15z" />
-        <path d="M13.4 5.6 18.4 10.6" />
-        <path d="M6.2 16.6 8.6 19" />
-      </svg>
-    );
   }
   if (name === 'filter') {
     return <svg {...common}><path d="M4 7h16M7 12h10M10 17h4" /></svg>;

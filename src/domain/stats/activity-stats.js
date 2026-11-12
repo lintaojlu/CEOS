@@ -6,6 +6,7 @@
 import { addDays, diffDays, getDateKey, parseDateKey, shiftDateKey, startOfWeek } from '../shared/date-key.js';
 import { dayView, earliestStart, isScheduleDocument } from '../schedule/schedule-document.js';
 import { activityRateLevel, dayCompletion, requiredCompletion } from './day-completion.js';
+import { indexDayStats, indexedCompletion, indexedRequired } from './day-index.js';
 
 const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
@@ -63,6 +64,14 @@ function visitScheduleDates(schedule, todayKey, visit) {
 }
 
 function activeDateSet(schedule, todayKey) {
+  const stats = indexDayStats(schedule);
+  if (stats) {
+    const active = new Set();
+    stats.forEach((row, dateKey) => {
+      if (dateKey <= todayKey && row.allDone > 0) active.add(dateKey);
+    });
+    return active;
+  }
   const active = new Set();
   visitScheduleDates(schedule, todayKey, (dateKey) => {
     const stat = dayCompletion(dayView(schedule, dateKey));
@@ -163,6 +172,7 @@ export function buildHeatmapWeeks(schedule, { weeks, today }) {
   const span = weeks == null ? heatmapSpan(today, schedule) : null;
   const count = span ? span.weeks : weeks;
   const first = span ? span.first : addDays(startOfWeek(todayDate), -(count - 1) * 7);
+  const stats = indexDayStats(schedule);
   /** @type {{ monthLabel: string, days: HeatCell[] }[]} */
   const columns = [];
 
@@ -174,7 +184,11 @@ export function buildHeatmapWeeks(schedule, { weeks, today }) {
       const date = addDays(first, week * 7 + dow);
       const dateKey = getDateKey(date);
       const future = dateKey > today;
-      const stat = future ? null : requiredCompletion(dayView(schedule, dateKey));
+      const stat = future
+        ? null
+        : stats
+          ? indexedRequired(stats.get(dateKey))
+          : requiredCompletion(dayView(schedule, dateKey));
       if (date.getDate() === 1) monthLabel = MONTHS[date.getMonth()];
       days.push({
         dateKey,

@@ -8,6 +8,7 @@ import { addDays, diffDays, getDateKey, parseDateKey } from '../shared/date-key.
 import { summarizeActivity } from '../stats/activity-stats.js';
 import { dayView } from '../schedule/schedule-document.js';
 import { dayCompletion } from '../stats/day-completion.js';
+import { forEachPlainTaskDay, indexDayStats, indexedCompletion } from '../stats/day-index.js';
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -30,11 +31,11 @@ function keysEnding(endKey, count) {
  * @param {Record<string, any>} schedule
  * @param {string[]} keys
  */
-function aggregate(schedule, keys) {
+function aggregate(schedule, keys, stats) {
   let completed = 0;
   let total = 0;
   keys.forEach((key) => {
-    const stat = dayCompletion(dayView(schedule, key));
+    const stat = stats ? indexedCompletion(stats.get(key)) : dayCompletion(dayView(schedule, key));
     if (!stat) return;
     completed += stat.completed;
     total += stat.total;
@@ -45,12 +46,14 @@ function aggregate(schedule, keys) {
 /**
  * @param {Record<string, any>} schedule
  * @param {string} todayKey
+ * @param {Map<string, { allDone: number, allTotal: number }>|null} stats
  */
-function weakestWeekday(schedule, todayKey) {
+function weakestWeekday(schedule, todayKey, stats) {
   const buckets = Array.from({ length: 7 }, () => ({ completed: 0, total: 0 }));
-  Object.keys(schedule || {}).forEach((dateKey) => {
+  const keys = stats ? [...stats.keys()] : Object.keys(schedule || {});
+  keys.forEach((dateKey) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || dateKey > todayKey) return;
-    const stat = dayCompletion(dayView(schedule, dateKey));
+    const stat = stats ? indexedCompletion(stats.get(dateKey)) : dayCompletion(dayView(schedule, dateKey));
     if (!stat) return;
     const date = parseDateKey(dateKey);
     if (!date) return;
@@ -82,25 +85,32 @@ export function buildInsightSnapshot({ schedule, workspace, ideas, todayKey }) {
   const last7 = keysEnding(todayKey, 7);
   const prev7 = keysEnding(getDateKey(addDays(parseDateKey(todayKey), -7)), 7);
   const last30 = keysEnding(todayKey, 30);
+  const stats = indexDayStats(data);
   const activity = summarizeActivity(data, { today: todayKey });
+  const recent = new Set(last7);
 
   const recentTagIds = new Set();
   const totals = new Map();
-  Object.keys(data).forEach((key) => {
-    const day = data[key];
-    if (!day) return;
-    [...(day.required || []), ...(day.optional || [])].forEach((task) => {
-      normalizeTagIds(task).forEach((tagId) => {
-        const row = totals.get(tagId) || { done: 0, total: 0 };
-        row.total += 1;
-        if (task.completed) {
-          row.done += 1;
-          if (last7.includes(key)) recentTagIds.add(tagId);
-        }
-        totals.set(tagId, row);
-      });
+  function tally(key, task) {
+    normalizeTagIds(task).forEach((tagId) => {
+      const row = totals.get(tagId) || { done: 0, total: 0 };
+      row.total += 1;
+      if (task.completed) {
+        row.done += 1;
+        if (recent.has(key)) recentTagIds.add(tagId);
+      }
+      totals.set(tagId, row);
     });
-  });
+  }
+  if (!forEachPlainTaskDay(data, (key, task) => {
+    if (key <= todayKey) tally(key, task);
+  })) {
+    Object.keys(data).forEach((key) => {
+      const day = data[key];
+      if (!day) return;
+      [...(day.required || []), ...(day.optional || [])].forEach((task) => tally(key, task));
+    });
+  }
 
   const tagRows = tags
     .map((tag) => {
@@ -134,16 +144,16 @@ export function buildInsightSnapshot({ schedule, workspace, ideas, todayKey }) {
   return {
     todayKey,
     completion: {
-      last7: aggregate(data, last7),
-      prev7: aggregate(data, prev7),
-      last30: aggregate(data, last30),
-      last7Rate: aggregate(data, last7).rate,
-      prev7Rate: aggregate(data, prev7).rate,
-      last30Rate: aggregate(data, last30).rate
+      last7: aggregate(data, last7, stats),
+      prev7: aggregate(data, prev7, stats),
+      last30: aggregate(data, last30, stats),
+      last7Rate: aggregate(data, last7, stats).rate,
+      prev7Rate: aggregate(data, prev7, stats).rate,
+      last30Rate: aggregate(data, last30, stats).rate
     },
     rhythm: {
       ...activity,
-      weakest: weakestWeekday(data, todayKey)
+      weakest: weakestWeekday(data, todayKey, stats)
     },
     tags: {
       rows: tagRows,

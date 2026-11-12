@@ -66,6 +66,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
+        index: 'index.html',
         main: 'ceo-schedule.html'
       }
     }

@@ -18,7 +18,7 @@ Web 只用来测 UI、快速查看和改界面。正式应用是 Tauri 桌面端
 | 形态 | 端口 | 地址 |
 | --- | --- | --- |
 | Web | `5173` | `http://localhost:5173/ceo-schedule.html` |
-| Tauri 开发 | `1420` | 由 `tauri.conf.json` 的 `devUrl` 加载；Vite 由 `npm run dev:tauri` 拉起 |
+| Tauri 开发 | `1420` | `http://localhost:1420/ceo-schedule.html`。根地址会转到这一页；以前直接打开根地址是空的 404 |
 
 占用时直接报错（`strictPort`），不会静默换端口。
 

@@ -43,18 +43,20 @@ function serveCeosData() {
   };
 }
 
+// Web 预览固定 5173；桌面开发（tauri）固定 1420。两边可同时跑，localStorage 也按端口隔离。
+const port = Number(process.env.CEOS_PORT || 5173);
+
 export default defineConfig({
   plugins: [serveCeosData()],
   clearScreen: false,
   root: '.',
   publicDir: 'public',
   server: {
-    port: 5173,
-    // localStorage 按 协议+域名+端口 隔离：端口一变，之前记录的数据就看不到了。
-    // strictPort 让 5173 被占用时直接报错，而不是静默换到 5174。
+    port,
+    // strictPort：占用时直接报错，避免静默换端口导致「数据不见了」。
     strictPort: true,
     host: 'localhost',
-    // 桌面端（tauri / ceos.sh）不自动打开浏览器；仅 npm run dev 时打开网页预览
+    // 桌面端不自动打开浏览器；仅 npm run dev 时打开网页预览
     open: process.env.CEOS_NO_BROWSER ? false : '/ceo-schedule.html',
     watch: {
       ignored: ['**/src-tauri/**']

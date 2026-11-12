@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EventBus } from './event-bus.js';
 import { LlmService } from './llm-service.js';
 import { ScheduleService } from './schedule-service.js';
@@ -205,5 +205,41 @@ describe('TaskTagService', () => {
     expect(seen.user).toContain('先画菜单');
     expect(seen.user).not.toContain('旧标题');
     expect(schedule.workspace.tags[0].description).toBe('旧描述');
+  });
+
+  it('rewrites the changed tags in the background and keeps the latest result', async () => {
+    const schedule = createSchedule();
+    const kept = schedule.addTag('ceos', '旧描述');
+    const dropped = schedule.addTag('生活', '生活旧描述');
+    const task = schedule.addTask('required', '写菜单');
+    schedule.updateTask('required', task.id, { tagIds: [dropped.id] });
+    let releaseFirst = () => {};
+    let ceosCalls = 0;
+    const service = new TaskTagService({
+      scheduleService: schedule,
+      llmService: llm(
+        { baseUrl: 'https://example.com/v1', fullUrl: false, apiKey: 'k', model: 'big', tagModel: 'tiny' },
+        async (input) => {
+          const prompt = String(input.user);
+          if (prompt.includes('标签名称：\n生活')) return '{"description":"和日常生活有关"}';
+          ceosCalls += 1;
+          if (ceosCalls === 1) {
+            await new Promise((resolve) => { releaseFirst = resolve; });
+            return '{"description":"过期描述"}';
+          }
+          return '{"description":"和 CEOS 的设计与开发有关"}';
+        }
+      )
+    });
+    schedule.onTaskTagsChanged = (tagIds) => { service.refreshDescriptions(tagIds); };
+    schedule.updateTask('required', task.id, { tagIds: [kept.id] });
+    service.refreshDescriptions([kept.id]);
+    await vi.waitFor(() => {
+      expect(schedule.workspace.tags.find((item) => item.id === kept.id).description).toBe('和 CEOS 的设计与开发有关');
+      expect(schedule.workspace.tags.find((item) => item.id === dropped.id).description).toBe('和日常生活有关');
+    });
+    releaseFirst();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(schedule.workspace.tags.find((item) => item.id === kept.id).description).toBe('和 CEOS 的设计与开发有关');
   });
 });

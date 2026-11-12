@@ -1,16 +1,62 @@
 import { describe, expect, it } from 'vitest';
-import { chatCompletionWithTools, chatCompletionsUrl, modelsUrl, streamChatCompletionWithTools } from './openai-compatible-client.js';
+import { chatCompletion, chatCompletionWithTools, modelsUrl, responsesUrl, streamChatCompletionWithTools } from './openai-compatible-client.js';
 import { DEFAULT_JEV_BASE_URL, DEFAULT_JEV_MODEL, normalizeLlmSettings, resolveJevModel } from '../storage/llm-settings-repository.js';
 
-describe('openai compatible urls', () => {
-  it('appends chat/completions and models to a base endpoint', () => {
-    expect(chatCompletionsUrl('https://api.openai.com/v1/', false)).toBe('https://api.openai.com/v1/chat/completions');
+describe('responses urls', () => {
+  it('appends responses and models to a base endpoint', () => {
+    expect(responsesUrl('https://api.openai.com/v1/', false)).toBe('https://api.openai.com/v1/responses');
     expect(modelsUrl('https://api.openai.com/v1/', false)).toBe('https://api.openai.com/v1/models');
   });
 
   it('uses a full request url as-is and derives the models url', () => {
-    expect(chatCompletionsUrl('https://api.openai.com/v1/chat/completions', true)).toBe('https://api.openai.com/v1/chat/completions');
+    expect(responsesUrl('https://api.openai.com/v1/responses', true)).toBe('https://api.openai.com/v1/responses');
+    expect(modelsUrl('https://api.openai.com/v1/responses', true)).toBe('https://api.openai.com/v1/models');
     expect(modelsUrl('https://api.openai.com/v1/chat/completions', true)).toBe('https://api.openai.com/v1/models');
+  });
+});
+
+describe('chatCompletion', () => {
+  it('reads a responses stream instead of a single JSON body', async () => {
+    const encoder = new TextEncoder();
+    const chunks = [
+      'data: {"type":"response.output_text.delta","delta":"{\\"description\\":\\"和空间折叠有关\\"}"}\n\n'
+    ];
+    const text = await chatCompletion({
+      baseUrl: 'https://example.com/v1',
+      apiKey: 'sk-test',
+      model: 'demo',
+      system: '只输出 JSON',
+      user: '写描述',
+      maxTokens: 200,
+      fetchImpl: async (url, init) => {
+        const body = JSON.parse(init.body);
+        expect(url).toBe('https://example.com/v1/responses');
+        expect(body.stream).toBe(true);
+        expect(body.thinking).toBeUndefined();
+        expect(body.max_output_tokens).toBe(200);
+        expect(body.instructions).toBe('只输出 JSON');
+        expect(body.input).toEqual([{ role: 'user', content: '写描述' }]);
+        let index = 0;
+        return {
+          ok: true,
+          status: 200,
+          body: {
+            getReader() {
+              return {
+                async read() {
+                  if (index >= chunks.length) return { done: true, value: undefined };
+                  const value = encoder.encode(chunks[index]);
+                  index += 1;
+                  return { done: false, value };
+                },
+                async cancel() {}
+              };
+            }
+          }
+        };
+      }
+    });
+    expect(text).toBe('{"description":"和空间折叠有关"}');
   });
 });
 
@@ -20,21 +66,55 @@ describe('chatCompletionWithTools', () => {
       baseUrl: 'https://example.com/v1',
       apiKey: 'sk-test',
       model: 'demo',
-      messages: [],
-      tools: [],
-      fetchImpl: async (_url, init) => {
+      messages: [
+        { role: 'system', content: '规则' },
+        { role: 'user', content: '今天' },
+        {
+          role: 'assistant',
+          content: '',
+          tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'list_tags', arguments: '{}' } }]
+        },
+        { role: 'tool', tool_call_id: 'call-1', content: '{"tags":[]}' }
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'list_tags',
+          description: '列出标签',
+          parameters: { type: 'object', properties: {} }
+        }
+      }],
+      fetchImpl: async (url, init) => {
         const body = JSON.parse(init.body);
-        expect(body.tools).toEqual([]);
+        expect(url).toBe('https://example.com/v1/responses');
+        expect(body.messages).toBeUndefined();
+        expect(body.input).toEqual([
+          { role: 'user', content: '今天' },
+          {
+            type: 'function_call',
+            call_id: 'call-1',
+            name: 'list_tags',
+            arguments: '{}'
+          },
+          { type: 'function_call_output', call_id: 'call-1', output: '{"tags":[]}' }
+        ]);
+        expect(body.instructions).toBe('规则');
+        expect(body.tools).toEqual([{
+          type: 'function',
+          name: 'list_tags',
+          description: '列出标签',
+          parameters: { type: 'object', properties: {} }
+        }]);
         expect(init.headers.Authorization).toBe('Bearer sk-test');
         return {
           ok: true,
           status: 200,
           json: async () => ({
-            choices: [{
-              message: {
-                content: null,
-                tool_calls: [{ id: 'call-1', function: { name: 'list_tags', arguments: '{}' } }]
-              }
+            output: [{
+              type: 'function_call',
+              call_id: 'call-1',
+              name: 'list_tags',
+              arguments: '{}'
             }]
           })
         };
@@ -45,7 +125,7 @@ describe('chatCompletionWithTools', () => {
     expect(result.toolCalls).toEqual([{ id: 'call-1', name: 'list_tags', arguments: {} }]);
   });
 
-  it('reads reasoning_content when the model sends it', async () => {
+  it('reads reasoning when the model sends it', async () => {
     const result = await chatCompletionWithTools({
       baseUrl: 'https://example.com/v1',
       apiKey: 'sk-test',
@@ -56,13 +136,11 @@ describe('chatCompletionWithTools', () => {
         ok: true,
         status: 200,
         json: async () => ({
-          choices: [{
-            message: {
-              content: '好。',
-              reasoning_content: '先看今天',
-              tool_calls: []
-            }
-          }]
+          output_text: '好。',
+          output: [
+            { type: 'reasoning', summary: [{ type: 'summary_text', text: '先看今天' }] },
+            { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: '好。' }] }
+          ]
         })
       })
     });
@@ -75,9 +153,9 @@ describe('streamChatCompletionWithTools', () => {
   it('emits content as each event arrives', async () => {
     const encoder = new TextEncoder();
     const chunks = [
-      'data: {"choices":[{"delta":{"content":"今"}}]}\n\n',
-      'data: {"choices":[{"delta":{"content":"天"}}]}\n\n',
-      'data: [DONE]\n\n'
+      'data: {"type":"response.output_text.delta","delta":"今"}\n\n',
+      'data: {"type":"response.output_text.delta","delta":"天"}\n\n',
+      'data: {"type":"response.completed","response":{"output_text":"今天","output":[]}}\n\n'
     ];
     /** @type {string[]} */
     const seen = [];

@@ -5,6 +5,7 @@ import { DEFAULT_JEV_BASE_URL } from '../../infrastructure/storage/llm-settings-
 import { useApp, useShell } from '../app/context.jsx';
 import { Symbol } from '../library/index.js';
 import { ArchivedIdeas } from './ArchivedIdeas.jsx';
+import { TagSettings } from './TagSettings.jsx';
 import { groupModelIds } from './model-list.js';
 import { readSecret, secretsToSave } from './secret-field.js';
 import { DEFAULT_SETTINGS_SECTION, SETTINGS_GROUPS, filterSettingsGroups } from './settings-nav.js';
@@ -85,7 +86,7 @@ export function SettingsModal() {
   useEffect(() => {
     if (!shell.settingsOpen) return undefined;
     function onKey(event) {
-      if (event.key === 'Escape' && !openPicker) shell.closeSettings();
+      if (event.key === 'Escape' && !openPicker && !document.querySelector('dialog[open]')) shell.closeSettings();
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -231,7 +232,7 @@ export function SettingsModal() {
           <header className="settings-card-head">
             <div>
               <h3 className="settings-card-title">模型服务</h3>
-              <p className="settings-card-desc">兼容 OpenAI 格式的服务端点，请求发到该地址下的 /chat/completions。只存在这台机器的应用数据目录。</p>
+              <p className="settings-card-desc">兼容 OpenAI Responses 的服务端点，请求发到该地址下的 /responses。只存在这台机器的应用数据目录。</p>
             </div>
             <button type="button" className="settings-btn" onMouseDown={holdSecrets} onClick={test} disabled={busy}>测试连接</button>
           </header>
@@ -366,6 +367,8 @@ export function SettingsModal() {
         {footer}
       </>
     );
+  } else if (section === 'tags') {
+    body = <TagSettings />;
   } else if (section === 'data') {
     body = (
       <>

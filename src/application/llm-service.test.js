@@ -115,7 +115,7 @@ describe('LlmService model slots', () => {
     globalThis.fetch = async () => ({
       ok: true,
       status: 200,
-      json: async () => ({ choices: [{ message: { content: '好', tool_calls: [] } }] })
+      json: async () => ({ object: 'response', output_text: '好', output: [] })
     });
     try {
       await llm.completeWithTools({

@@ -69,6 +69,20 @@ describe('tags on daily tasks', () => {
     expect(service.getCurrentData().required[0].tagIds).toEqual([other.id]);
   });
 
+  it('reports only the tags that were added or removed', () => {
+    const service = createService();
+    const first = service.addTag('CEOS');
+    const second = service.addTag('攀岩');
+    const task = service.addTask('required', '写计划', first.id);
+    /** @type {string[][]} */
+    const seen = [];
+    service.onTaskTagsChanged = (tagIds) => { seen.push(tagIds); };
+    service.updateTask('required', task.id, { text: '改标题' });
+    service.updateTask('required', task.id, { tagIds: [first.id] });
+    service.updateTask('required', task.id, { tagIds: [second.id] });
+    expect(seen).toEqual([[first.id, second.id]]);
+  });
+
   it('extends the range when syncing and keeps the same task', () => {
     const service = createService();
     const tag = service.addTag('CEOS');

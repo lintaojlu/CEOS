@@ -103,7 +103,7 @@ flowchart LR
   repo --> records[数据记录]
   repo --> store[(localStorage)]
   schedApp --> llm[LLM 客户端]
-  llm -->|HTTPS chat completions| ark[OpenAI 兼容模型]
+  llm -->|HTTPS responses| ark[OpenAI 兼容模型]
 ```
 
 | 层 | 职责 |
@@ -129,7 +129,7 @@ flowchart LR
 
 ## 技术栈
 
-Vite 上的 React 应用，用 [React Flow](https://reactflow.dev) 做灵感画布，用 [Tauri 2](https://tauri.app) 做桌面窗口，用 Vitest 测试领域规则。洞察从应用里直接调用 OpenAI 兼容接口，例如[火山引擎 Ark](https://www.volcengine.com/product/ark)。
+Vite 上的 React 应用，用 [React Flow](https://reactflow.dev) 做灵感画布，用 [Tauri 2](https://tauri.app) 做桌面窗口，用 Vitest 测试领域规则。洞察从应用里直接调用 OpenAI Responses 接口，例如[火山引擎 Ark](https://www.volcengine.com/product/ark)。
 
 ## 更多细节
 

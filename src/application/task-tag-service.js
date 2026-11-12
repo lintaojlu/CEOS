@@ -16,6 +16,8 @@ export class TaskTagService {
   constructor({ scheduleService, llmService }) {
     this.scheduleService = scheduleService;
     this.llmService = llmService;
+    /** @type {Map<string, number>} */
+    this._descriptionGeneration = new Map();
   }
 
   /**
@@ -76,5 +78,35 @@ export class TaskTagService {
     const next = descriptionFromModel(raw);
     if (!next) throw new Error('没有得到可用的描述');
     return next;
+  }
+
+  /**
+   * 任务上的标签刚被改过。后台重写这些标签的描述，不打断当前操作。
+   * 同一标签只保留最后一次结果。
+   * @param {string[]} tagIds
+   */
+  refreshDescriptions(tagIds) {
+    const ids = [...new Set((tagIds || []).filter(Boolean))];
+    for (const tagId of ids) {
+      const generation = (this._descriptionGeneration.get(tagId) || 0) + 1;
+      this._descriptionGeneration.set(tagId, generation);
+      void this._refreshDescription(tagId, generation);
+    }
+  }
+
+  /**
+   * @param {string} tagId
+   * @param {number} generation
+   */
+  async _refreshDescription(tagId, generation) {
+    try {
+      const next = await this.generateDescription(tagId);
+      if (this._descriptionGeneration.get(tagId) !== generation) return;
+      const tag = (this.scheduleService.workspace.tags || []).find((item) => item.id === tagId);
+      if (!tag || tag.description === next) return;
+      this.scheduleService.renameTag(tag.id, tag.name, next);
+    } catch {
+      // 没配模型或这次没写出描述时，留下原来的描述。
+    }
   }
 }

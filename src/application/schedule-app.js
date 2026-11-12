@@ -91,6 +91,9 @@ export class ScheduleApp {
       scheduleService: this.scheduleService,
       llmService: this.llmService
     });
+    this.scheduleService.onTaskTagsChanged = (tagIds) => {
+      this.taskTagService.refreshDescriptions(tagIds);
+    };
 
     this.taskGroupService = new TaskGroupService({
       scheduleService: this.scheduleService,

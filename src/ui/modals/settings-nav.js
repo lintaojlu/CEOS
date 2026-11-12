@@ -4,7 +4,8 @@ export const SETTINGS_GROUPS = [
     label: '设置',
     items: [
       { id: 'model', label: '模型', icon: 'model', keywords: ['API', 'Key', '地址', '请求', 'Agent', '拆解', '分类', '标准化', '连接', 'OpenAI'] },
-      { id: 'jev', label: '决策', icon: 'decision', keywords: ['JEV', 'Key', '地址', '模型'] }
+      { id: 'jev', label: '决策', icon: 'decision', keywords: ['JEV', 'Key', '地址', '模型'] },
+      { id: 'tags', label: '标签', icon: 'tag', keywords: ['钉住', '描述', '颜色', '新建', '删除'] }
     ]
   },
   {

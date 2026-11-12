@@ -561,7 +561,25 @@ input[type="date"], input[type="time"] { color-scheme: light; }
   border: 0; border-radius: 8px; background: transparent; color: var(--text-soft);
 }
 .settings-icon-btn:hover { background: var(--well); color: var(--text); }
+.settings-icon-btn.is-on { color: var(--text); }
+.settings-icon-btn.is-on .pin-head { fill: currentColor; }
 .settings-icon-btn.is-danger { background: var(--warn-soft); color: var(--bad); }
+.settings-tag-open {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
+  padding: 0; border: 0; background: transparent;
+  color: inherit; font: inherit; text-align: left;
+}
+.settings-tag-title {
+  display: flex; align-items: center; gap: 8px;
+  overflow: hidden; color: var(--text); font-size: 15px;
+}
+.settings-tag-title > span:last-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.settings-tag-swatch { width: 10px; height: 10px; border-radius: 999px; flex: none; }
+.settings-tag-open .settings-list-meta {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .settings-empty { margin: 14px 0; color: var(--muted); font-size: 14px; }
 
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

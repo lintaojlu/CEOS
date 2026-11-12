@@ -181,6 +181,14 @@ export function Symbol({ name, size = 18 }) {
       </svg>
     );
   }
+  if (name === 'tag') {
+    return (
+      <svg {...common}>
+        <path d="M3.8 12.2 12.2 3.8H20v7.8l-8.4 8.4z" />
+        <circle cx="15.2" cy="8.6" r="1.15" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
   if (name === 'sync') {
     return (
       <svg {...common}>

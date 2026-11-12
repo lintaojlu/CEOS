@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "dev:tauri": "CEOS_NO_BROWSER=1 CEOS_PORT=1420 vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

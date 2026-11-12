@@ -244,9 +244,11 @@ export class ScheduleService {
   setTaskTag(type, id, tagIds) {
     const task = this._findTask(type, id);
     if (!task) return null;
+    const changed = this._changedTagIds(task, { tagIds });
     task.tagIds = this._knownTagIds(tagIds);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
+    this._notifyTagChange(changed);
     return task;
   }
 
@@ -352,9 +354,11 @@ export class ScheduleService {
   updateTask(type, id, patch) {
     const task = this._findTask(type, id);
     if (!task) return null;
+    const changed = this._changedTagIds(task, patch);
     this._applyTaskPatch(task, patch);
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id });
+    this._notifyTagChange(changed);
     return task;
   }
 
@@ -370,10 +374,31 @@ export class ScheduleService {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return null;
     const task = this._findTask(type, id);
     if (!task) return null;
+    const changed = this._changedTagIds(task, patch);
     this._applyTaskPatch(task, { ...(patch || {}), start: dateKey, due: dateKey });
     this.persist();
     this.eventBus.emit(Events.TASKS_UPDATED, { type, id, dateKey });
+    this._notifyTagChange(changed);
     return task;
+  }
+
+  /**
+   * 这次补丁里新挂上或摘掉的标签。没改标签时是空数组。
+   * @param {import('../domain/schedule/schedule-document.js').ScheduleTask} task
+   * @param {object} [patch]
+   * @returns {string[]}
+   */
+  _changedTagIds(task, patch) {
+    if (!patch || (patch.tagIds == null && patch.tagId == null)) return [];
+    const before = new Set(normalizeTagIds(task));
+    const after = new Set(this._knownTagIds(patch.tagIds != null ? patch.tagIds : patch.tagId));
+    return [...new Set([...before, ...after])].filter((id) => before.has(id) !== after.has(id));
+  }
+
+  /** @param {string[]} tagIds */
+  _notifyTagChange(tagIds) {
+    if (!tagIds.length || typeof this.onTaskTagsChanged !== 'function') return;
+    this.onTaskTagsChanged(tagIds);
   }
 
   /**

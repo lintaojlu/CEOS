@@ -8,6 +8,8 @@ describe('filterSettingsGroups', () => {
 
   it('matches labels and hidden keywords, and drops empty groups', () => {
     expect(filterSettingsGroups('归档').map((group) => group.items.map((item) => item.id))).toEqual([['data']]);
+    expect(filterSettingsGroups('标签').map((group) => group.items.map((item) => item.id))).toEqual([['tags']]);
+    expect(filterSettingsGroups('钉住').flatMap((group) => group.items.map((item) => item.id))).toEqual(['tags']);
     expect(filterSettingsGroups('jev').map((group) => group.items.map((item) => item.id))).toEqual([['jev']]);
     expect(filterSettingsGroups('key').flatMap((group) => group.items.map((item) => item.id))).toEqual(['model', 'jev']);
     expect(filterSettingsGroups('没有这个')).toEqual([]);

@@ -103,7 +103,7 @@ flowchart LR
   repo --> records[Data records]
   repo --> store[(localStorage)]
   schedApp --> llm[LLM client]
-  llm -->|HTTPS chat completions| ark[OpenAI-compatible model]
+  llm -->|HTTPS responses| ark[OpenAI-compatible model]
 ```
 
 | Layer | Responsibility |
@@ -129,7 +129,7 @@ An idea becomes ready when it is unfinished, every predecessor is done, and its 
 
 ## Tech stack
 
-A React app on Vite, with [React Flow](https://reactflow.dev) for the idea canvas, [Tauri 2](https://tauri.app) for the desktop window, and Vitest for the domain rules. Insights call an OpenAI-compatible model, such as [Volcengine Ark](https://www.volcengine.com/product/ark), directly from the app.
+A React app on Vite, with [React Flow](https://reactflow.dev) for the idea canvas, [Tauri 2](https://tauri.app) for the desktop window, and Vitest for the domain rules. Insights call the OpenAI Responses API, such as [Volcengine Ark](https://www.volcengine.com/product/ark), directly from the app.
 
 ## Details
 

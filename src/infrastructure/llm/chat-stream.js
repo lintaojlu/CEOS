@@ -1,7 +1,9 @@
 /**
- * 把模型的流式输出收成正文、思考和工具调用。
+ * 把 Responses 的流式输出收成正文、思考和工具调用。
  * 工具参数只留在结果里，不通过 onDelta 送出。
  */
+
+import { parseArguments, readResponsesOutput } from './responses.js';
 
 /**
  * @param {(delta: { type: 'content', text: string } | { type: 'tools' }) => void} [onDelta]
@@ -10,6 +12,7 @@ export function createChatStream(onDelta) {
   let raw = '';
   let buffer = '';
   let sawSse = false;
+  let sawTextDelta = false;
   /** @type {string} */
   let content = '';
   /** @type {string} */
@@ -27,61 +30,79 @@ export function createChatStream(onDelta) {
   }
 
   /**
+   * @param {number} index
+   */
+  function slotAt(index) {
+    const at = Number.isInteger(index) && index >= 0 ? index : calls.length;
+    while (calls.length <= at) calls.push({ id: '', name: '', arguments: '' });
+    return calls[at];
+  }
+
+  /**
    * @param {any} json
    */
   function consume(json) {
     if (!json || typeof json !== 'object') return;
-    const rawError = json.error?.message || json.error;
+    const rawError = json.response?.error?.message || json.error?.message || json.error;
     if (typeof rawError === 'string' && rawError) error = rawError;
-    const choice = Array.isArray(json.choices) ? json.choices[0] : null;
-    if (!choice) return;
-    if (choice.delta) applyDelta(choice.delta);
-    if (choice.message) applyMessage(choice.message);
-  }
 
-  /**
-   * @param {any} delta
-   */
-  function applyDelta(delta) {
-    if (typeof delta.content === 'string' && delta.content) {
-      content += delta.content;
-      onDelta?.({ type: 'content', text: delta.content });
-    }
-    const thought = delta.reasoning_content ?? delta.reasoning;
-    if (typeof thought === 'string' && thought) reasoning += thought;
-    if (Array.isArray(delta.tool_calls) && delta.tool_calls.length) {
-      announceTools();
-      for (const call of delta.tool_calls) {
-        const index = Number.isInteger(call?.index) ? call.index : 0;
-        while (calls.length <= index) calls.push({ id: '', name: '', arguments: '' });
-        const slot = calls[index];
-        if (call?.id) slot.id = String(call.id);
-        const name = call?.function?.name;
-        const args = call?.function?.arguments;
-        if (typeof name === 'string' && name) slot.name += name;
-        if (typeof args === 'string') slot.arguments += args;
+    const type = typeof json.type === 'string' ? json.type : '';
+    if (type === 'response.output_text.delta') {
+      if (typeof json.delta === 'string' && json.delta) {
+        content += json.delta;
+        sawTextDelta = true;
+        onDelta?.({ type: 'content', text: json.delta });
       }
+      return;
+    }
+    if (type === 'response.reasoning_summary_text.delta' || type === 'response.reasoning_text.delta') {
+      if (typeof json.delta === 'string' && json.delta) reasoning += json.delta;
+      return;
+    }
+    if (type === 'response.output_item.added' && json.item?.type === 'function_call') {
+      announceTools();
+      const slot = slotAt(json.output_index);
+      const item = json.item;
+      if (item.call_id || item.id) slot.id = String(item.call_id || item.id);
+      if (item.name) slot.name = String(item.name);
+      if (typeof item.arguments === 'string' && item.arguments && !slot.arguments) slot.arguments = item.arguments;
+      return;
+    }
+    if (type === 'response.function_call_arguments.delta') {
+      announceTools();
+      const slot = slotAt(json.output_index);
+      if (json.item_id && !slot.id) slot.id = String(json.item_id);
+      if (typeof json.delta === 'string') slot.arguments += json.delta;
+      return;
+    }
+    if (type === 'response.function_call_arguments.done') {
+      const slot = slotAt(json.output_index);
+      if (typeof json.arguments === 'string' && json.arguments) slot.arguments = json.arguments;
+      return;
+    }
+    if (type === 'error' || type === 'response.failed') return;
+    if (type === 'response.completed' || type === 'response.incomplete' || json.object === 'response' || Array.isArray(json.output)) {
+      applyCompleted(json.response || json);
     }
   }
 
   /**
-   * @param {any} message
+   * @param {any} response
    */
-  function applyMessage(message) {
-    if (typeof message.content === 'string' && message.content && !content) {
-      content = message.content;
-      onDelta?.({ type: 'content', text: message.content });
+  function applyCompleted(response) {
+    const parsed = readResponsesOutput(response);
+    if (!sawTextDelta && parsed.content && !content) {
+      content = parsed.content;
+      onDelta?.({ type: 'content', text: parsed.content });
     }
-    const thought = message.reasoning_content ?? message.reasoning;
-    if (typeof thought === 'string' && thought && !reasoning) reasoning = thought;
-    if (Array.isArray(message.tool_calls) && message.tool_calls.length && !calls.length) {
+    if (!reasoning && parsed.reasoning) reasoning = parsed.reasoning;
+    if (!calls.some((call) => call.name) && parsed.toolCalls.length) {
       announceTools();
-      for (const call of message.tool_calls) {
-        const args = call?.function?.arguments;
+      for (const call of parsed.toolCalls) {
         calls.push({
-          id: String(call?.id || ''),
-          name: String(call?.function?.name || ''),
-          arguments: typeof args === 'string' ? args : JSON.stringify(args ?? {})
+          id: call.id,
+          name: call.name,
+          arguments: JSON.stringify(call.arguments ?? {})
         });
       }
     }
@@ -127,17 +148,4 @@ export function createChatStream(onDelta) {
       return { content, reasoning: reasoning.trim(), toolCalls, error };
     }
   };
-}
-
-/**
- * @param {string} raw
- */
-function parseArguments(raw) {
-  if (!raw || !raw.trim()) return {};
-  try {
-    const value = JSON.parse(raw);
-    return value && typeof value === 'object' ? value : {};
-  } catch {
-    return {};
-  }
 }

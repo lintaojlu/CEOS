@@ -6,11 +6,11 @@ describe('createChatStream', () => {
     /** @type {any[]} */
     const deltas = [];
     const stream = createChatStream((delta) => deltas.push(delta));
-    stream.push('data: {"choices":[{"delta":{"content":"你"}}]}\n');
-    stream.push('data: {"choices":[{"delta":{"content":"好"}}]}\n\n');
-    stream.push('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-1","function":{"name":"list_tags","arguments":""}}]}}]}\n\n');
-    stream.push('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\"a\\":1}"}}]}}]}\n\n');
-    stream.push('data: [DONE]\n\n');
+    stream.push('data: {"type":"response.output_text.delta","delta":"你"}\n');
+    stream.push('data: {"type":"response.output_text.delta","delta":"好"}\n\n');
+    stream.push('data: {"type":"response.output_item.added","output_index":1,"item":{"type":"function_call","call_id":"call-1","name":"list_tags","arguments":""}}\n\n');
+    stream.push('data: {"type":"response.function_call_arguments.delta","output_index":1,"delta":"{\\"a\\":1}"}\n\n');
+    stream.push('data: {"type":"response.completed","response":{"output_text":"你好"}}\n\n');
     expect(deltas).toEqual([
       { type: 'content', text: '你' },
       { type: 'content', text: '好' },
@@ -27,7 +27,12 @@ describe('createChatStream', () => {
     const deltas = [];
     const stream = createChatStream((delta) => deltas.push(delta));
     stream.push(JSON.stringify({
-      choices: [{ message: { content: '好。', reasoning_content: '先看', tool_calls: [] } }]
+      object: 'response',
+      output_text: '好。',
+      output: [
+        { type: 'reasoning', summary: [{ type: 'summary_text', text: '先看' }] },
+        { type: 'message', content: [{ type: 'output_text', text: '好。' }] }
+      ]
     }));
     const result = stream.finish();
     expect(deltas).toEqual([{ type: 'content', text: '好。' }]);

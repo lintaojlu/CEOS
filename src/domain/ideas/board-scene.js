@@ -1,5 +1,21 @@
 export const BOARD_BYTE_LIMIT = 32 * 1024 * 1024;
 
+/**
+ * 存盘用的画布底。Excalidraw 深色主题会把画布反相，
+ * 这块浅底在画面上接近纸。写成纸色再反相会变成浅底。
+ */
+export const BOARD_STORED_BACKGROUND = '#ffffff';
+
+/**
+ * @param {string} [color]
+ * @returns {string}
+ */
+export function boardBackground(color) {
+  const value = String(color || '').trim().toLowerCase();
+  if (!value || value === '#fff' || value === '#ffffff') return BOARD_STORED_BACKGROUND;
+  return String(color);
+}
+
 /** @param {string} text */
 export function boardByteLength(text) {
   return new TextEncoder().encode(String(text || '')).length;
@@ -55,7 +71,7 @@ export function scenePayload(elements, appState, files) {
     source: 'ceo-schedule',
     elements: live,
     appState: {
-      viewBackgroundColor: appState?.viewBackgroundColor || '#ffffff'
+      viewBackgroundColor: boardBackground(appState?.viewBackgroundColor)
     },
     files: nextFiles
   };
@@ -80,6 +96,6 @@ export function sceneFingerprint(scene) {
   return JSON.stringify({
     elements,
     files,
-    background: scene?.appState?.viewBackgroundColor || '#ffffff'
+    background: boardBackground(scene?.appState?.viewBackgroundColor)
   });
 }

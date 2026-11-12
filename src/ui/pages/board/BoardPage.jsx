@@ -4,6 +4,8 @@ import '@excalidraw/excalidraw/index.css';
 import { useApp } from '../../app/context.jsx';
 import {
   BOARD_BYTE_LIMIT,
+  BOARD_STORED_BACKGROUND,
+  boardBackground,
   boardByteLength,
   parseBoardFile,
   sceneFingerprint,
@@ -25,7 +27,7 @@ const BOARD_UI = {
 };
 
 function emptyScene() {
-  return scenePayload([], { viewBackgroundColor: '#ffffff' }, {});
+  return scenePayload([], { viewBackgroundColor: BOARD_STORED_BACKGROUND }, {});
 }
 
 function errorText(err) {
@@ -131,7 +133,7 @@ export function BoardPage() {
   const initialData = useMemo(() => ({
     elements: scene?.elements || [],
     appState: {
-      viewBackgroundColor: scene?.appState?.viewBackgroundColor || '#ffffff'
+      viewBackgroundColor: boardBackground(scene?.appState?.viewBackgroundColor)
     },
     files: scene?.files || {}
   }), [scene]);
@@ -189,7 +191,7 @@ export function BoardPage() {
       <div className="board-canvas">
         <Excalidraw
           langCode="zh-CN"
-          theme="light"
+          theme="dark"
           name="画板"
           aiEnabled={false}
           UIOptions={BOARD_UI}

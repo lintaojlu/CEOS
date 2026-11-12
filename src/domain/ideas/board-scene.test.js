@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BOARD_STORED_BACKGROUND,
   parseBoardFile,
   sceneHasElements,
   scenePayload
@@ -27,5 +28,11 @@ describe('board scene', () => {
     );
     expect(Object.keys(scene.files)).toEqual(['keep']);
     expect(scene.elements).toHaveLength(1);
+    expect(scene.appState.viewBackgroundColor).toBe(BOARD_STORED_BACKGROUND);
+  });
+
+  it('keeps a canvas color that is not the old white', () => {
+    const scene = scenePayload([], { viewBackgroundColor: '#223344' }, {});
+    expect(scene.appState.viewBackgroundColor).toBe('#223344');
   });
 });

@@ -34,7 +34,7 @@ export function TagSettings() {
         </header>
         {tags.length === 0 ? <p className="settings-empty">还没有标签。</p> : tags.map((tag) => {
           const count = tasksUsing(tasks, tag.id);
-          const color = displayTagColor(tag) || '#8E8E93';
+          const color = displayTagColor(tag) || '#777777';
           return (
             <div key={tag.id} className="settings-list-row">
               <button type="button" className="settings-tag-open" onClick={() => setEditingId(tag.id)}>

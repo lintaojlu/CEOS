@@ -2,6 +2,7 @@
  * Global workspace: tags, and any ideas still stored on this record.
  * A daily task stores at most one tag id. Tags do not own a task list.
  */
+import { canonicalTagColor } from '../domain/schedule/tag-palette.js';
 
 /**
  * @typedef {import('./schedule-record.js').TaskRefRecord} TaskRefRecord
@@ -110,7 +111,7 @@ export function normalizeTags(raw) {
     const name = String(tag?.name || '').trim();
     if (!tag?.id || !name || names.has(name)) return;
     names.add(name);
-    const color = typeof tag.color === 'string' && tag.color ? tag.color : '';
+    const color = canonicalTagColor(typeof tag.color === 'string' ? tag.color : '');
     tags.push({
       id: String(tag.id),
       name,

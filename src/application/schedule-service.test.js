@@ -187,8 +187,8 @@ describe('tags on daily tasks', () => {
     });
     service.load();
     expect(service.workspace.tags.map((tag) => [tag.id, tag.name, tag.color])).toEqual([
-      ['tag-life', '生活', '#F5C400'],
-      ['tag-work', '工作', '#111111']
+      ['tag-life', '生活', '#F79410'],
+      ['tag-work', '工作', '#777777']
     ]);
     expect(service.renameTag('tag-life', '日常').id).toBe('tag-life');
     const task = service.addTask('required', '买菜', 'tag-work');

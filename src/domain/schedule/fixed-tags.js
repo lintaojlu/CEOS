@@ -1,4 +1,5 @@
 import { normalizeTagIds } from './daily-task.js';
+import { TAG_LIGHT_FILLS, canonicalTagColor } from './tag-palette.js';
 
 /**
  * 标签栏只显示当天有任务挂着的，以及被钉住的。生活、工作和其他标签同一套规则。
@@ -26,15 +27,16 @@ export function tagsVisibleOnDay(tags, day) {
  * @returns {string}
  */
 export function displayTagColor(tag) {
-  return tag?.color || '';
+  return canonicalTagColor(tag?.color || '');
 }
 
 /**
- * 胶囊底色。黄底用黑字，其余用白字。
+ * 胶囊底色。白、橙、琥珀、绿、青用纸色字，其余用白字。
  * @param {{ color?: string }|null|undefined} tag
  * @returns {{ background: string, color: string }}
  */
 export function tagPillStyle(tag) {
   const background = displayTagColor(tag);
-  return { background, color: background.toLowerCase() === '#f5c400' ? '#111111' : '#ffffff' };
+  const light = TAG_LIGHT_FILLS.has(String(background).trim().toLowerCase());
+  return { background, color: light ? '#141414' : '#ffffff' };
 }
